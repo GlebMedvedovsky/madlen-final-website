@@ -1,0 +1,8 @@
+# Cloudflare Pages redirect rules
+# Astro handles routing, so we add a catch-all for SPA-style navigation
+# (Astro generates static HTML, so this is mostly for edge cases)
+
+[[redirects]]
+  from = "/*"
+  to = "/404"
+  status = 404

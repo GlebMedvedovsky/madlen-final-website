@@ -1,0 +1,33 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout
+  lang="en"
+  title="Terms / Notes – Foto & Video Madlen"
+  description="Editable terms and project notes for Foto & Video Madlen."
+>
+  <section class="legal-page">
+    <div class="container">
+      <span class="section-label">Legal</span>
+      <h1>Terms / Notes</h1>
+      <p>
+        Editable placeholder for future terms covering bookings, payment,
+        rescheduling, cancellation, image usage and delivery.
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .legal-page {
+    min-height: 80vh;
+    padding: calc(var(--nav-height) + 5rem) 0 6rem;
+    background: #fff;
+  }
+  h1 {
+    margin-bottom: 2rem;
+    color: var(--madlen-blue);
+    font-size: clamp(3.5rem, 8vw, 7rem);
+  }
+</style>

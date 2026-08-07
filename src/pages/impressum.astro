@@ -1,0 +1,128 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="Impressum – Foto & Video Madlen"
+  description="Impressum von Foto & Video Madlen / Madlen Medvedovskyy."
+>
+  <section class="legal-page">
+    <div class="container legal-container">
+      <span class="section-label">Rechtliches</span>
+      <h1>Impressum</h1>
+
+      <div class="legal-block">
+        <h2>Angaben gemäß § 5 DDG</h2>
+        <p>
+          Madlen Medvedovskyy<br />
+          Freie Fotografin, Videografin und Regisseurin<br />
+          Reichenberger Str. 22<br />
+          71638 Ludwigsburg<br />
+          Deutschland
+        </p>
+      </div>
+
+      <div class="legal-block">
+        <h2>Kontakt</h2>
+        <p>
+          Telefon:
+          <a href="tel:+4915223337700">+49 1522 3337700</a><br />
+          E-Mail:
+          <a href="mailto:madlen.medvedovskyy@live.de">
+            madlen.medvedovskyy@live.de
+          </a>
+        </p>
+      </div>
+
+      <div class="legal-block">
+        <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+        <p>
+          Madlen Medvedovskyy<br />
+          Reichenberger Str. 22<br />
+          71638 Ludwigsburg<br />
+          Deutschland
+        </p>
+      </div>
+
+      <div class="legal-block">
+        <h2>Verbraucherstreitbeilegung</h2>
+        <p>
+          Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren
+          vor einer Verbraucherschlichtungsstelle teilzunehmen.
+        </p>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .legal-page {
+    padding-top: calc(var(--nav-height) + var(--space-3xl));
+    padding-bottom: var(--space-3xl);
+    background:
+      linear-gradient(var(--madlen-pink-soft) 0 13rem, #ffffff 13rem);
+  }
+
+  .legal-container {
+    max-width: 860px;
+  }
+
+  .legal-page .section-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--madlen-blue);
+    opacity: 1;
+  }
+
+  .legal-page h1 {
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-2xl);
+    color: var(--madlen-blue);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+  }
+
+  .legal-block {
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--madlen-pink);
+  }
+
+  .legal-block:last-child {
+    border-bottom: none;
+  }
+
+  .legal-block h2 {
+    margin-bottom: var(--space-sm);
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--madlen-blue);
+  }
+
+  .legal-block p {
+    max-width: 68ch;
+    margin: 0;
+    color: var(--madlen-black);
+    line-height: 1.8;
+  }
+
+  .legal-block a {
+    color: var(--madlen-blue);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .legal-block a:hover {
+    color: #c9485d;
+  }
+
+  @media (max-width: 560px) {
+    .legal-page {
+      padding-top: calc(var(--nav-height) + var(--space-2xl));
+    }
+  }
+</style>

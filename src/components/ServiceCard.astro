@@ -1,0 +1,76 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  icon?: string;
+  highlighted?: boolean;
+}
+
+const { title, description, icon = '', highlighted = false } = Astro.props;
+---
+
+<div class:list={['service-card', { 'service-card--highlighted': highlighted }]}>
+  {icon && (
+    <div class="service-icon" aria-hidden="true">{icon}</div>
+  )}
+  <h3 class="service-title">{title}</h3>
+  <span class="divider" aria-hidden="true"></span>
+  <p class="service-desc">{description}</p>
+  <a href="/kontakt" class="btn btn-outline service-btn">Anfrage senden</a>
+</div>
+
+<style>
+  .service-card {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-beige);
+    padding: var(--space-xl) var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+
+  .service-card:hover {
+    border-color: var(--color-sand);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+  }
+
+  .service-card--highlighted {
+    background-color: var(--color-cream);
+    border-color: var(--color-sand);
+  }
+
+  .service-icon {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-md);
+    opacity: 0.7;
+  }
+
+  .service-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--color-gray-dark);
+    margin-bottom: 0;
+  }
+
+  .service-card .divider {
+    margin-block: var(--space-md);
+  }
+
+  .service-desc {
+    font-size: 0.9rem;
+    line-height: 1.75;
+    color: var(--color-text-muted);
+    flex: 1;
+    margin-bottom: var(--space-lg);
+    max-width: 45ch;
+  }
+
+  .service-btn {
+    font-size: 0.7rem;
+    padding: 0.65rem 1.4rem;
+    margin-top: auto;
+  }
+</style>

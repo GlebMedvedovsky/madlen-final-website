@@ -1,0 +1,232 @@
+/* ============================================================
+   FOTO & VIDEO MADLEN — Global Stylesheet
+   Design Tokens, Typography, Reset, Utilities
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+/* ── Tokens ── */
+:root {
+  --madlen-blue: #0338da;
+  --madlen-cream: #fffaf4;
+  --madlen-pink: #f4c4ce;
+  --madlen-pink-soft: #f9e8ec;
+  --madlen-black: #050505;
+
+  --color-white: #ffffff;
+  --color-cream: var(--madlen-cream);
+  --color-blue: var(--madlen-blue);
+  --color-beige: #eee5df;
+  --color-sand: #d9cec7;
+  --color-gray-light: #f4f0ed;
+  --color-gray-dark: var(--madlen-black);
+  --color-black: var(--madlen-black);
+  --color-text: var(--madlen-black);
+  --color-text-muted: #4f4b48;
+  /* Compatibility aliases for older components while keeping the new palette. */
+  --color-bronze: var(--madlen-blue);
+  --color-bronze-light: var(--madlen-pink);
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+
+  --space-xs:  0.5rem;
+  --space-sm:  1rem;
+  --space-md:  1.5rem;
+  --space-lg:  2.5rem;
+  --space-xl:  4rem;
+  --space-2xl: 6rem;
+  --space-3xl: 9rem;
+
+  --max-width: 1560px;
+  --nav-height: 72px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+
+  --transition: 0.3s ease;
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--color-text);
+  background-color: var(--madlen-cream);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img, video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--madlen-pink);
+  outline-offset: 3px;
+}
+
+/* ── Typography ── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--color-gray-dark);
+}
+
+h1 { font-size: clamp(2.4rem, 6vw, 4.5rem); letter-spacing: -0.01em; }
+h2 { font-size: clamp(1.8rem, 4vw, 3rem);   letter-spacing: -0.01em; }
+h3 { font-size: clamp(1.3rem, 2.5vw, 1.8rem); }
+h4 { font-size: 1.2rem; }
+
+p {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  max-width: 65ch;
+}
+
+/* ── Utilities ── */
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-inline: var(--space-xl);
+  }
+}
+
+.section-label {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--madlen-blue);
+  display: block;
+  margin-bottom: var(--space-sm);
+}
+
+.section-title {
+  margin-bottom: var(--space-md);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.85rem 2rem;
+  border: 1px solid currentColor;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition), border-color var(--transition);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background-color: var(--madlen-blue);
+  color: var(--madlen-pink);
+  border-color: var(--madlen-blue);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible,
+.btn-primary:active {
+  background-color: var(--madlen-pink);
+  color: var(--madlen-blue);
+  border-color: var(--madlen-pink);
+}
+
+.btn-outline {
+  background-color: var(--madlen-blue);
+  color: var(--madlen-pink);
+  border-color: var(--madlen-blue);
+}
+
+.btn-outline:hover,
+.btn-outline:focus-visible,
+.btn-outline:active {
+  background-color: var(--madlen-pink);
+  color: var(--madlen-blue);
+  border-color: var(--madlen-pink);
+}
+
+.btn-outline-light {
+  background-color: transparent;
+  color: var(--color-white);
+  border-color: rgba(255,255,255,0.7);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255,255,255,0.15);
+  border-color: var(--color-white);
+}
+
+.divider {
+  width: 2.5rem;
+  height: 1px;
+  background-color: var(--madlen-blue);
+  display: block;
+  margin-block: var(--space-md);
+}
+
+/* ── Section spacing ── */
+.section {
+  padding-block: var(--space-3xl);
+}
+
+.section--cream {
+  background-color: var(--color-cream);
+}
+
+.section--beige {
+  background-color: var(--color-beige);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}

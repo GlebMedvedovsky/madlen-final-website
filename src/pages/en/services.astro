@@ -1,0 +1,120 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout
+  lang="en"
+  title="Services – Foto & Video Madlen"
+  description="Portrait, wedding and event photography, videography, editing and editorial photography by Madlen Medvedovskyy."
+>
+  <section class="page-hero">
+    <div class="container">
+      <span class="section-label">Services</span>
+
+      <h1>
+        What I can<br />
+        <em>create for you.</em>
+      </h1>
+
+      <p>
+        Every project is different. Tell me about your plans and
+        I will prepare an individual offer tailored to your needs.
+      </p>
+
+      <div class="services-grid">
+        <article>
+          <h2>Portrait Photography</h2>
+          <p>Natural and expressive portraits shaped by light, personality and atmosphere.</p>
+        </article>
+
+        <article>
+          <h2>Couples & Families</h2>
+          <p>Authentic photographs of shared moments without forced poses.</p>
+        </article>
+
+        <article>
+          <h2>Wedding Photography</h2>
+          <p>Emotional and timeless images of the moments that make your wedding unique.</p>
+        </article>
+
+        <article>
+          <h2>Events</h2>
+          <p>Professional photography for private events, cultural occasions and celebrations.</p>
+        </article>
+
+        <article>
+          <h2>Videography & Editing</h2>
+          <p>Cinematic wedding films, event videos and carefully edited visual stories.</p>
+        </article>
+
+        <article>
+          <h2>Editorial & Commercial</h2>
+          <p>Photography for magazines, brands, shops, campaigns and creative projects.</p>
+        </article>
+      </div>
+
+      <a href="/en/contact" class="page-button">
+        Send inquiry ›
+      </a>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .page-hero {
+    padding-top: calc(var(--nav-height) + var(--space-3xl));
+    padding-bottom: var(--space-3xl);
+    background: var(--color-cream);
+  }
+
+  h1 {
+    margin: var(--space-sm) 0 var(--space-md);
+  }
+
+  h1 em {
+    color: var(--color-bronze);
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .page-hero > .container > p {
+    max-width: 58ch;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 3rem;
+  }
+
+  article {
+    padding: 1.5rem;
+    background: #ffffff;
+    border: 1px solid var(--color-beige);
+    border-radius: 12px;
+  }
+
+  article h2 {
+    margin-bottom: 0.75rem;
+    font-size: 1.35rem;
+  }
+
+  .page-button {
+    display: inline-flex;
+    margin-top: 2rem;
+    padding: 0.8rem 1.4rem;
+    border-radius: 999px;
+    background: #0338da;
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 900px) {
+    .services-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

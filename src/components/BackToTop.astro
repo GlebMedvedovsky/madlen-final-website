@@ -1,0 +1,139 @@
+<button
+  class="back-to-top"
+  id="back-to-top"
+  type="button"
+  aria-label="Nach oben"
+  title="Nach oben"
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 20V5" />
+    <path d="M5 12L12 5L19 12" />
+  </svg>
+</button>
+
+<script>
+  const button = document.getElementById("back-to-top");
+
+  const updateButton = () => {
+    button?.classList.toggle("is-visible", window.scrollY > 500);
+  };
+
+  window.addEventListener("scroll", updateButton, { passive: true });
+
+  button?.addEventListener("click", () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  });
+
+  updateButton();
+</script>
+
+<style>
+  .back-to-top {
+    position: fixed;
+    right: 170px;
+    bottom: 24px;
+    z-index: 9998;
+
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: 1px solid var(--madlen-blue);
+    border-radius: 50%;
+
+    display: grid;
+    place-items: center;
+
+    box-shadow:
+    inset 2px 2px 4px rgba(255, 255, 255, 0.32),
+    inset -3px -3px 5px rgba(0, 20, 120, 0.38),
+    0 5px 0 #00269d,
+    0 12px 25px rgba(3, 56, 218, 0.28);
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+
+    transition:
+      opacity 180ms ease,
+      visibility 180ms ease,
+      transform 180ms ease,
+      background 180ms ease,
+      color 180ms ease;
+  }
+
+  .back-to-top__icon {
+  width: 26px;
+  height: 26px;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arrow-shadow {
+  stroke: rgba(84, 21, 71, 0.5);
+  stroke-width: 3.4;
+  transform: translateY(1.5px);
+}
+
+.arrow-main {
+  stroke: var(--madlen-pink);
+  stroke-width: 2.8;
+}
+
+.arrow-highlight {
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 0.9;
+}
+
+  .back-to-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .back-to-top:hover,
+.back-to-top:focus-visible {
+  background: linear-gradient(
+    145deg,
+    #ffffff 0%,
+    var(--madlen-pink) 60%,
+    #e9aeba 100%
+  );
+
+  color: var(--madlen-blue);
+
+  transform: translateY(-3px);
+
+  box-shadow:
+    inset 2px 2px 4px rgba(255, 255, 255, 0.75),
+    inset -3px -3px 5px rgba(172, 91, 112, 0.24),
+    0 6px 0 #c98f9c,
+    0 14px 28px rgba(3, 56, 218, 0.25);
+}
+
+.back-to-top:hover .arrow-main,
+.back-to-top:focus-visible .arrow-main {
+  stroke: var(--madlen-blue);
+}
+
+.back-to-top:hover .arrow-shadow,
+.back-to-top:focus-visible .arrow-shadow {
+  stroke: rgba(0, 24, 135, 0.38);
+}
+
+  .back-to-top:focus-visible {
+    outline: 3px solid rgba(3, 56, 218, 0.25);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 600px) {
+    .back-to-top {
+      right: 70px;
+      bottom: 14px;
+    }
+  }
+</style>

@@ -1,0 +1,228 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ServiceCard from '../components/ServiceCard.astro';
+
+const services = [
+  {
+    title: 'Portraitshooting',
+    icon: '◎',
+    description:
+      'Ein Portraitshooting mit mir ist kein Fotoshooting im klassischen Sinne – es ist ein Gespräch mit Licht und Zeit. Ich arbeite mit natürlichem Licht, echten Orten und Ihrer Persönlichkeit. Das Ergebnis sind Bilder, die Sie so zeigen, wie Sie wirklich sind.',
+  },
+  {
+    title: 'Paare & Familien',
+    icon: '♡',
+    description:
+      'Ob frisch verliebt, seit Jahren zusammen oder mit Kindern unterwegs: gemeinsame Momente verdienen Bilder, die man nicht wegpackt. Ich begleite Sie an einem Ort, der Ihnen etwas bedeutet – ohne Regie, mit viel Raum für das Echte.',
+  },
+  {
+    title: 'Hochzeiten',
+    icon: '◇',
+    description:
+      'Hochzeitsfotografie ist Vertrauen. Ich bin an Ihrem großen Tag dabei – ruhig, aufmerksam und im Hintergrund – und halte die Momente fest, die keine Kamera bemerkt hat. Von der Vorbereitung bis zum Tanz.',
+    highlighted: true,
+  },
+  {
+    title: 'Events',
+    icon: '✦',
+    description:
+      'Firmenfeiern, Kulturveranstaltungen, private Events – jedes Event hat seine eigene Energie. Ich dokumentiere Ihre Veranstaltung authentisch und in einer Qualität, die Sie stolz zeigen können.',
+  },
+  {
+    title: 'Videografie',
+    icon: '▷',
+    description:
+      'Bewegte Bilder erzählen Momente auf eine besondere Weise. Ich drehe mit ruhigem Blick und natürlicher Bildsprache – ob Hochzeitsfilm, Event-Video oder kreative Kurzproduktion. Ohne Überdramatik, dafür mit Seele.',
+  },
+  {
+    title: 'Videoschnitt',
+    icon: '⊞',
+    description:
+      'Sie haben bereits Rohmaterial und suchen jemanden, der daraus etwas Stimmiges macht? Ich übernehme auch reine Schnitt-Projekte – strukturiert, sorgfältig und mit dem Gespür für Rhythmus und Atmosphäre.',
+  },
+  {
+    title: 'Editorial & Commercial',
+    icon: '▣',
+    description:
+      'Fotografie für Magazine, Marken, Shops und kreative Projekte. Ob Produktfotografie, Brand-Shooting oder editoriale Bildwelten: Ich verstehe, was Ihr Projekt braucht, und liefere Bilder, die kommunizieren.',
+    highlighted: true,
+  },
+];
+---
+
+<Layout
+  title="Leistungen – Foto & Video Madlen"
+  description="Portraitshooting, Hochzeiten, Familienfotografie, Videografie und Editorial-Fotografie in Deutschland. Individuelle Angebote auf Anfrage."
+>
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="container">
+      <span class="section-label">Leistungen</span>
+      <h1 class="page-hero-title">Was ich<br /><em>für Sie tue</em></h1>
+      <p class="page-hero-desc">
+        Ich biete keine festen Pakete an – denn kein Projekt ist wie das andere.
+        Schreiben Sie mir, und ich erstelle Ihnen ein individuelles Angebot.
+      </p>
+    </div>
+  </section>
+
+  <!-- Services grid -->
+  <section class="section services-section">
+    <div class="container">
+      <div class="services-grid">
+        {services.map(s => (
+          <ServiceCard
+            title={s.title}
+            description={s.description}
+            icon={s.icon}
+            highlighted={s.highlighted ?? false}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Process / How it works -->
+  <section class="section section--cream process-section">
+    <div class="container">
+      <div class="process-inner">
+        <span class="section-label">Wie es läuft</span>
+        <h2 class="process-title">Vom ersten Wort<br /><em>bis zum fertigen Bild</em></h2>
+        <span class="divider" aria-hidden="true"></span>
+
+        <div class="process-steps">
+          <div class="process-step">
+            <span class="step-num" aria-hidden="true">01</span>
+            <div>
+              <h3 class="step-title">Anfrage</h3>
+              <p>Sie schreiben mir – per E-Mail, WhatsApp oder über das Kontaktformular. Je mehr Sie mir über Ihr Projekt erzählen, desto besser.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <span class="step-num" aria-hidden="true">02</span>
+            <div>
+              <h3 class="step-title">Gespräch</h3>
+              <p>Wir lernen uns kennen – kurz und persönlich. Ich verstehe Ihre Wünsche und beantworte alle Fragen.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <span class="step-num" aria-hidden="true">03</span>
+            <div>
+              <h3 class="step-title">Angebot</h3>
+              <p>Sie erhalten ein maßgeschneidertes Angebot – transparent, ohne versteckte Kosten.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <span class="step-num" aria-hidden="true">04</span>
+            <div>
+              <h3 class="step-title">Shooting & Lieferung</h3>
+              <p>Wir arbeiten zusammen, und ich liefere Ihnen die fertigen Bilder – sorgfältig bearbeitet und in Topqualität.</p>
+            </div>
+          </div>
+        </div>
+
+        <a href="/kontakt" class="btn btn-primary" style="margin-top: 3rem;">Jetzt anfragen</a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .page-hero {
+    padding-top: calc(var(--nav-height) + var(--space-3xl));
+    padding-bottom: var(--space-xl);
+    background-color: var(--color-cream);
+  }
+
+  .page-hero-title {
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+
+  .page-hero-title em,
+  h2 em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--color-bronze);
+  }
+
+  .page-hero-desc {
+    max-width: 55ch;
+  }
+
+  /* Services grid */
+  .services-section {
+    background-color: var(--color-white);
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  @media (min-width: 768px) {
+    .services-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .services-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* Process */
+  .process-inner {
+    max-width: 800px;
+  }
+
+  .process-title {
+    margin-top: var(--space-sm);
+    margin-bottom: 0;
+  }
+
+  .process-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    margin-top: var(--space-xl);
+  }
+
+  @media (min-width: 768px) {
+    .process-steps {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .process-step {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+  }
+
+  .step-num {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: var(--color-sand);
+    line-height: 1;
+    flex-shrink: 0;
+    width: 2.5rem;
+  }
+
+  .step-title {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-bottom: var(--space-xs);
+    color: var(--color-gray-dark);
+  }
+
+  .process-step p {
+    font-size: 0.88rem;
+    line-height: 1.75;
+    max-width: 40ch;
+  }
+</style>

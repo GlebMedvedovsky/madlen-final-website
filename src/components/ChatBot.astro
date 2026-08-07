@@ -1,0 +1,334 @@
+---
+import { getLanguageFromUrl } from "../i18n/utils";
+
+const lang = getLanguageFromUrl(Astro.url);
+const isGerman = lang === "de";
+const copy = isGerman
+  ? {
+      toggle: "Fragen?",
+      open: "Chat öffnen",
+      close: "Chat schließen",
+      title: "Madlen Assist",
+      greeting:
+        "Hallo! Ich helfe dir kurz bei Fragen zu Portfolio, Leistungen und Kontakt.",
+      input: "Deine Frage eingeben …",
+      send: "Senden",
+      quick: ["Leistungen", "Portfolio", "Preise", "Kontakt"],
+      note: "Der Chat speichert keine Nachrichten.",
+    }
+  : {
+      toggle: "Questions?",
+      open: "Open chat",
+      close: "Close chat",
+      title: "Madlen Assist",
+      greeting:
+        "Hello! I can help with quick questions about the portfolio, services and contact.",
+      input: "Type your question …",
+      send: "Send",
+      quick: ["Services", "Portfolio", "Pricing", "Contact"],
+      note: "This chat does not store messages.",
+    };
+---
+
+<div class="madlen-chat" data-chatbot>
+  <button
+    class="chat-toggle"
+    type="button"
+    aria-label={copy.open}
+    aria-expanded="false"
+    data-chat-toggle
+  >
+    <span class="chat-toggle__icon">?</span>
+    <span>{copy.toggle}</span>
+  </button>
+
+  <section class="chat-window" aria-label={copy.title} hidden data-chat-window>
+    <header class="chat-header">
+      <div>
+        <p>Foto & Video Madlen</p>
+        <h2>{copy.title}</h2>
+      </div>
+      <button class="chat-close" type="button" aria-label={copy.close} data-chat-close>×</button>
+    </header>
+
+    <div class="chat-body" data-chat-body>
+      <div class="chat-message chat-message--bot"><p>{copy.greeting}</p></div>
+    </div>
+
+    <div class="chat-quick-actions">
+      {copy.quick.map((label) => (
+        <button type="button" data-chat-question={label}>{label}</button>
+      ))}
+    </div>
+
+    <form class="chat-form" data-chat-form>
+      <label class="sr-only" for="chat-input">{copy.input}</label>
+      <input id="chat-input" name="message" placeholder={copy.input} data-chat-input />
+      <button type="submit">{copy.send}</button>
+    </form>
+
+    <p class="chat-note">{copy.note}</p>
+  </section>
+</div>
+
+<script is:inline define:vars={{ lang }}>
+  (() => {
+    const root = document.querySelector("[data-chatbot]");
+    if (!root) return;
+    const toggle = root.querySelector("[data-chat-toggle]");
+    const close = root.querySelector("[data-chat-close]");
+    const panel = root.querySelector("[data-chat-window]");
+    const body = root.querySelector("[data-chat-body]");
+    const form = root.querySelector("[data-chat-form]");
+    const input = root.querySelector("[data-chat-input]");
+
+    const answers = lang === "de"
+      ? {
+          services: "Madlen bietet Fotografie und Videografie für Portraits, Hochzeiten, Events sowie Editorial- und Commercial-Projekte an.",
+          portfolio: "Im Portfolio findest du alle ausgewählten Projekte mit vollständigen Bildergalerien.",
+          pricing: "Preise werden passend zu Umfang, Ort und Termin individuell angeboten.",
+          contact: "Nutze das Kontaktformular, um Projektart, Termin und Aufnahmeort zu senden.",
+          fallback: "Schreib Madlen am besten über das Kontaktformular – sie antwortet persönlich.",
+        }
+      : {
+          services: "Madlen offers photography and videography for portraits, weddings, events, editorial and commercial projects.",
+          portfolio: "The portfolio contains selected projects with their complete image galleries.",
+          pricing: "Pricing is tailored to the scope, location and date of each project.",
+          contact: "Use the contact form to share your project type, preferred date and location.",
+          fallback: "The best next step is to contact Madlen through the inquiry form.",
+        };
+
+    function setOpen(open) {
+      panel.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+      if (open) input.focus();
+    }
+
+    function answer(text) {
+      const value = text.toLowerCase();
+      if (/leistung|service/.test(value)) return answers.services;
+      if (/portfolio|arbeit|work|gallery/.test(value)) return answers.portfolio;
+      if (/preis|price|cost|pricing/.test(value)) return answers.pricing;
+      if (/kontakt|contact|termin|inquiry/.test(value)) return answers.contact;
+      return answers.fallback;
+    }
+
+    function addMessage(text, kind) {
+      const message = document.createElement("div");
+      message.className = `chat-message chat-message--${kind}`;
+      const paragraph = document.createElement("p");
+      paragraph.textContent = text;
+      message.appendChild(paragraph);
+      body.appendChild(message);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    toggle.addEventListener("click", () => setOpen(panel.hidden));
+    close.addEventListener("click", () => setOpen(false));
+    root.querySelectorAll("[data-chat-question]").forEach((button) => {
+      button.addEventListener("click", () => {
+        addMessage(button.textContent, "user");
+        addMessage(answer(button.textContent), "bot");
+      });
+    });
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const value = input.value.trim();
+      if (!value) return;
+      addMessage(value, "user");
+      addMessage(answer(value), "bot");
+      input.value = "";
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setOpen(false);
+    });
+  })();
+</script>
+
+<style>
+  .madlen-chat {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 9999;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .chat-toggle,
+  .chat-form button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    border: 1px solid var(--madlen-blue);
+    border-radius: 999px;
+    background: var(--madlen-blue);
+    color: var(--madlen-pink);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+
+  .chat-toggle {
+    min-height: 46px;
+    padding: 0.75rem 1.15rem;
+    box-shadow: 0 14px 35px rgba(3, 56, 218, 0.22);
+  }
+
+  .chat-toggle:hover,
+  .chat-toggle:focus-visible,
+  .chat-form button:hover,
+  .chat-form button:focus-visible {
+    background: var(--madlen-pink);
+    color: var(--madlen-blue);
+    transform: translateY(-2px);
+  }
+
+  .chat-toggle__icon {
+    width: 23px;
+    height: 23px;
+    display: grid;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+  }
+
+  .chat-window {
+    position: absolute;
+    right: 0;
+    bottom: 62px;
+    width: min(390px, calc(100vw - 32px));
+    max-height: min(650px, calc(100vh - 110px));
+    overflow: hidden;
+    border: 1px solid rgba(3, 56, 218, 0.16);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 24px 65px rgba(5, 5, 5, 0.2);
+  }
+
+  .chat-header {
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: var(--madlen-pink-soft);
+  }
+
+  .chat-header p {
+    color: var(--madlen-blue);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .chat-header h2 {
+    color: var(--madlen-blue);
+    font-size: 1.45rem;
+    font-weight: 600;
+  }
+
+  .chat-close {
+    border: 0;
+    background: transparent;
+    color: var(--madlen-blue);
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .chat-body {
+    max-height: 285px;
+    padding: 1rem;
+    overflow: auto;
+    background: var(--madlen-cream);
+  }
+
+  .chat-message {
+    max-width: 88%;
+    margin-bottom: 0.7rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 14px;
+  }
+
+  .chat-message p {
+    color: inherit;
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+
+  .chat-message--bot {
+    background: #fff;
+  }
+
+  .chat-message--user {
+    margin-left: auto;
+    background: var(--madlen-blue);
+    color: var(--madlen-pink);
+  }
+
+  .chat-quick-actions {
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .chat-quick-actions button {
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--madlen-blue);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--madlen-blue);
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+
+  .chat-form {
+    padding: 0 1rem 0.8rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+  }
+
+  .chat-form input {
+    min-width: 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(5, 5, 5, 0.22);
+    border-radius: 999px;
+  }
+
+  .chat-form button {
+    padding: 0.65rem 0.8rem;
+  }
+
+  .chat-note {
+    padding: 0 1rem 0.9rem;
+    color: #777;
+    font-size: 0.65rem;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 600px) {
+    .madlen-chat {
+      right: 14px;
+      bottom: 14px;
+    }
+
+    .chat-toggle span:last-child {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,225 @@
+---
+import type { Project } from "../data/projects";
+import { getAdjacentProjects } from "../data/projects";
+
+interface Props {
+  project: Project;
+  lang: "de" | "en";
+}
+
+const { project, lang } = Astro.props;
+const adjacent = getAdjacentProjects(project.slug);
+const previous = adjacent.previous!;
+const next = adjacent.next!;
+const prefix = lang === "en" ? "/en/portfolio" : "/portfolio";
+const backLabel = lang === "de" ? "Alle Projekte" : "All projects";
+const previousLabel = lang === "de" ? "Vorheriges Projekt" : "Previous project";
+const nextLabel = lang === "de" ? "Nächstes Projekt" : "Next project";
+---
+
+<article class="project-detail">
+  <header class="project-detail__header">
+    <a href={prefix} class="project-detail__back">← {backLabel}</a>
+    <h1>{project.title[lang]}</h1>
+    <p>{project.description[lang]}</p>
+  </header>
+
+  <div class="project-detail__cover" data-detail-reveal>
+    <img
+      src={project.cover}
+      alt={lang === "de"
+        ? `${project.title.de} – Titelbild`
+        : `${project.title.en} — cover image`}
+    />
+  </div>
+
+  <div class="project-detail__gallery">
+    {project.images.map((image, index) => (
+      <figure
+        class:list={["project-detail__image", `project-detail__image--${image.side}`]}
+        data-detail-reveal
+        style={`--detail-reveal-delay: ${(index % 2) * 80}ms;`}
+      >
+        <img
+          src={image.src}
+          alt={lang === "de" ? image.altDe : image.altEn}
+          loading="lazy"
+        />
+      </figure>
+    ))}
+  </div>
+
+  <nav class="project-detail__nav" aria-label={lang === "de" ? "Projekte" : "Projects"}>
+    <a href={`${prefix}/${previous.slug}`}>
+      <span>← {previousLabel}</span>
+      <strong>{previous.title[lang]}</strong>
+    </a>
+    <a href={`${prefix}/${next.slug}`}>
+      <span>{nextLabel} →</span>
+      <strong>{next.title[lang]}</strong>
+    </a>
+  </nav>
+</article>
+
+<script>
+  const detailRevealItems = document.querySelectorAll("[data-detail-reveal]");
+  const detailReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!detailReduceMotion && "IntersectionObserver" in window) {
+    document.documentElement.classList.add("project-detail-reveal-ready");
+
+    const detailRevealObserver = new IntersectionObserver(
+      (entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      {
+        threshold: 0.23,
+        rootMargin: "0px 0px -4% 0px",
+      },
+    );
+
+    detailRevealItems.forEach((item) => detailRevealObserver.observe(item));
+  }
+</script>
+
+<style>
+  .project-detail {
+    padding-top: var(--nav-height);
+    background: #fff;
+  }
+
+  .project-detail__header {
+    width: min(100% - 2.5rem, 1180px);
+    margin: 0 auto;
+    padding: clamp(3.5rem, 7vw, 7rem) 0;
+  }
+
+  .project-detail__back {
+    color: var(--madlen-blue);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .project-detail__header h1 {
+    margin: 1.3rem 0 1rem;
+    color: var(--madlen-blue);
+    font-size: clamp(4rem, 10vw, 9rem);
+    font-weight: 600;
+    letter-spacing: -0.07em;
+    line-height: 0.86;
+  }
+
+  .project-detail__header p {
+    max-width: 650px;
+    color: var(--madlen-black);
+    font-size: clamp(1rem, 1.3vw, 1.25rem);
+  }
+
+  .project-detail__cover {
+    width: min(100% - 2rem, 1560px);
+    margin: 0 auto clamp(3rem, 7vw, 8rem);
+  }
+
+  :global(html.project-detail-reveal-ready) [data-detail-reveal] {
+    filter: opacity(0);
+    transform: scale(0.5);
+    transform-origin: center top;
+    transition:
+      filter 800ms ease,
+      transform 800ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition-delay: var(--detail-reveal-delay, 0ms);
+    will-change: filter, transform;
+  }
+
+  :global(html.project-detail-reveal-ready) [data-detail-reveal].is-visible {
+    filter: opacity(1);
+    transform: scale(1);
+  }
+
+  .project-detail__cover img {
+    width: 100%;
+    max-height: 88vh;
+    object-fit: cover;
+  }
+
+  .project-detail__gallery {
+    width: min(100% - 2.5rem, 1400px);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: clamp(1.5rem, 4vw, 5rem);
+  }
+
+  .project-detail__image {
+    grid-column: span 8;
+    margin: 0;
+  }
+
+  .project-detail__image--right {
+    grid-column: 5 / span 8;
+  }
+
+  .project-detail__image img {
+    width: 100%;
+    max-height: 92vh;
+    object-fit: contain;
+  }
+
+  .project-detail__nav {
+    width: min(100% - 2.5rem, 1400px);
+    margin: clamp(5rem, 10vw, 10rem) auto 0;
+    padding: 2rem 0 3rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    border-top: 1px solid rgba(5, 5, 5, 0.2);
+  }
+
+  .project-detail__nav a:last-child {
+    text-align: right;
+  }
+
+  .project-detail__nav span,
+  .project-detail__nav strong {
+    display: block;
+  }
+
+  .project-detail__nav span {
+    color: var(--madlen-blue);
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .project-detail__nav strong {
+    margin-top: 0.3rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 2.2vw, 2.2rem);
+    font-weight: 500;
+  }
+
+  @media (max-width: 700px) {
+    .project-detail__gallery {
+      display: block;
+    }
+
+    .project-detail__image {
+      margin-bottom: 1.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-detail-reveal] {
+      filter: none !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+</style>

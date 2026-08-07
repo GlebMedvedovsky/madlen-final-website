@@ -1,0 +1,594 @@
+---
+import {
+  getLanguageFromUrl,
+  useTranslations,
+} from "../i18n/utils";
+
+const lang = getLanguageFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const isGerman = lang === "de";
+
+const titlePrefix = isGerman ? "Über" : "About";
+const titleRest = isGerman ? "ich" : "e";
+
+const portfolioPath = isGerman
+  ? "/portfolio"
+  : "/en/portfolio";
+
+const contactPath = isGerman
+  ? "/kontakt"
+  : "/en/contact";
+
+const introTitle = isGerman
+  ? "Hallo, ich bin Madlen"
+  : "Hello, I’m Madlen";
+
+const clientsTitle = isGerman
+  ? "Kunden, mit denen ich gearbeitet habe:"
+  : "Clients I’ve worked with:";
+
+const closingText = isGerman
+  ? "Lass uns etwas Unvergessliches schaffen."
+  : "Let’s create something worth remembering.";
+
+const clients = [
+  {
+    src: "/images/clients/Breuninger-Logo.svg",
+    alt: "Breuninger",
+  },
+  {
+    src: "/images/clients/Check24_Logo.svg",
+    alt: "CHECK24",
+  },
+  {
+    src: "/images/clients/LEGO_logo.svg",
+    alt: "LEGO",
+  },
+  {
+    src: "/images/clients/Lidl-Logo.svg",
+    alt: "Lidl",
+  },
+  {
+    src: "/images/clients/mercedes-benz-Logo.svg",
+    alt: "Mercedes-Benz",
+  },
+  {
+    src: "/images/clients/Logo_REWE.svg",
+    alt: "REWE",
+  },
+  {
+    src: "/images/clients/BaWue_Logo_Standard_rgb_pos.svg",
+    alt: "Baden-Württemberg",
+  },
+  {
+    src: "/images/clients/Personio_logo.svg",
+    alt: "Personio",
+  },
+  {
+    src: "/images/clients/Popbuero_buerovier_Logo2-01.webp",
+    alt: "Popbüro",
+  },
+];
+---
+
+<section class="about-section">
+  <div class="about-main">
+    <div class="about-content">
+      <h1 class="about-title">
+        <span>{titlePrefix}</span>
+
+        <span
+  class:list={[
+    "about-title-word",
+    isGerman ? "about-title-word--de" : "about-title-word--en",
+  ]}
+>
+          <img
+            src="/images/brand/M_buchstabe.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>{titleRest}</span>
+        </span>
+      </h1>
+
+      <h2 class="about-intro-title">
+        {introTitle}
+      </h2>
+
+      <div class="about-copy">
+        {
+          t.about.text.slice(0, -1).map((paragraph) => (
+            <p>{paragraph}</p>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="about-visual">
+      <img
+        class="about-zigzag"
+        src="/images/brand/Linial_unter_madlen-coffee.png"
+        alt=""
+        aria-hidden="true"
+      />
+
+      <div class="about-photo-shape">
+        <img
+          src="/images/about/madlen-coffee.jpg"
+          alt={isGerman
+            ? "Madlen mit einer Tasse Kaffee"
+            : "Madlen holding a cup of coffee"}
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="about-closing">
+    <div class="about-closing-copy">
+      <p>{t.about.text[t.about.text.length - 1]}</p>
+
+      <div class="cloud-action">
+        <img
+          src="/images/about/decorations/about-cloud.png"
+          alt=""
+          aria-hidden="true"
+        />
+
+        <span>{closingText}</span>
+      </div>
+    </div>
+
+    <div class="about-actions">
+      <a href={portfolioPath} class="about-button">
+        {t.home.viewPortfolio}
+        <span aria-hidden="true">›</span>
+      </a>
+
+      <a href={contactPath} class="about-button">
+        {t.home.sendInquiry}
+        <span aria-hidden="true">›</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="clients-section">
+    <h2>{clientsTitle}</h2>
+
+    <div class="clients-marquee">
+      <div class="clients-track">
+        <div class="clients-group">
+          {
+            clients.map((client) => (
+              <div class="client-logo">
+                <img
+                  src={client.src}
+                  alt={client.alt}
+                  loading="lazy"
+                />
+              </div>
+            ))
+          }
+        </div>
+
+        <div class="clients-group" aria-hidden="true">
+          {
+            clients.map((client) => (
+              <div class="client-logo">
+                <img
+                  src={client.src}
+                  alt=""
+                  loading="lazy"
+                />
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about-section {
+    --about-blue: #0338da;
+    --about-background: #fffcf7;
+
+    min-height: calc(100vh - var(--nav-height));
+    padding-top: calc(var(--nav-height) + 2.5rem);
+    background: var(--about-background);
+    overflow: hidden;
+  }
+
+  .about-main {
+    width: min(100%, 1560px);
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 4.5rem);
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+    gap: clamp(3rem, 6vw, 7rem);
+    align-items: start;
+  }
+
+  .about-content {
+    position: relative;
+    z-index: 3;
+  }
+
+  .about-title {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.14em;
+    margin: 0 0 0.8rem;
+    color: var(--about-blue);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(4.2rem, 7vw, 7.5rem);
+    font-weight: 700;
+    letter-spacing: -0.08em;
+    line-height: 0.85;
+  }
+
+  .about-title-word {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 0;
+  }
+
+  .about-title-word img {
+    display: block;
+    width: 2.2em;
+    height: 2.2em;
+    object-fit: contain;
+    margin-left: -0.25em;
+  }
+
+  .about-title-word--de img {
+  margin-right: -0.44em;
+  transform: translateY(0.55em);
+}
+
+.about-title-word--en img {
+  margin-right: -0.46em;
+  transform: translateY(0.65em);
+}
+
+  .about-title-word span {
+    margin-left: -0.08em;
+  }
+
+  .about-intro-title {
+    margin: 0 0 1rem;
+    color: var(--about-blue);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(1.25rem, 1.8vw, 1.7rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .about-copy {
+    max-width: 670px;
+  }
+
+  .about-copy p {
+    margin: 0 0 0.85rem;
+    color: #111111;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(0.88rem, 0.95vw, 1rem);
+    font-weight: 500;
+    line-height: 1.42;
+  }
+
+  .about-visual {
+    position: relative;
+    min-height: 570px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .about-zigzag {
+    position: absolute;
+    z-index: 1;
+    width: min(1250px, 80vw);
+    max-width: none;
+    top: 5.5rem;
+    left: 0%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .about-photo-shape {
+    position: relative;
+    z-index: 2;
+    width: min(390px, 50vw);
+    aspect-ratio: 0.82 / 1;
+    overflow: hidden;
+    border-radius:
+      45% 55% 48% 52% /
+      35% 42% 58% 65%;
+  }
+
+  .about-photo-shape img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .about-closing {
+    width: min(100%, 1560px);
+    margin: 1rem auto 0;
+    padding: 1.2rem clamp(1.25rem, 4vw, 4.5rem);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 3rem;
+    align-items: end;
+    border-top: 1px solid rgba(17, 17, 17, 0.08);
+  }
+
+  .about-closing-copy {
+    max-width: 720px;
+  }
+
+  .about-closing-copy > p {
+    margin: 0 0 0.8rem;
+    color: #111111;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(0.88rem, 0.95vw, 1rem);
+    font-weight: 500;
+    line-height: 1.42;
+  }
+
+  .cloud-action {
+    position: relative;
+    width: min(460px, 90vw);
+    min-height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cloud-action img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+  }
+
+  .cloud-action span {
+    position: relative;
+    z-index: 2;
+    max-width: 75%;
+    color: var(--madlen-pink);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.25;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .about-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 1.25rem;
+    padding-bottom: 2.5rem;
+  }
+
+  .about-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    min-height: 42px;
+    padding: 0.75rem 1.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--about-blue);
+    background: var(--about-blue);
+    color: var(--madlen-pink);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition:
+      transform 180ms ease,
+      background-color 180ms ease,
+      color 180ms ease;
+  }
+
+  .about-button:hover {
+    background: var(--madlen-pink);
+    color: var(--about-blue);
+    transform: translateY(-1px);
+  }
+
+  .clients-section {
+    padding: 1.25rem 0 2rem;
+    background: var(--about-background);
+  }
+
+  .clients-section h2 {
+    width: min(100%, 1560px);
+    margin: 0 auto 1rem;
+    padding-inline: clamp(1.25rem, 4vw, 4.5rem);
+    color: #111111;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+  }
+
+  .clients-marquee {
+    width: 100%;
+    overflow: hidden;
+    mask-image:
+      linear-gradient(
+        to right,
+        transparent,
+        black 7%,
+        black 93%,
+        transparent
+      );
+  }
+
+  .clients-track {
+    display: flex;
+    width: max-content;
+    animation: clients-scroll 30s linear infinite;
+  }
+
+  .clients-marquee:hover .clients-track {
+    animation-play-state: paused;
+  }
+
+  .clients-group {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: clamp(3rem, 6vw, 7rem);
+    padding-right: clamp(3rem, 6vw, 7rem);
+  }
+
+  .client-logo {
+    width: clamp(110px, 10vw, 175px);
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .client-logo img {
+    display: block;
+    max-width: 100%;
+    max-height: 58px;
+    object-fit: contain;
+    filter: grayscale(1);
+    opacity: 0.72;
+    transition:
+      filter 180ms ease,
+      opacity 180ms ease;
+  }
+
+  .client-logo:hover img {
+    filter: grayscale(0);
+    opacity: 1;
+  }
+
+  @keyframes clients-scroll {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .about-main {
+      grid-template-columns: 1fr;
+    }
+
+    .about-visual {
+      min-height: 520px;
+    }
+
+    .about-photo-shape {
+      width: min(390px, 70vw);
+    }
+
+    .about-zigzag {
+      width: min(820px, 115vw);
+    }
+
+    .about-closing {
+      grid-template-columns: 1fr;
+    }
+
+    .about-actions {
+      justify-content: flex-start;
+      padding-bottom: 0;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .about-section {
+      padding-top: calc(var(--nav-height) + 2rem);
+    }
+
+    .about-title {
+      flex-wrap: wrap;
+      font-size: clamp(3.8rem, 19vw, 5.2rem);
+    }
+
+    .about-title-word img {
+  margin-left: -0.2em;
+}
+
+.about-title-word--de img {
+  margin-right: -0.44em;
+  transform: translateY(0.55em);
+}
+
+.about-title-word--en img {
+  margin-right: -0.46em;
+  transform: translateY(0.65em);
+}
+
+    .about-copy p,
+    .about-closing-copy > p {
+      font-size: 0.95rem;
+    }
+
+    .about-visual {
+      min-height: 430px;
+    }
+
+    .about-photo-shape {
+      width: min(330px, 82vw);
+    }
+
+    .about-zigzag {
+      top: 2rem;
+      width: 760px;
+    }
+
+    .about-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .about-button {
+      width: 100%;
+    }
+
+    .cloud-action {
+      width: 100%;
+    }
+
+    .clients-section h2 {
+      font-size: 0.82rem;
+    }
+
+    .client-logo {
+      width: 120px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .clients-track {
+      animation: none;
+    }
+  }
+</style>

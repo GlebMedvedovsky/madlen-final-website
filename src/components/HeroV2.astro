@@ -1,0 +1,296 @@
+---
+interface Props {
+  eyebrow: string;
+  name: string;
+  intro: string;
+  description: string;
+  viewPortfolio: string;
+  sendInquiry: string;
+  moreAboutMe: string;
+}
+
+const {
+  eyebrow,
+  intro,
+  description,
+  viewPortfolio,
+  sendInquiry,
+  moreAboutMe,
+} = Astro.props;
+
+const isEnglish = Astro.url.pathname.startsWith("/en");
+const aboutPath = isEnglish ? "/en/about" : "/ueber-mich";
+const portfolioPath = isEnglish ? "/en/portfolio" : "/portfolio";
+const contactPath = isEnglish ? "/en/contact" : "/kontakt";
+---
+
+<section class="hero-v2">
+  <div class="hero-v2__inner">
+    <div class="hero-v2__content">
+      <h1 class="hero-v2__title">
+        <span class="hero-v2__name-prefix">{eyebrow}</span>
+        <span class="hero-v2__name-line">
+          <img
+            class="hero-v2__name-m"
+            src="/images/brand/M_buchstabe.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <span class="hero-v2__name-rest">adlen</span>
+        </span>
+      </h1>
+
+      <p class="hero-v2__intro">{intro}</p>
+      <p class="hero-v2__description">{description}</p>
+
+      <div class="hero-v2__actions">
+        <a href={aboutPath} class="hero-v2__button">
+          {moreAboutMe}<span aria-hidden="true">›</span>
+        </a>
+        <a href={portfolioPath} class="hero-v2__button">
+          {viewPortfolio}<span aria-hidden="true">›</span>
+        </a>
+        <a href={contactPath} class="hero-v2__button">
+          {sendInquiry}<span aria-hidden="true">›</span>
+        </a>
+      </div>
+    </div>
+
+    <img
+      class="hero-v2__line"
+      src="/images/brand/Linial_unter_madlen-coffee.png"
+      alt=""
+      aria-hidden="true"
+    />
+
+    <div class="hero-v2__visual">
+      <div class="hero-v2__photo-shape">
+        <img
+          src="/images/about/madlen-coffee.jpg"
+          alt={isEnglish
+            ? "Madlen holding a cup of coffee"
+            : "Madlen mit einer Tasse Kaffee"}
+        />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-v2 {
+    min-height: calc(100vh - var(--nav-height));
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: var(--madlen-cream);
+    color: var(--madlen-black);
+  }
+
+  .hero-v2__inner {
+    position: relative;
+    width: min(100%, 1560px);
+    margin: 0 auto;
+    padding: 5rem clamp(2rem, 4vw, 4.5rem);
+    display: grid;
+    grid-template-columns: minmax(420px, 0.95fr) minmax(520px, 1.05fr);
+    gap: clamp(2rem, 4vw, 5rem);
+    align-items: center;
+  }
+
+  .hero-v2__content {
+    position: relative;
+    z-index: 3;
+  }
+
+  .hero-v2__title {
+    margin: 0 0 2rem;
+    color: var(--madlen-blue);
+  }
+
+  .hero-v2__name-prefix {
+    display: block;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(3.2rem, 4.6vw, 6.3rem);
+    font-weight: 700;
+    letter-spacing: -0.065em;
+    line-height: 0.9;
+  }
+
+  .hero-v2__name-line {
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    margin-top: -0.05em;
+  }
+
+  .hero-v2__name-m {
+  width: 15.3rem;
+  height: auto;
+  flex: 0 0 auto;
+  margin-right: -3.5rem;
+  transform: translateY(0.45rem);
+}
+
+  .hero-v2__name-rest {
+    margin-left: -0.06em;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(3.8rem, 8vw, 8.5rem);
+    font-weight: 700;
+    letter-spacing: -0.065em;
+    line-height: 0.82;
+  }
+
+  .hero-v2__intro,
+  .hero-v2__description {
+    max-width: 410px;
+    color: var(--madlen-black);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(0.95rem, 1.05vw, 1.15rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.35;
+    text-transform: uppercase;
+  }
+
+  .hero-v2__intro {
+    margin: 1rem 0 1.5rem;
+  }
+
+  .hero-v2__description {
+    margin: 1rem 0 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--madlen-black);
+  }
+
+  .hero-v2__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .hero-v2__button {
+    min-height: 42px;
+    padding: 0.75rem 1.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    border: 1px solid var(--madlen-blue);
+    border-radius: 999px;
+    background: var(--madlen-blue);
+    color: var(--madlen-pink);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+
+  .hero-v2__button:hover,
+  .hero-v2__button:focus-visible {
+    background: var(--madlen-pink);
+    color: var(--madlen-blue);
+    transform: translateY(-2px);
+  }
+
+  .hero-v2__button span {
+    font-size: 1.3rem;
+    line-height: 0;
+  }
+
+  .hero-v2__visual {
+    position: relative;
+    z-index: 2;
+    min-height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-v2__line {
+    position: absolute;
+    z-index: 1;
+    left: 60%;
+    bottom: -3rem;
+    width: min(950px, 60vw);
+    max-width: none;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .hero-v2__photo-shape {
+    position: relative;
+    width: min(400px, 35vw);
+    aspect-ratio: 0.78 / 1;
+    overflow: hidden;
+    border-radius: 45% 55% 48% 52% / 35% 42% 58% 65%;
+    transform: translate(60px, -30px);
+  }
+
+  .hero-v2__photo-shape img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  @media (max-width: 900px) {
+    .hero-v2 {
+      min-height: auto;
+    }
+
+    .hero-v2__inner {
+      width: 100%;
+      padding: 5.2rem 1.5rem 4rem;
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+
+    .hero-v2__title {
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-v2__name-prefix {
+      font-size: clamp(3rem, 15vw, 5.2rem);
+    }
+
+    .hero-v2__name-m {
+      width: 8rem;
+      margin-right: -1.8rem;
+      transform: translateY(0.25rem);
+    }
+
+    .hero-v2__name-rest {
+      font-size: clamp(3.8rem, 18vw, 6.8rem);
+    }
+
+    .hero-v2__intro,
+    .hero-v2__description {
+      max-width: 100%;
+    }
+
+    .hero-v2__actions {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .hero-v2__visual {
+      min-height: 420px;
+    }
+
+    .hero-v2__line {
+      left: 25%;
+      bottom: 1.5rem;
+      width: 170vw;
+    }
+
+    .hero-v2__photo-shape {
+      width: min(330px, 78vw);
+      transform: translate(12vw, -25px);
+    }
+  }
+</style>

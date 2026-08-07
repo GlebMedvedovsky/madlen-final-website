@@ -1,0 +1,537 @@
+---
+import {
+  getLanguageFromUrl,
+  useTranslations,
+} from "../i18n/utils";
+
+const lang = getLanguageFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const content =
+  lang === "de"
+    ? {
+        title: "kontakt",
+        intro:
+          "Schreib mir gerne eine Nachricht. Ich melde mich zeitnah. Du erreichst mich unter contact@madlenmedvedovskyy.de oder über das Kontaktformular.",
+        name: "Name",
+        namePlaceholder: "Ihr Name",
+        email: "E-Mail",
+        emailPlaceholder: "ihre@email.de",
+        phone: "Telefonnummer",
+        optional: "optional",
+        requestType: "Art der Anfrage",
+        select: "Bitte wählen",
+        date: "Wunschtermin(e)",
+        datePlaceholder: "z. B. 05.–07.09.2026 oder mehrere Termine",
+        location: "Ort der Aufnahme",
+        locationPlaceholder: "z. B. Ludwigsburg, Stuttgart",
+        message: "Nachricht",
+        messagePlaceholder: "Erzählen Sie mir kurz von Ihrem Projekt …",
+        privacyStart: "Ich habe die",
+        privacyLink: "Datenschutzerklärung",
+        privacyEnd:
+          "gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Anfrage einverstanden.",
+        required: "* Pflichtfelder",
+        submit: "Anfrage senden",
+        subject: "Neue Anfrage über madlenmedvedovskyy.de",
+        options: [
+          "Portraitshooting",
+          "Paare & Familien",
+          "Hochzeit",
+          "Event",
+          "Editorial & Commercial",
+          "Videografie",
+          "Videoschnitt",
+          "Sonstiges",
+        ],
+      }
+    : {
+        title: "contact",
+        intro:
+          "Feel free to send me a message. I will get back to you soon. Reach me at contact@madlenmedvedovskyy.de or use the contact form.",
+        name: "Name",
+        namePlaceholder: "Your name",
+        email: "Email",
+        emailPlaceholder: "your@email.com",
+        phone: "Phone number",
+        optional: "optional",
+        requestType: "Type of inquiry",
+        select: "Please select",
+        date: "Preferred date(s)",
+        datePlaceholder: "e.g. 05–07 September 2026",
+        location: "Location",
+        locationPlaceholder: "e.g. Stuttgart, Vancouver",
+        message: "Message",
+        messagePlaceholder: "Tell me briefly about your project …",
+        privacyStart: "I have read the",
+        privacyLink: "Privacy Policy",
+        privacyEnd:
+          "and consent to the processing of my information for the purpose of responding to my inquiry.",
+        required: "* Required fields",
+        submit: "Send inquiry",
+        subject: "New inquiry via madlenmedvedovskyy.de",
+        options: [
+          "Portrait photography",
+          "Couples & families",
+          "Wedding",
+          "Event",
+          "Editorial & Commercial",
+          "Videography",
+          "Video editing",
+          "Other",
+        ],
+      };
+---
+
+<section class="contact-section" id="contact">
+  <img
+    class="contact-zigzag"
+    src="/images/brand/Linial_unter_madlen-coffee.png"
+    alt=""
+    aria-hidden="true"
+  />
+
+  <img
+    class="contact-character"
+    src="/images/brand/Think_bigger-cutout.png"
+    alt=""
+    aria-hidden="true"
+  />
+
+  <div class="contact-container">
+    <div class="contact-intro">
+      <h1>{content.title}</h1>
+      <p>{content.intro}</p>
+    </div>
+
+    <form
+      class="contact-form"
+      method="POST"
+      action="https://formspree.io/f/DEINE_FORM_ID"
+    >
+      <input
+        type="hidden"
+        name="_subject"
+        value={content.subject}
+      />
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="contact-name">
+            {content.name} *
+          </label>
+
+          <input
+            id="contact-name"
+            name="name"
+            type="text"
+            placeholder={content.namePlaceholder}
+            autocomplete="name"
+            required
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="contact-email">
+            {content.email} *
+          </label>
+
+          <input
+            id="contact-email"
+            name="email"
+            type="email"
+            placeholder={content.emailPlaceholder}
+            autocomplete="email"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="contact-phone">
+            {content.phone}
+            <span> ({content.optional})</span>
+          </label>
+
+          <input
+            id="contact-phone"
+            name="phone"
+            type="tel"
+            placeholder="+49 …"
+            autocomplete="tel"
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="contact-request">
+            {content.requestType} *
+          </label>
+
+          <select
+            id="contact-request"
+            name="request_type"
+            required
+          >
+            <option value="">
+              {content.select}
+            </option>
+
+            {
+              content.options.map((option) => (
+                <option value={option}>{option}</option>
+              ))
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="contact-date">
+            {content.date} *
+          </label>
+
+          <input
+            id="contact-date"
+            name="preferred_date"
+            type="text"
+            placeholder={content.datePlaceholder}
+            required
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="contact-location">
+            {content.location} *
+          </label>
+
+          <input
+            id="contact-location"
+            name="location"
+            type="text"
+            placeholder={content.locationPlaceholder}
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="contact-message">
+          {content.message} *
+        </label>
+
+        <textarea
+          id="contact-message"
+          name="message"
+          rows="6"
+          placeholder={content.messagePlaceholder}
+          required
+        ></textarea>
+      </div>
+
+      <label class="privacy-check">
+        <input type="checkbox" name="privacy" required />
+
+        <span>
+          {content.privacyStart}
+          <a
+            href={lang === "de" ? "/datenschutz" : "/en/privacy"}
+            target="_blank"
+            rel="noopener"
+          >
+            {content.privacyLink}
+          </a>
+          {content.privacyEnd}
+        </span>
+      </label>
+
+      <p class="required-note">{content.required}</p>
+
+      <button type="submit" class="contact-submit">
+        {content.submit}
+        <span aria-hidden="true">›</span>
+      </button>
+    </form>
+  </div>
+</section>
+
+<style>
+  .contact-section {
+  position: relative;
+  z-index: 2;
+  min-height: calc(100vh - var(--nav-height));
+  padding-top: calc(var(--nav-height) + 2.5rem);
+  padding-bottom: 0;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.contact-container {
+  position: relative;
+  z-index: 3;
+  width: min(100%, 1480px);
+  min-height: 700px;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 4.5rem);
+  box-sizing: border-box;
+  display: grid;
+  /* 1fr слева, auto справа pushed вправо через justify-content */
+  grid-template-columns: 1fr auto; 
+  gap: clamp(2rem, 5vw, 6rem);
+  align-items: start;
+}
+
+  .contact-intro {
+    padding-top: 1rem;
+  }
+
+  .contact-intro h1 {
+    margin: 0 0 1rem;
+    color: #0338da;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(4.2rem, 6.5vw, 7rem);
+    font-weight: 700;
+    letter-spacing: -0.085em;
+    line-height: 0.70;
+    text-transform: lowercase;
+  }
+
+  .contact-intro p {
+  max-width: 620px;
+  margin: 0;
+  color: #050505;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(1rem, 1.2vw, 1.28rem);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+  .contact-form {
+  position: relative;
+  z-index: 4;
+  width: 500px;
+  max-width: 500px; /* <--- Делаем форму узкой и аккуратной, как на макете */
+  padding: clamp(0.5rem, 2.1vw, 2.2rem);
+  border: 1px solid rgba(17, 17, 17, 0.09);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(20, 20, 20, 0.06);
+  margin-left: auto;
+}
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+
+  .form-field {
+    margin-bottom: 1rem;
+  }
+
+  .form-field label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #222222;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .form-field label span {
+    color: #777777;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    width: 100%;
+    padding: 0.75rem 0.8rem;
+    border: 1px solid #d8d1ca;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #222222;
+    font: inherit;
+  }
+
+  .form-field textarea {
+    min-height: 130px;
+    resize: vertical;
+  }
+
+  .form-field input:focus,
+  .form-field select:focus,
+  .form-field textarea:focus {
+    outline: none;
+    border-color: #0338da;
+    box-shadow: 0 0 0 3px rgba(3, 56, 218, 0.1);
+  }
+
+  .privacy-check {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem;
+    align-items: start;
+    color: #343434;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.72rem;
+    line-height: 1.45;
+  }
+
+  .privacy-check input {
+    margin-top: 0.2rem;
+    accent-color: #0338da;
+  }
+
+  .privacy-check a {
+    margin-inline: 0.2rem;
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  .required-note {
+    margin: 0.8rem 0;
+    color: #777777;
+    font-size: 0.7rem;
+  }
+
+  .contact-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: #0338da;
+    color: var(--madlen-pink);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+
+  .contact-submit:hover,
+  .contact-submit:focus-visible {
+    background: var(--madlen-pink);
+    color: var(--madlen-blue);
+    transform: translateY(-1px);
+  }
+
+.contact-zigzag {
+  position: absolute;
+  z-index: 2;
+  /* Задаем широкую ширину в процентах или пикселях */
+  width: max(1400px, 85vw); 
+  /* Привязываем к ЛЕВОМУ краю и вытягиваем в центр страницы */
+  left: 7%; 
+    bottom: -8rem;
+  max-width: none;
+  height: auto;
+  pointer-events: none;
+}
+
+  .contact-character {
+    position: absolute;
+    z-index: 2;
+    left: max(1rem, calc((100vw - 1450px) / 2));
+    bottom: 0;
+    width: clamp(390px, 34vw, 590px);
+    height: auto;
+    pointer-events: none;
+
+  }
+
+  @media (max-width: 1100px) {
+  .contact-container {
+    grid-template-columns: minmax(0, 0.8fr) minmax(400px, 1.2fr);
+    gap: 2.5rem;
+  }
+
+  .contact-character {
+    width: clamp(330px, 38vw, 470px);
+  }
+}
+
+@media (max-width: 900px) {
+  /* Вернули селектор .contact-section */
+  .contact-section {
+    padding-bottom: 5rem !important; 
+    overflow: hidden;
+  }
+
+  .contact-container {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .contact-intro h1 {
+    font-size: clamp(4.5rem, 18vw, 7rem);
+  }
+
+  .contact-form {
+    width: 82%;
+    max-width: 420px;
+    margin: 0 auto 3rem auto;
+  }
+
+  .contact-character {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    display: block;
+    width: min(520px, 100%);
+    margin: 1rem auto 0;
+    transform: translateY(2px);
+  }
+
+  .contact-zigzag {
+    position: absolute;
+    z-index: 1;
+    width: 920px;
+    left: -420px;
+    right: auto;
+    bottom: -3rem;
+    max-width: none;
+    height: auto;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .contact-container {
+    padding-inline: 1rem;
+  }
+
+  .contact-intro h1 {
+    font-size: clamp(4rem, 21vw, 5.5rem);
+  }
+
+  .contact-intro p {
+    font-size: 1rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .contact-form {
+    padding: 1.25rem;
+  }
+
+  .contact-submit {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>

@@ -1,0 +1,262 @@
+---
+interface Props {
+  backgroundImage: string;
+  eyebrow?: string;
+  name?: string;
+  intro?: string;
+  description?: string;
+  viewPortfolio?: string;
+  sendInquiry?: string;
+  moreAboutMe?: string;
+  showCta?: boolean;
+
+  title?: string;
+  subtitle?: string;
+  primaryCta?: string;
+  secondaryCta?: string;
+}
+
+const {
+  backgroundImage,
+  eyebrow = "hello, I’m",
+  name = "Madlen",
+  intro = "Based between Vancouver, Canada and Stuttgart, Germany. Available worldwide.",
+  description = "Cinematic and editorial photography shaped by real moments, colour and individual character.",
+  viewPortfolio = "View Portfolio",
+  sendInquiry = "Send inquiry",
+  moreAboutMe = "More About Me",
+  showCta = true,
+
+  title = name,
+  subtitle = description,
+  primaryCta = sendInquiry,
+  secondaryCta = viewPortfolio,
+} = Astro.props;
+---
+
+<section class="hero" aria-label="Startbereich">
+  <div class="hero-bg" role="img" aria-label="Großes schwarz-weißes Stimmungsfoto als Hintergrund">
+    {backgroundImage
+      ? <img src={backgroundImage} alt="" class="hero-img" loading="eager" />
+      : <div class="hero-placeholder" aria-hidden="true">
+          <div class="hero-placeholder-inner">
+            <span>Hero Photo</span>
+            <span class="hero-placeholder-hint">Platzhalter – hier später das Hauptfoto einfügen</span>
+          </div>
+        </div>
+    }
+    <div class="hero-overlay" aria-hidden="true"></div>
+  </div>
+
+  <div class="hero-content container">
+    <div class="hero-text">
+     <h1>{eyebrow} {name}</h1>
+     <p>{description}</p>
+
+      {showCta && (
+        <div class="hero-actions">
+          <a href="/portfolio" class="btn hero-btn">Portfolio ansehen</a>
+          <a href="/kontakt#kontakt" class="btn hero-btn">Anfrage senden</a>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <div class="hero-scroll-hint" aria-hidden="true">
+    <span class="scroll-line"></span>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    margin-top: 0;
+    padding-block: var(--nav-height) var(--space-2xl);
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    filter: grayscale(100%);
+  }
+
+  .hero-placeholder {
+    width: 100%;
+    height: 100%;
+    background:
+      radial-gradient(circle at 68% 42%, rgba(255,255,255,0.14) 0%, transparent 34%),
+      linear-gradient(150deg, #161616 0%, #343434 45%, #101010 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-placeholder-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    color: rgba(255,255,255,0.16);
+    font-size: 0.8rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .hero-placeholder-hint {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.08);
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(0,0,0,0.20) 0%,
+        rgba(0,0,0,0.06) 42%,
+        rgba(255,255,255,0.04) 100%
+      ),
+      linear-gradient(
+        to top,
+        rgba(0,0,0,0.28) 0%,
+        rgba(0,0,0,0.06) 48%,
+        rgba(255,255,255,0.02) 100%
+      );
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .hero-text {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: clamp(1rem, 2vw, 2rem);
+    text-align: center;
+    color: var(--color-bronze);
+    transform: translateX(clamp(30px, 4vw, 90px));
+  }
+
+  .hero-title {
+    font-size: clamp(2.2rem, 5.6vw, 5rem);
+    font-weight: 400;
+    color: var(--color-bronze);
+    letter-spacing: 0.075em;
+    text-transform: uppercase;
+    line-height: 1.02;
+    margin: 0;
+    text-shadow:
+      0 1px 1px rgba(255,255,255,0.62),
+      0 2px 8px rgba(255,255,255,0.24),
+      0 9px 32px rgba(0,0,0,0.66);
+  }
+
+  .hero-subtitle {
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2.25vw, 1.85rem);
+    font-weight: 400;
+    font-style: italic;
+    color: var(--color-bronze);
+    max-width: none;
+    margin: 0.95rem auto 0;
+    line-height: 1.2;
+    text-shadow:
+      0 1px 1px rgba(255,255,255,0.58),
+      0 2px 7px rgba(255,255,255,0.22),
+      0 8px 28px rgba(0,0,0,0.64);
+  }
+
+  .hero-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+  }
+
+  .hero-btn {
+    background-color: var(--color-bronze);
+    border: 1px solid var(--color-bronze);
+    color: var(--color-white);
+    border-radius: 7px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+  }
+
+  .hero-btn:hover {
+    background-color: #74461F;
+    border-color: #74461F;
+    color: var(--color-white);
+  }
+
+  .hero-scroll-hint {
+    position: absolute;
+    bottom: var(--space-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+
+  .scroll-line {
+    display: block;
+    width: 1px;
+    height: 46px;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.48));
+    margin: 0 auto;
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.35; transform: scaleY(1); }
+    50%      { opacity: 1;    transform: scaleY(1.08); }
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      align-items: center;
+      padding-block: calc(var(--nav-height) + var(--space-xl)) var(--space-xl);
+    }
+
+    .hero-text {
+      margin-inline: auto;
+      max-width: 92%;
+      transform: none;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 8vw, 3.2rem);
+      letter-spacing: 0.055em;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.15rem, 5vw, 1.55rem);
+    }
+  }
+
+  @media (max-width: 520px) {
+    .hero-actions {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-actions .btn {
+      width: 100%;
+      max-width: 280px;
+      text-align: center;
+    }
+  }
+</style>

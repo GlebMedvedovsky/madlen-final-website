@@ -1,0 +1,57 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+import ChatBot from "../components/ChatBot.astro";
+import CookieBanner from "../components/CookieBanner.astro";
+import BackToTop from "../components/BackToTop.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  lang?: string;
+}
+
+const {
+  title,
+  description = 'Cinematic and editorial photography by Madlen Medvedovskyy.',
+  ogImage = '/og-image.jpg',
+  lang = 'de',
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content={lang === "en" ? "en_US" : "de_DE"} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/images/brand/M_logo.png" />
+
+    <title>{title}</title>
+  </head>
+  <body>
+    <Header />
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
+    <BackToTop />
+    <ChatBot />
+    <CookieBanner />
+  </body>
+</html>

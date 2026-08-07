@@ -1,0 +1,24 @@
+---
+import Layout from "../layouts/Layout.astro";
+import HeroV2 from "../components/HeroV2.astro";
+import { getLanguageFromUrl, useTranslations } from "../i18n/utils";
+
+const lang = getLanguageFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+
+<Layout
+  lang={t.lang}
+  title="Madlen Medvedovskyy – Cinematic & Editorial Photography"
+  description={t.home.description}
+>
+  <HeroV2
+  eyebrow={t.home.eyebrow}
+  name={t.home.name}
+  intro={t.home.intro}
+  description={t.home.description}
+  viewPortfolio={t.home.viewPortfolio}
+  sendInquiry={t.home.sendInquiry}
+  moreAboutMe={t.home.moreAboutMe}
+/>
+</Layout>

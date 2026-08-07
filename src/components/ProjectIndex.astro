@@ -1,0 +1,282 @@
+---
+import { projects } from "../data/projects";
+import ProjectCard from "./ProjectCard.astro";
+
+interface Props {
+  lang: "de" | "en";
+}
+
+const { lang } = Astro.props;
+const copy =
+  lang === "de"
+    ? {
+        label: "Ausgewählte Arbeiten",
+        title: "portfolio",
+        intro:
+          "Filmische, editoriale und dokumentarische Bildwelten – von Hochzeiten und Events bis zu Mode, Marken und Landschaft.",
+      }
+    : {
+        label: "Selected work",
+        title: "portfolio",
+        intro:
+          "Cinematic, editorial and documentary visual stories — from weddings and events to fashion, brands and landscape.",
+      };
+
+const filters =
+  lang === "de"
+    ? [
+        ["all", "Alle"],
+        ["editorial", "Editorial"],
+        ["events", "Events"],
+        ["weddings", "Hochzeiten"],
+        ["landscape", "Landschaft"],
+      ]
+    : [
+        ["all", "All"],
+        ["editorial", "Editorial"],
+        ["events", "Events"],
+        ["weddings", "Weddings"],
+        ["landscape", "Landscape"],
+      ];
+---
+
+<section class="portfolio-index">
+  <header class="portfolio-index__header">
+    <span>{copy.label}</span>
+    <h1>{copy.title}</h1>
+    <p>{copy.intro}</p>
+  </header>
+
+  <div class="portfolio-index__filters" aria-label={lang === "de" ? "Projekte filtern" : "Filter projects"}>
+    {filters.map(([value, label], index) => (
+      <button
+        type="button"
+        class:list={["portfolio-filter", { active: index === 0 }]}
+        data-project-filter={value}
+        aria-pressed={index === 0 ? "true" : "false"}
+      >
+        {label}
+      </button>
+    ))}
+  </div>
+
+  <div class="portfolio-index__grid">
+    {projects.map((project, index) => (
+      <div
+        class:list={["portfolio-index__item", { "portfolio-index__item--wide": index % 5 === 0 }]}
+        data-project-category={project.category}
+      >
+        <ProjectCard project={project} lang={lang} index={index} />
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  const filterButtons = document.querySelectorAll("[data-project-filter]");
+  const projectItems = document.querySelectorAll("[data-project-category]");
+
+  filterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const selected = button.getAttribute("data-project-filter");
+      filterButtons.forEach((candidate) => {
+        const active = candidate === button;
+        candidate.classList.toggle("active", active);
+        candidate.setAttribute("aria-pressed", String(active));
+      });
+      projectItems.forEach((item) => {
+        const visible =
+          selected === "all" ||
+          item.getAttribute("data-project-category") === selected;
+        item.toggleAttribute("hidden", !visible);
+      });
+    });
+  });
+
+  const revealItems = document.querySelectorAll("[data-project-reveal]");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!reduceMotion && "IntersectionObserver" in window) {
+    document.documentElement.classList.add("portfolio-reveal-ready");
+
+    const revealObserver = new IntersectionObserver(
+      (entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      {
+        threshold: 0.12,
+        rootMargin: "0px 0px -6% 0px",
+      },
+    );
+
+    revealItems.forEach((item) => revealObserver.observe(item));
+  }
+</script>
+
+<style>
+  .portfolio-index {
+    min-height: 100vh;
+    padding: calc(var(--nav-height) + clamp(3rem, 7vw, 7rem))
+      clamp(1.25rem, 4vw, 4.5rem) 5rem;
+    background: #fff;
+  }
+
+  .portfolio-index__header,
+  .portfolio-index__grid {
+    width: min(100%, 1470px);
+    margin-inline: auto;
+  }
+
+  .portfolio-index__header {
+    margin-bottom: clamp(2.5rem, 5vw, 5rem);
+  }
+
+  .portfolio-index__header > span {
+    color: var(--madlen-blue);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .portfolio-index__header h1 {
+    margin: 0.15rem 0 2rem;
+    color: var(--madlen-blue);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(5rem, 11vw, 10rem);
+    font-weight: 700;
+    letter-spacing: -0.085em;
+    line-height: 0.8;
+  }
+
+  .portfolio-index__header p {
+    max-width: 670px;
+    color: var(--madlen-black);
+    font-size: clamp(1rem, 1.3vw, 1.25rem);
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .portfolio-index__filters {
+    width: min(100%, 1470px);
+    margin: 0 auto 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .portfolio-filter {
+    padding: 0.55rem 0.9rem;
+    border: 1px solid var(--madlen-blue);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--madlen-blue);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .portfolio-filter:hover,
+  .portfolio-filter:focus-visible,
+  .portfolio-filter.active {
+    background: var(--madlen-blue);
+    color: var(--madlen-pink);
+  }
+
+  .portfolio-index__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1.3rem, 2.5vw, 2.8rem);
+  }
+
+  .portfolio-index__item {
+    min-width: 0;
+  }
+
+  .portfolio-index__item--wide {
+    grid-column: span 2;
+  }
+
+  .portfolio-index__item[hidden] {
+    display: none;
+  }
+
+  .portfolio-back-to-top {
+  position: fixed;
+  right: 170px;
+  bottom: 18px;
+  z-index: 9997;
+
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--madlen-blue);
+  border-radius: 50%;
+
+  background: var(--madlen-blue);
+  color: #ffffff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+
+  display: grid;
+  place-items: center;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition:
+    opacity 180ms ease,
+    visibility 180ms ease,
+    transform 180ms ease,
+    background 180ms ease;
+}
+
+.portfolio-back-to-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.portfolio-back-to-top:hover {
+  background: #ffffff;
+  color: var(--madlen-blue);
+}
+
+.portfolio-back-to-top:focus-visible {
+  outline: 3px solid var(--madlen-pink);
+  outline-offset: 3px;
+}
+
+  @media (max-width: 1000px) {
+    .portfolio-index__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 700px) {
+    .portfolio-index {
+      padding-inline: 1rem;
+      .portfolio-back-to-top {
+  right: 76px;
+  bottom: 14px;
+  width: 44px;
+  height: 44px;
+}
+    }
+
+    .portfolio-index__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .portfolio-index__item--wide {
+      grid-column: auto;
+    }
+  }
+</style>
