@@ -22,6 +22,46 @@ export const en = {
     viewPortfolio: "View Portfolio",
     sendInquiry: "Send inquiry",
     moreAboutMe: "More About Me",
+    video: {
+      pause: "Pause video",
+      play: "Play video",
+      fallback: "Your browser cannot play this video.",
+    },
+    memories: {
+      title: "Memories you can feel.",
+      paragraphs: [
+        "I’ll capture you as you are – close, authentic, and always at your most beautiful.",
+        "With a subtle sensitivity for the quiet yet meaningful moments:",
+      ],
+      highlight: "A laugh. A glance. A tear.",
+      continuation: [
+        "The little things that often mean the most – and can easily be overlooked in the whirlwind of the day.",
+        "With a gentle presence, careful attention, and an eye for what truly matters, I guide you naturally and capture you in your best light, preserving what lasts:",
+      ],
+      closing: ["honest, vibrant memories", "in timeless beauty."],
+      imageAlt: "Bright portrait of a smiling woman with a straw hat",
+    },
+    workApart: {
+      title: "What sets my work apart",
+      items: [
+        {
+          title: "emotional storytelling",
+          text: "The moments that matter most are often the ones in between — a look, a laugh, a quiet gesture. I’m drawn to real emotion and images that feel honest, personal and alive.",
+        },
+        {
+          title: "cinematic eye",
+          text: "My background in film and directing shapes the way I see light, colour, movement and composition. I create images that feel cinematic without losing their naturalness.",
+        },
+        {
+          title: "images that still feel like you",
+          text: "I’m not interested in chasing trends. I want your photographs to still feel true years from now — personal, elegant and full of the atmosphere of the day.",
+        },
+        {
+          title: "a calm presence",
+          text: "I guide when needed and step back when the moment speaks for itself. The goal is simple: for you to feel present, relaxed and almost forget the camera is there.",
+        },
+      ],
+    },
   },
 
   portfolio: {

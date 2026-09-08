@@ -1,48 +1,25 @@
 ---
 import { getLanguageFromUrl } from "../i18n/utils";
-
+import { projects } from "../data/projects";
+import { copy as chatCopy } from "../lib/madlen-assist";
 const lang = getLanguageFromUrl(Astro.url);
-const isGerman = lang === "de";
-const copy = isGerman
-  ? {
-      toggle: "Fragen?",
-      open: "Chat öffnen",
-      close: "Chat schließen",
-      title: "Madlen Assist",
-      greeting:
-        "Hallo! Ich helfe dir kurz bei Fragen zu Portfolio, Leistungen und Kontakt.",
-      input: "Deine Frage eingeben …",
-      send: "Senden",
-      quick: ["Leistungen", "Portfolio", "Preise", "Kontakt"],
-      note: "Der Chat speichert keine Nachrichten.",
-    }
-  : {
-      toggle: "Questions?",
-      open: "Open chat",
-      close: "Close chat",
-      title: "Madlen Assist",
-      greeting:
-        "Hello! I can help with quick questions about the portfolio, services and contact.",
-      input: "Type your question …",
-      send: "Send",
-      quick: ["Services", "Portfolio", "Pricing", "Contact"],
-      note: "This chat does not store messages.",
-    };
+const copy = chatCopy[lang];
+const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title, category }));
 ---
 
-<div class="madlen-chat" data-chatbot>
+<div class="madlen-chat" data-chatbot data-language={lang} data-projects={JSON.stringify(chatProjects)}>
   <button
     class="chat-toggle"
     type="button"
     aria-label={copy.open}
     aria-expanded="false"
+    aria-controls="madlen-chat-window"
     data-chat-toggle
   >
-    <span class="chat-toggle__icon">?</span>
-    <span>{copy.toggle}</span>
+    <img src="/images/bot.jpg" alt="" width="1411" height="736" />
   </button>
 
-  <section class="chat-window" aria-label={copy.title} hidden data-chat-window>
+  <section id="madlen-chat-window" class="chat-window" aria-label={copy.title} hidden data-chat-window>
     <header class="chat-header">
       <div>
         <p>Foto & Video Madlen</p>
@@ -51,7 +28,7 @@ const copy = isGerman
       <button class="chat-close" type="button" aria-label={copy.close} data-chat-close>×</button>
     </header>
 
-    <div class="chat-body" data-chat-body>
+    <div class="chat-body" data-chat-body role="log" aria-label={copy.history} aria-live="polite" aria-relevant="additions" tabindex="0">
       <div class="chat-message chat-message--bot"><p>{copy.greeting}</p></div>
     </div>
 
@@ -71,90 +48,79 @@ const copy = isGerman
   </section>
 </div>
 
-<script is:inline define:vars={{ lang }}>
-  (() => {
-    const root = document.querySelector("[data-chatbot]");
-    if (!root) return;
-    const toggle = root.querySelector("[data-chat-toggle]");
-    const close = root.querySelector("[data-chat-close]");
-    const panel = root.querySelector("[data-chat-window]");
-    const body = root.querySelector("[data-chat-body]");
-    const form = root.querySelector("[data-chat-form]");
-    const input = root.querySelector("[data-chat-input]");
+<script>
+  import { answer, type Language, type ChatProject, type Reply } from "../lib/madlen-assist";
+  const root = document.querySelector<HTMLElement>("[data-chatbot]");
+  if (root) {
+    const lang: Language = root.dataset.language === "en" ? "en" : "de";
+    const projects: ChatProject[] = JSON.parse(root.dataset.projects || "[]");
+    const toggle = root.querySelector<HTMLButtonElement>("[data-chat-toggle]")!;
+    const close = root.querySelector<HTMLButtonElement>("[data-chat-close]")!;
+    const panel = root.querySelector<HTMLElement>("[data-chat-window]")!;
+    const body = root.querySelector<HTMLElement>("[data-chat-body]")!;
+    const form = root.querySelector<HTMLFormElement>("[data-chat-form]")!;
+    const input = root.querySelector<HTMLInputElement>("[data-chat-input]")!;
 
-    const answers = lang === "de"
-      ? {
-          services: "Madlen bietet Fotografie und Videografie für Portraits, Hochzeiten, Events sowie Editorial- und Commercial-Projekte an.",
-          portfolio: "Im Portfolio findest du alle ausgewählten Projekte mit vollständigen Bildergalerien.",
-          pricing: "Preise werden passend zu Umfang, Ort und Termin individuell angeboten.",
-          contact: "Nutze das Kontaktformular, um Projektart, Termin und Aufnahmeort zu senden.",
-          fallback: "Schreib Madlen am besten über das Kontaktformular – sie antwortet persönlich.",
-        }
-      : {
-          services: "Madlen offers photography and videography for portraits, weddings, events, editorial and commercial projects.",
-          portfolio: "The portfolio contains selected projects with their complete image galleries.",
-          pricing: "Pricing is tailored to the scope, location and date of each project.",
-          contact: "Use the contact form to share your project type, preferred date and location.",
-          fallback: "The best next step is to contact Madlen through the inquiry form.",
-        };
-
-    function setOpen(open) {
+    function setOpen(open: boolean) {
+      const restoreFocus = !open && panel.contains(document.activeElement);
       panel.hidden = !open;
       toggle.setAttribute("aria-expanded", String(open));
       if (open) input.focus();
+      else if (restoreFocus) toggle.focus();
     }
-
-    function answer(text) {
-      const value = text.toLowerCase();
-      if (/leistung|service/.test(value)) return answers.services;
-      if (/portfolio|arbeit|work|gallery/.test(value)) return answers.portfolio;
-      if (/preis|price|cost|pricing/.test(value)) return answers.pricing;
-      if (/kontakt|contact|termin|inquiry/.test(value)) return answers.contact;
-      return answers.fallback;
-    }
-
-    function addMessage(text, kind) {
+    function addMessage(text: string, kind: "user" | "bot", links: Reply["links"] = []) {
       const message = document.createElement("div");
-      message.className = `chat-message chat-message--${kind}`;
+      message.className = "chat-message chat-message--" + kind;
       const paragraph = document.createElement("p");
       paragraph.textContent = text;
       message.appendChild(paragraph);
+      if (links.length) {
+        const list = document.createElement("ul");
+        for (const link of links) {
+          const item = document.createElement("li");
+          const anchor = document.createElement("a");
+          anchor.textContent = link.label;
+          anchor.href = link.href;
+          item.appendChild(anchor);
+          list.appendChild(item);
+        }
+        message.appendChild(list);
+      }
       body.appendChild(message);
+    }
+    function submit(text: string) {
+      const value = text.trim();
+      if (!value) return;
+      const result = answer(value, lang, projects);
+      addMessage(value, "user");
+      addMessage(result.text, "bot", result.links);
       body.scrollTop = body.scrollHeight;
     }
-
     toggle.addEventListener("click", () => setOpen(panel.hidden));
     close.addEventListener("click", () => setOpen(false));
-    root.querySelectorAll("[data-chat-question]").forEach((button) => {
-      button.addEventListener("click", () => {
-        addMessage(button.textContent, "user");
-        addMessage(answer(button.textContent), "bot");
-      });
+    root.querySelectorAll<HTMLButtonElement>("[data-chat-question]").forEach(button => {
+      button.addEventListener("click", () => submit(button.textContent || ""));
     });
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", event => {
       event.preventDefault();
-      const value = input.value.trim();
-      if (!value) return;
-      addMessage(value, "user");
-      addMessage(answer(value), "bot");
+      submit(input.value);
       input.value = "";
     });
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") setOpen(false);
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !panel.hidden) setOpen(false);
     });
-  })();
+  }
 </script>
 
 <style>
   .madlen-chat {
     position: fixed;
-    right: 24px;
-    bottom: 24px;
-    z-index: 9999;
+    right: calc(24px + env(safe-area-inset-right, 0px));
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    z-index: 9997;
     font-family: Arial, Helvetica, sans-serif;
   }
 
-  .chat-toggle,
   .chat-form button {
     display: inline-flex;
     align-items: center;
@@ -173,13 +139,37 @@ const copy = isGerman
   }
 
   .chat-toggle {
-    min-height: 46px;
-    padding: 0.75rem 1.15rem;
-    box-shadow: 0 14px 35px rgba(3, 56, 218, 0.22);
+    display: block;
+    width: 140px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 24px;
+    background: #ead9df;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(30, 25, 20, 0.16);
+    transition: transform 180ms ease;
   }
 
-  .chat-toggle:hover,
-  .chat-toggle:focus-visible,
+  .madlen-chat:has(.chat-window:not([hidden])) {
+    z-index: 9999;
+  }
+
+  .chat-toggle:hover {
+    transform: translateY(-2px);
+  }
+
+  .chat-toggle:focus-visible {
+    outline: 3px solid var(--madlen-blue);
+    outline-offset: 4px;
+  }
+
+  .chat-toggle img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
   .chat-form button:hover,
   .chat-form button:focus-visible {
     background: var(--madlen-pink);
@@ -187,27 +177,23 @@ const copy = isGerman
     transform: translateY(-2px);
   }
 
-  .chat-toggle__icon {
-    width: 23px;
-    height: 23px;
-    display: grid;
-    place-items: center;
-    border: 1px solid currentColor;
-    border-radius: 50%;
-  }
-
   .chat-window {
     position: absolute;
+    z-index: 1;
     right: 0;
     bottom: 62px;
     width: min(390px, calc(100vw - 32px));
-    max-height: min(650px, calc(100vh - 110px));
+    height: min(600px, calc(100dvh - 110px - env(safe-area-inset-bottom, 0px)));
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
     overflow: hidden;
     border: 1px solid rgba(3, 56, 218, 0.16);
     border-radius: 20px;
     background: #fff;
     box-shadow: 0 24px 65px rgba(5, 5, 5, 0.2);
   }
+
+  .chat-window[hidden] { display: none; }
 
   .chat-header {
     padding: 1.1rem 1.2rem;
@@ -240,33 +226,54 @@ const copy = isGerman
   }
 
   .chat-body {
-    max-height: 285px;
+    min-height: 0;
+    overscroll-behavior: contain;
     padding: 1rem;
     overflow: auto;
     background: var(--madlen-cream);
   }
 
-  .chat-message {
-    max-width: 88%;
+  .madlen-chat :global(.chat-message) {
+    width: fit-content;
+    max-width: 92%;
+    overflow-wrap: anywhere;
     margin-bottom: 0.7rem;
     padding: 0.75rem 0.9rem;
     border-radius: 14px;
   }
 
-  .chat-message p {
+  .madlen-chat :global(.chat-message p) {
     color: inherit;
     font-size: 0.84rem;
     line-height: 1.45;
   }
 
-  .chat-message--bot {
+  .madlen-chat :global(.chat-message--bot) {
     background: #fff;
   }
 
-  .chat-message--user {
+  .madlen-chat :global(.chat-message--user) {
     margin-left: auto;
     background: var(--madlen-blue);
     color: var(--madlen-pink);
+  }
+
+  .madlen-chat :global(.chat-message ul) {
+    margin: 0.6rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .madlen-chat :global(.chat-message li + li) { margin-top: 0.45rem; }
+  .madlen-chat :global(.chat-message a) {
+    color: var(--madlen-blue);
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .madlen-chat :global(.chat-message a:focus-visible) {
+    outline: 2px solid var(--madlen-blue);
+    outline-offset: 3px;
   }
 
   .chat-quick-actions {
@@ -321,14 +328,24 @@ const copy = isGerman
     border: 0;
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 760px) {
     .madlen-chat {
-      right: 14px;
-      bottom: 14px;
+      right: calc(12px + env(safe-area-inset-right, 0px));
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     }
 
-    .chat-toggle span:last-child {
-      display: none;
+    .chat-toggle {
+      width: 120px;
+      border-radius: 22px;
+    }
+
+    .chat-window {
+      position: fixed;
+      right: calc(12px + env(safe-area-inset-right, 0px));
+      bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+      width: min(390px, calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+      max-height: calc(100dvh - 28px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      height: min(600px, calc(100dvh - 28px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
     }
   }
 </style>

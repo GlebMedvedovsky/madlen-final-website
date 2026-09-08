@@ -76,22 +76,22 @@ const filters =
   const filterButtons = document.querySelectorAll("[data-project-filter]");
   const projectItems = document.querySelectorAll("[data-project-category]");
 
-  filterButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const selected = button.getAttribute("data-project-filter");
-      filterButtons.forEach((candidate) => {
-        const active = candidate === button;
-        candidate.classList.toggle("active", active);
-        candidate.setAttribute("aria-pressed", String(active));
-      });
-      projectItems.forEach((item) => {
-        const visible =
-          selected === "all" ||
-          item.getAttribute("data-project-category") === selected;
-        item.toggleAttribute("hidden", !visible);
-      });
+  function applyFilter(requested: string | null) {
+    const selected = Array.from(filterButtons).some(button => button.getAttribute("data-project-filter") === requested)
+      ? requested : "all";
+    filterButtons.forEach(button => {
+      const active = button.getAttribute("data-project-filter") === selected;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
     });
+    projectItems.forEach(item => {
+      item.toggleAttribute("hidden", selected !== "all" && item.getAttribute("data-project-category") !== selected);
+    });
+  }
+  filterButtons.forEach(button => {
+    button.addEventListener("click", () => applyFilter(button.getAttribute("data-project-filter")));
   });
+  applyFilter(new URLSearchParams(window.location.search).get("category"));
 
   const revealItems = document.querySelectorAll("[data-project-reveal]");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

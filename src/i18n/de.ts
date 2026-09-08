@@ -22,6 +22,46 @@ export const de = {
   viewPortfolio: "Portfolio ansehen",
   sendInquiry: "Anfrage senden",
   moreAboutMe: "Mehr über mich",
+  video: {
+    pause: "Video pausieren",
+    play: "Video abspielen",
+    fallback: "Dein Browser kann dieses Video nicht abspielen.",
+  },
+  memories: {
+    title: "Erinnerungen, die du fühlen kannst.",
+    paragraphs: [
+      "Ich halte dich so fest, wie du bist – nah, authentisch und immer von deiner schönsten Seite.",
+      "Mit feinem Gespür für die leisen und doch bedeutungsvollen Momente:",
+    ],
+    highlight: "Ein Lachen. Ein Blick. Eine Träne.",
+    continuation: [
+      "Die kleinen Dinge, die oft am meisten bedeuten – und im Trubel des Tages leicht übersehen werden.",
+      "Mit ruhiger Präsenz, achtsamer Aufmerksamkeit und einem Blick für das, was wirklich zählt, begleite ich dich ganz natürlich und halte dich in deinem besten Licht fest. So bewahre ich, was bleibt:",
+    ],
+    closing: ["ehrliche, lebendige Erinnerungen", "in zeitloser Schönheit."],
+    imageAlt: "Helles Portrait einer lächelnden Frau mit einem Strohhut",
+  },
+  workApart: {
+    title: "Was meine Arbeit ausmacht",
+    items: [
+      {
+        title: "Geschichten voller Gefühl",
+        text: "Die bedeutungsvollsten Momente sind oft die dazwischen — ein Blick, ein Lachen, eine leise Geste. Mich berühren echte Emotionen und Bilder, die ehrlich, persönlich und lebendig wirken.",
+      },
+      {
+        title: "Ein filmischer Blick",
+        text: "Mein Hintergrund in Film und Regie prägt meinen Blick auf Licht, Farbe, Bewegung und Komposition. Ich schaffe Bilder, die filmisch wirken, ohne ihre Natürlichkeit zu verlieren.",
+      },
+      {
+        title: "Bilder, in denen du dich wiedererkennst",
+        text: "Ich möchte keinen Trends hinterherlaufen. Ich möchte, dass sich deine Fotografien auch Jahre später noch echt anfühlen — persönlich, elegant und voller Atmosphäre dieses Tages.",
+      },
+      {
+        title: "Eine ruhige Präsenz",
+        text: "Ich gebe Orientierung, wenn sie gebraucht wird, und trete zurück, wenn der Moment für sich spricht. Das Ziel ist einfach: Du sollst ganz im Moment sein, dich entspannen und beinahe vergessen, dass die Kamera da ist.",
+      },
+    ],
+  },
 },
 
   portfolio: {

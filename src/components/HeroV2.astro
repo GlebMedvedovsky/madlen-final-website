@@ -7,6 +7,7 @@ interface Props {
   viewPortfolio: string;
   sendInquiry: string;
   moreAboutMe: string;
+  followsStory?: boolean;
 }
 
 const {
@@ -16,6 +17,7 @@ const {
   viewPortfolio,
   sendInquiry,
   moreAboutMe,
+  followsStory = false,
 } = Astro.props;
 
 const isEnglish = Astro.url.pathname.startsWith("/en");
@@ -24,10 +26,10 @@ const portfolioPath = isEnglish ? "/en/portfolio" : "/portfolio";
 const contactPath = isEnglish ? "/en/contact" : "/kontakt";
 ---
 
-<section class="hero-v2">
+<section class:list={["hero-v2", { "hero-v2--after-story": followsStory }]}>
   <div class="hero-v2__inner">
     <div class="hero-v2__content">
-      <h1 class="hero-v2__title">
+      <h2 class="hero-v2__title">
         <span class="hero-v2__name-prefix">{eyebrow}</span>
         <span class="hero-v2__name-line">
           <img
@@ -38,7 +40,7 @@ const contactPath = isEnglish ? "/en/contact" : "/kontakt";
           />
           <span class="hero-v2__name-rest">adlen</span>
         </span>
-      </h1>
+      </h2>
 
       <p class="hero-v2__intro">{intro}</p>
       <p class="hero-v2__description">{description}</p>
@@ -95,6 +97,10 @@ const contactPath = isEnglish ? "/en/contact" : "/kontakt";
     grid-template-columns: minmax(420px, 0.95fr) minmax(520px, 1.05fr);
     gap: clamp(2rem, 4vw, 5rem);
     align-items: center;
+  }
+
+  .hero-v2--after-story .hero-v2__inner {
+    padding-top: 3.5rem;
   }
 
   .hero-v2__content {

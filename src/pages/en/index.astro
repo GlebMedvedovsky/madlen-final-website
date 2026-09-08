@@ -1,6 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import HeroV2 from "../../components/HeroV2.astro";
+import HomeVideo from "../../components/HomeVideo.astro";
+import HomepageStory from "../../components/HomepageStory.astro";
 import { useTranslations } from "../../i18n/utils";
 
 const t = useTranslations("en");
@@ -11,7 +13,14 @@ const t = useTranslations("en");
   title="Madlen Medvedovskyy – Cinematic & Editorial Photography"
   description={t.home.description}
 >
+  <HomeVideo
+    pauseLabel={t.home.video.pause}
+    playLabel={t.home.video.play}
+    fallback={t.home.video.fallback}
+  />
+  <HomepageStory memories={t.home.memories} workApart={t.home.workApart} />
   <HeroV2
+    followsStory
     eyebrow={t.home.eyebrow}
     name={t.home.name}
     intro={t.home.intro}

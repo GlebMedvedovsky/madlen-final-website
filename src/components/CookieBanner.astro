@@ -1,9 +1,17 @@
 ---
+import { getLanguageFromUrl } from "../i18n/utils";
+
+const openLabel = getLanguageFromUrl(Astro.url) === "de"
+  ? "Cookie-Einstellungen öffnen"
+  : "Open cookie settings";
 const gaMeasurementId = "G-XXXXXXXXXX";
 ---
 
-<button class="cookie-floating-button" id="cookie-floating-button" type="button" aria-label="Cookie-Einstellungen öffnen">
-  ◉
+<button class="cookie-floating-button" id="cookie-floating-button" type="button" aria-label={openLabel}>
+  <span class="cookie-floating-button__image" aria-hidden="true">
+    <img src="/images/Kukes.jpg" alt="" width="1411" height="736" />
+  </span>
+  <span class="cookie-floating-button__label">Cookies</span>
 </button>
 
 <div class="cookie-banner" id="cookie-banner" aria-hidden="true">
@@ -262,24 +270,25 @@ const gaMeasurementId = "G-XXXXXXXXXX";
 <style>
   .cookie-floating-button {
     position: fixed;
-    left: 18px;
-    bottom: 18px;
-    z-index: 9999;
-    width: 46px;
-    height: 46px;
-    border-radius: 999px;
-    border: 1px solid rgba(3, 56, 218, 0.35);
-    background: rgba(255, 250, 244, 0.96);
-    color: var(--color-bronze);
-    font-size: 1.35rem;
+    left: calc(24px + env(safe-area-inset-left, 0px));
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    z-index: 9996;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 82px;
+    padding: 0 0 8px;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 0;
+    background: #ead9df;
+    color: #303b77;
     cursor: pointer;
-    box-shadow: 0 12px 35px rgba(30, 25, 20, 0.18);
+    box-shadow: 0 8px 24px rgba(30, 25, 20, 0.16);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   .cookie-floating-button:hover {
-    background: var(--madlen-pink);
-    color: var(--madlen-blue);
     transform: translateY(-2px);
     box-shadow: 0 16px 45px rgba(30, 25, 20, 0.22);
   }
@@ -380,6 +389,36 @@ const gaMeasurementId = "G-XXXXXXXXXX";
   .cookie-btn-primary {
     background: var(--color-bronze);
     color: var(--madlen-pink);
+  }
+
+  .cookie-floating-button:focus-visible {
+    outline: 3px solid var(--madlen-blue);
+    outline-offset: 4px;
+  }
+
+  .cookie-floating-button__image {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 1.2;
+    overflow: hidden;
+  }
+
+  .cookie-floating-button__image img {
+    position: absolute;
+    /* Original crop: x=470..950, y=130..530; excludes the baked-in KUKES. */
+    width: 293.958333%;
+    max-width: none;
+    height: auto;
+    left: -97.916667%;
+    top: -32.5%;
+  }
+
+  .cookie-floating-button__label {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
   }
 
   .cookie-btn-primary:hover,
@@ -527,6 +566,13 @@ const gaMeasurementId = "G-XXXXXXXXXX";
   }
 
   @media (max-width: 760px) {
+    .cookie-floating-button {
+      left: calc(12px + env(safe-area-inset-left, 0px));
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      width: 76px;
+      border-radius: 20px;
+    }
+
     .cookie-banner {
       bottom: 76px;
     }

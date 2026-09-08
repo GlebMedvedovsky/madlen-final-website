@@ -1,0 +1,437 @@
+---
+interface StoryItem {
+  title: string;
+  text: string;
+}
+
+interface Props {
+  memories: {
+    title: string;
+    paragraphs: string[];
+    highlight: string;
+    continuation: string[];
+    closing: string[];
+    imageAlt: string;
+  };
+  workApart: {
+    title: string;
+    items: StoryItem[];
+  };
+}
+
+const { memories, workApart } = Astro.props;
+---
+
+<div class="homepage-story" data-homepage-story>
+  <svg
+    class="homepage-story__line-connector"
+    aria-hidden="true"
+    focusable="false"
+    data-line-connector
+  >
+    <path data-line-connector-path />
+  </svg>
+  <section class="memories" aria-labelledby="memories-title">
+    <div class="homepage-story__line-upper" aria-hidden="true">
+      <img
+        src="/images/Grafik%20Elemente/du%CC%88nne_rosa_Linie.png"
+        alt=""
+        width="1366"
+        height="768"
+      />
+    </div>
+    <div class="memories__inner">
+      <figure class="memories__photo-frame" data-line-photo-frame>
+        <img
+          src="/images/hero/memories-photo.webp"
+          alt={memories.imageAlt}
+          width="1901"
+          height="2400"
+        />
+      </figure>
+      <div class="memories__copy" data-line-memories-copy>
+        <h1 id="memories-title">{memories.title}</h1>
+        {memories.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+        <p class="memories__highlight">{memories.highlight}</p>
+        {memories.continuation.map((paragraph) => <p>{paragraph}</p>)}
+        <p class="memories__closing">
+          {memories.closing.map((line) => <span>{line}</span>)}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="work-apart" aria-labelledby="work-apart-title" data-line-work-apart>
+    <svg
+      class="homepage-story__line-lower"
+      viewBox="0 0 180 500"
+      aria-hidden="true"
+      focusable="false"
+      data-line-lower
+    >
+      <path d="M 132 0 C 118 58 78 92 48 136 C 18 180 20 226 43 270 C 62 306 72 346 50 374 C 34 394 7 385 9 362 C 11 340 41 338 50 357 C 62 382 48 423 31 474" />
+    </svg>
+    <div class="work-apart__inner">
+      <h2 id="work-apart-title">{workApart.title}</h2>
+      <div class="work-apart__grid">
+        {workApart.items.map((item) => (
+          <article class="work-apart__item" data-line-work-item>
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+  .homepage-story {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--madlen-cream);
+    color: var(--madlen-black);
+  }
+
+  .memories,
+  .work-apart {
+    position: relative;
+    isolation: auto;
+    z-index: 1;
+  }
+
+  .memories { z-index: 2; }
+
+  .memories__inner,
+  .work-apart__inner {
+    position: relative;
+    z-index: 2;
+    width: min(100% - 3rem, 1280px);
+    margin: 0 auto;
+  }
+
+  .memories__inner {
+    min-height: 760px;
+    padding: clamp(5rem, 9vw, 9rem) 0 clamp(3.5rem, 6vw, 6rem);
+    display: grid;
+    grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.1fr);
+    align-items: center;
+    gap: clamp(4rem, 9vw, 9rem);
+  }
+
+  .memories__photo-frame {
+    width: min(100%, 410px);
+    margin: 0 auto;
+    padding: clamp(0.65rem, 1.2vw, 1rem) clamp(0.65rem, 1.2vw, 1rem) clamp(2.6rem, 5vw, 4.4rem);
+    background: #fff;
+    box-shadow: 0 16px 38px rgba(52, 40, 34, 0.14);
+    transform: rotate(4deg);
+  }
+
+  .memories__photo-frame img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .memories__copy {
+    max-width: 590px;
+  }
+
+  .memories h1,
+  .memories__highlight,
+  .memories__closing,
+  .work-apart h2,
+  .work-apart h3 {
+    color: var(--madlen-blue);
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+  }
+
+  .memories h1 {
+    margin: 0 0 1.75rem;
+    font-size: clamp(2.7rem, 5.2vw, 5.6rem);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+  }
+
+  .memories p {
+    margin: 0 0 1rem;
+    font-size: clamp(1rem, 1.25vw, 1.18rem);
+    line-height: 1.55;
+  }
+
+  .memories__highlight {
+    margin: 1.55rem 0 !important;
+    font-size: clamp(1.65rem, 3vw, 2.8rem) !important;
+    line-height: 1.05 !important;
+  }
+
+  .memories__closing {
+    margin-top: 1.8rem !important;
+    text-align: center;
+    font-size: clamp(1.55rem, 2.7vw, 2.55rem) !important;
+    line-height: 1.05 !important;
+  }
+
+  .memories__closing span { display: block; }
+
+  .homepage-story__line-upper {
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: max(-3rem, calc((100% - 1280px) / 2 - 7rem));
+    width: min(76vw, 1100px);
+    aspect-ratio: 1366 / 768;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .homepage-story__line-upper img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .homepage-story__line-lower {
+    position: absolute;
+    z-index: 0;
+    top: clamp(-9rem, -8vw, -6rem);
+    left: max(-3rem, calc((100% - 1280px) / 2 - 7rem));
+    width: clamp(150px, 15vw, 220px);
+    height: auto;
+    overflow: visible;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .homepage-story__line-lower path {
+    fill: none;
+    stroke: #b8535f;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .homepage-story__line-connector {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .homepage-story__line-connector path {
+    fill: none;
+    stroke: #b8535f;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .work-apart__inner {
+    padding: clamp(3.5rem, 5.5vw, 5.5rem) 0 clamp(4rem, 7vw, 7rem);
+  }
+
+  .work-apart h2 {
+    margin: 0 auto clamp(3.5rem, 6vw, 6rem);
+    text-align: center;
+    font-size: clamp(2.35rem, 4.3vw, 4.8rem);
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+
+  .work-apart__grid {
+    width: min(100%, 980px);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(3.5rem, 7vw, 6.5rem) clamp(4rem, 9vw, 9rem);
+  }
+
+  .work-apart__item h3 {
+    margin: 0 0 1.15rem;
+    font-size: clamp(2rem, 3.8vw, 4rem);
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+  }
+
+  .work-apart__item p {
+    margin: 0;
+    font-size: clamp(1rem, 1.2vw, 1.12rem);
+    line-height: 1.58;
+  }
+
+  @media (max-width: 800px) {
+    .memories__inner {
+      min-height: 0;
+      padding: 4.5rem 0 3.5rem;
+      grid-template-columns: 1fr;
+      gap: 4.5rem;
+    }
+
+    .memories__photo-frame {
+      box-sizing: border-box;
+      width: min(74vw, 390px);
+    }
+
+    .memories__copy {
+      box-sizing: border-box;
+      max-width: none;
+      padding-left: clamp(6.25rem, 26vw, 7rem);
+    }
+
+    .memories h1 {
+      font-size: clamp(1.875rem, 8.5vw, 2.25rem);
+      line-height: 1.05;
+    }
+
+    .memories p {
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    .homepage-story__line-upper {
+      left: -1.25rem;
+      width: 140vw;
+      max-width: none;
+    }
+
+    .homepage-story__line-lower {
+      left: -0.25rem;
+      width: 145px;
+    }
+
+    .work-apart__grid {
+      grid-template-columns: 1fr;
+      gap: clamp(1.75rem, 8vw, 2.25rem);
+    }
+
+    .work-apart__inner {
+      box-sizing: border-box;
+      padding-top: 3.5rem;
+      padding-left: clamp(6.25rem, 26vw, 7rem);
+      padding-bottom: 4.5rem;
+    }
+
+    .work-apart h2 {
+      font-size: clamp(1.875rem, 8.5vw, 2.25rem);
+      line-height: 1.05;
+    }
+
+    .work-apart__item h3 {
+      font-size: clamp(1.625rem, 7vw, 1.875rem);
+      line-height: 1;
+    }
+
+    .work-apart__item p {
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .memories__inner,
+    .work-apart__inner { width: min(100% - 2rem, 1280px); }
+  }
+</style>
+
+<script>
+  const connectorCleanupKey = "__madlenLineConnectorCleanup";
+
+  function initLineConnector(story: HTMLElement) {
+    const state = story as HTMLElement & { [connectorCleanupKey]?: () => void };
+    state[connectorCleanupKey]?.();
+
+    const svg = story.querySelector<SVGSVGElement>("[data-line-connector]");
+    const path = story.querySelector<SVGPathElement>("[data-line-connector-path]");
+    const photo = story.querySelector<HTMLElement>("[data-line-photo-frame]");
+    const lower = story.querySelector<SVGSVGElement>("[data-line-lower]");
+    const memoriesCopy = story.querySelector<HTMLElement>("[data-line-memories-copy]");
+    const workApart = story.querySelector<HTMLElement>("[data-line-work-apart]");
+    const workItems = Array.from(story.querySelectorAll<HTMLElement>("[data-line-work-item]"));
+    if (!svg || !path || !photo || !lower || !memoriesCopy || !workApart || workItems.length < 4) return;
+
+    let animationFrame = 0;
+    const draw = () => {
+      animationFrame = 0;
+      const storyRect = story.getBoundingClientRect();
+      const photoRect = photo.getBoundingClientRect();
+      const width = story.clientWidth;
+      const height = story.clientHeight;
+      const mobile = width <= 800;
+
+      if (mobile) {
+        const workRect = workApart.getBoundingClientRect();
+        const secondItemRect = workItems[1].getBoundingClientRect();
+        const thirdItemRect = workItems[2].getBoundingClientRect();
+        const lowerHeight = lower.getBoundingClientRect().height;
+        const loopTarget = (secondItemRect.bottom + thirdItemRect.top) / 2 - workRect.top;
+        const loopOffset = lowerHeight * (362 / 500);
+        lower.style.top = `${loopTarget - loopOffset}px`;
+      } else {
+        lower.style.removeProperty("top");
+      }
+
+      const lowerRect = lower.getBoundingClientRect();
+      if (!width || !height || !photoRect.width || !lowerRect.width) return;
+
+      // Начало на 35 px заведено под непрозрачную нижнюю кромку рамки.
+      const startX = photoRect.left - storyRect.left + Math.max(18, photoRect.width * 0.055);
+      const startY = photoRect.bottom - storyRect.top - 35;
+      // M 132 0 — неизменённая начальная точка принятого нижнего SVG.
+      const endX = lowerRect.left - storyRect.left + lowerRect.width * (132 / 180);
+      const endY = lowerRect.top - storyRect.top;
+      const deltaY = Math.max(24, endY - startY);
+      const bend = Math.min(54, Math.max(18, Math.abs(endX - startX) * 0.45));
+
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      if (mobile) {
+        const copyRect = memoriesCopy.getBoundingClientRect();
+        const laneX = Math.max(12, copyRect.left - storyRect.left - 24);
+        const enterLaneY = Math.min(endY - 48, startY + 70);
+        path.setAttribute(
+          "d",
+          `M ${startX.toFixed(1)} ${startY.toFixed(1)} C ${(startX - 20).toFixed(1)} ${(startY + 18).toFixed(1)}, ${laneX.toFixed(1)} ${(enterLaneY - 20).toFixed(1)}, ${laneX.toFixed(1)} ${enterLaneY.toFixed(1)} C ${laneX.toFixed(1)} ${(enterLaneY + deltaY * 0.45).toFixed(1)}, ${(endX - 24).toFixed(1)} ${(endY - 42).toFixed(1)}, ${endX.toFixed(1)} ${endY.toFixed(1)}`,
+        );
+      } else {
+        path.setAttribute(
+          "d",
+          `M ${startX.toFixed(1)} ${startY.toFixed(1)} C ${(startX - bend).toFixed(1)} ${(startY + deltaY * 0.28).toFixed(1)}, ${(endX + bend * 0.45).toFixed(1)} ${(endY - deltaY * 0.3).toFixed(1)}, ${endX.toFixed(1)} ${endY.toFixed(1)}`,
+        );
+      }
+    };
+
+    const schedule = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(draw);
+    };
+    const observer = new ResizeObserver(schedule);
+    observer.observe(story);
+    observer.observe(photo);
+    observer.observe(lower);
+    observer.observe(memoriesCopy);
+    observer.observe(workApart);
+    workItems.forEach((item) => observer.observe(item));
+    schedule();
+
+    state[connectorCleanupKey] = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      observer.disconnect();
+    };
+  }
+
+  const initAllLineConnectors = () => {
+    document.querySelectorAll<HTMLElement>("[data-homepage-story]").forEach(initLineConnector);
+  };
+
+  initAllLineConnectors();
+  document.addEventListener("astro:page-load", initAllLineConnectors);
+</script>
