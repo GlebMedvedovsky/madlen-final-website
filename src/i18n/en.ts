@@ -65,6 +65,7 @@ export const en = {
   },
 
   portfolio: {
+    label: "Selected work",
     title: "portfolio",
     intro:
       "A selection of my work across portraits, weddings, events, editorial and commercial projects.",
@@ -74,6 +75,7 @@ export const en = {
       weddings: "Weddings",
       events: "Events",
       editorial: "Editorial",
+      landscape: "Landscape",
     },
     nextProject: "Next project",
   },
@@ -81,6 +83,11 @@ export const en = {
   services: {
     title: "services",
     headline: "Let’s create something worth remembering.",
+    eyebrow: "Services",
+    titleLead: "What I can",
+    titleEmphasis: "create for you.",
+    intro:
+      "Every project is different. Tell me about your plans and I will prepare an individual offer tailored to your needs.",
   },
 
   about: {
@@ -105,9 +112,36 @@ export const en = {
     emailText:
       "contact@madlenmedvedovskyy.de or fill out the contact form.",
     formName: "Name",
+    namePlaceholder: "Your name",
     formEmail: "Email",
+    emailPlaceholder: "your@email.com",
+    formPhone: "Phone number",
+    optional: "optional",
+    requestType: "Type of inquiry",
+    requestSelect: "Please select",
+    preferredDate: "Preferred date(s)",
+    datePlaceholder: "e.g. 05–07 September 2026",
+    location: "Location",
+    locationPlaceholder: "e.g. Stuttgart, Vancouver",
     formMessage: "Message",
+    messagePlaceholder: "Tell me briefly about your project …",
+    privacyStart: "I have read the",
+    privacyLink: "Privacy Policy",
+    privacyEnd:
+      "and consent to the processing of my information for the purpose of responding to my inquiry.",
+    requiredNote: "* Required fields",
     formSubmit: "Send inquiry",
+    subject: "New inquiry via madlenmedvedovskyy.de",
+    requestOptions: [
+      "Portrait photography",
+      "Couples & families",
+      "Wedding",
+      "Event",
+      "Editorial & Commercial",
+      "Videography",
+      "Video editing",
+      "Other",
+    ],
   },
 
   footer: {

@@ -1,0 +1,152 @@
+# EXAMPLE ONLY — deliberately outside .github/workflows and therefore inert.
+# Enable only after the private Netcup paths, API, SSH host key and runner access
+# have been verified. Draft packages and outputs must never enter a public root.
+name: Madlen external private preview (disabled example)
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_id:
+        description: UUID of the private preview job
+        required: true
+      package_sha256:
+        description: SHA-256 of the immutable draft package
+        required: true
+      source_revision:
+        description: Exact 40-character compatible application source commit
+        required: true
+      expires_at:
+        description: ISO-8601 expiration set by the CMS
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: madlen-preview-${{ inputs.preview_id }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-return-private-preview:
+    runs-on: ubuntu-latest
+    env:
+      PREVIEW_ID: ${{ inputs.preview_id }}
+      PACKAGE_SHA256: ${{ inputs.package_sha256 }}
+      SOURCE_REVISION: ${{ inputs.source_revision }}
+      EXPIRES_AT: ${{ inputs.expires_at }}
+      CMS_URL: ${{ secrets.MADLEN_CMS_URL }}
+      PREVIEW_API_TOKEN: ${{ secrets.MADLEN_PREVIEW_API_TOKEN }}
+    steps:
+      - name: Validate immutable identifiers and expiry
+        shell: bash
+        run: |
+          [[ "$PREVIEW_ID" =~ ^[A-Za-z0-9-]{8,64}$ ]]
+          [[ "$PACKAGE_SHA256" =~ ^[0-9a-fA-F]{64}$ ]]
+          [[ "$SOURCE_REVISION" =~ ^[0-9a-fA-F]{40}$ ]]
+          test "$(date -d "$EXPIRES_AT" +%s)" -gt "$(date +%s)"
+
+      - name: Check out the exact compatible source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_revision }}
+          persist-credentials: false
+
+      - name: Use Node 22 with the lockfile cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked frontend dependencies
+        run: npm ci
+
+      - name: Report building state
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --retry 3 \
+            -H "Authorization: Bearer $PREVIEW_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -d '{"status":"building"}' \
+            "$CMS_URL/api/preview-runner/v1/previews/$PREVIEW_ID/status"
+
+      - name: Download and verify the immutable draft package
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --retry 3 \
+            -H "Authorization: Bearer $PREVIEW_API_TOKEN" \
+            -o "$RUNNER_TEMP/preview.zip" \
+            "$CMS_URL/api/preview-runner/v1/previews/$PREVIEW_ID/package"
+          echo "$PACKAGE_SHA256  $RUNNER_TEMP/preview.zip" | sha256sum --check --strict
+          mkdir "$RUNNER_TEMP/preview-package"
+          python - "$RUNNER_TEMP/preview.zip" "$RUNNER_TEMP/preview-package" <<'PY'
+          import pathlib, sys, zipfile
+          archive, target = sys.argv[1:]
+          with zipfile.ZipFile(archive) as bundle:
+              names = bundle.namelist()
+              if len(names) != len(set(names)) or len(names) > 20000:
+                  raise SystemExit("unsafe preview archive entries")
+              for name in names:
+                  path = pathlib.PurePosixPath(name)
+                  if path.is_absolute() or ".." in path.parts or "\\" in name:
+                      raise SystemExit("unsafe preview archive path")
+              bundle.extractall(target)
+          PY
+
+      - name: Build and validate protected DE/EN preview
+        env:
+          MADLEN_EXPECTED_PREVIEW_ID: ${{ inputs.preview_id }}
+          MADLEN_EXPECTED_SOURCE_REVISION: ${{ inputs.source_revision }}
+          MADLEN_EXPECTED_EXPIRES_AT: ${{ inputs.expires_at }}
+        run: npm run build:preview -- "$RUNNER_TEMP/preview-package" "$RUNNER_TEMP/preview-output"
+
+      - name: Package the private result
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/preview-output"
+          zip -q -r "$RUNNER_TEMP/madlen-preview-result-$PREVIEW_ID.zip" .
+          sha256sum "$RUNNER_TEMP/madlen-preview-result-$PREVIEW_ID.zip" | cut -d' ' -f1 > "$RUNNER_TEMP/result.sha256"
+
+      - name: Configure narrowly scoped Netcup SSH access
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
+          SSH_HOST_KEY: ${{ secrets.NETCUP_SSH_HOST_KEY }}
+        run: |
+          install -m 0700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/madlen-preview
+          chmod 0600 ~/.ssh/madlen-preview
+          printf '%s\n' "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+
+      - name: Transfer result only to the private incoming directory
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.NETCUP_SSH_HOST }}
+          SSH_USER: ${{ secrets.NETCUP_SSH_USER }}
+          PREVIEW_INCOMING_ROOT: ${{ vars.NETCUP_MADLEN_PREVIEW_INCOMING_ROOT }}
+        run: |
+          archive="madlen-preview-result-$PREVIEW_ID.zip"
+          scp -i ~/.ssh/madlen-preview "$RUNNER_TEMP/$archive" "$SSH_USER@$SSH_HOST:$PREVIEW_INCOMING_ROOT/$archive.tmp"
+          ssh -i ~/.ssh/madlen-preview "$SSH_USER@$SSH_HOST" \
+            "mv '$PREVIEW_INCOMING_ROOT/$archive.tmp' '$PREVIEW_INCOMING_ROOT/$archive'"
+
+      - name: Ask the CMS to validate and accept the private result
+        id: return
+        shell: bash
+        run: |
+          checksum="$(cat "$RUNNER_TEMP/result.sha256")"
+          curl --fail --silent --show-error --retry 3 --retry-all-errors \
+            -H "Authorization: Bearer $PREVIEW_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -d "{\"status\":\"ready\",\"result_archive\":\"madlen-preview-result-$PREVIEW_ID.zip\",\"result_sha256\":\"$checksum\"}" \
+            "$CMS_URL/api/preview-runner/v1/previews/$PREVIEW_ID/status"
+
+      - name: Report a failed build or transfer
+        if: ${{ failure() && steps.return.outcome != 'success' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --retry 2 \
+            -H "Authorization: Bearer $PREVIEW_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -d '{"status":"failed","error":"Der externe Vorschau-Build oder die private Rückübertragung ist fehlgeschlagen."}' \
+            "$CMS_URL/api/preview-runner/v1/previews/$PREVIEW_ID/status"

@@ -50,8 +50,29 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
       <slot />
     </main>
     <Footer />
-    <BackToTop />
-    <ChatBot />
+    <div class="floating-controls-anchor">
+      <BackToTop />
+      <ChatBot />
+    </div>
     <CookieBanner />
   </body>
 </html>
+
+<style>
+  .floating-controls-anchor {
+    --floating-control-size: 48px;
+    --floating-control-gap: 24px;
+    --floating-control-edge: 24px;
+    --floating-control-bottom: 24px;
+    display: contents;
+  }
+
+  @media (max-width: 760px) {
+    .floating-controls-anchor {
+      --floating-control-size: 44px;
+      --floating-control-gap: 12px;
+      --floating-control-edge: 12px;
+      --floating-control-bottom: 12px;
+    }
+  }
+</style>

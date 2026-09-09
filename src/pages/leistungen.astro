@@ -1,8 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import ServiceCard from '../components/ServiceCard.astro';
+import { getServices } from '../content/cms';
+import { useTranslations } from '../i18n/utils';
 
-const services = [
+const sourceServices = [
   {
     title: 'Portraitshooting',
     icon: '◎',
@@ -48,6 +50,9 @@ const services = [
     highlighted: true,
   },
 ];
+const cmsServices = getServices('de');
+const services = cmsServices.length ? cmsServices : sourceServices;
+const t = useTranslations('de');
 ---
 
 <Layout
@@ -57,11 +62,10 @@ const services = [
   <!-- Page Hero -->
   <section class="page-hero">
     <div class="container">
-      <span class="section-label">Leistungen</span>
-      <h1 class="page-hero-title">Was ich<br /><em>für Sie tue</em></h1>
+      <span class="section-label">{t.services.eyebrow}</span>
+      <h1 class="page-hero-title">{t.services.titleLead}<br /><em>{t.services.titleEmphasis}</em></h1>
       <p class="page-hero-desc">
-        Ich biete keine festen Pakete an – denn kein Projekt ist wie das andere.
-        Schreiben Sie mir, und ich erstelle Ihnen ein individuelles Angebot.
+        {t.services.intro}
       </p>
     </div>
   </section>
@@ -76,6 +80,9 @@ const services = [
             description={s.description}
             icon={s.icon}
             highlighted={s.highlighted ?? false}
+            headingLevel="h2"
+            ctaHref="/kontakt"
+            ctaLabel="Anfrage senden"
           />
         ))}
       </div>
@@ -129,36 +136,46 @@ const services = [
 
 <style>
   .page-hero {
-    padding-top: calc(var(--nav-height) + var(--space-3xl));
-    padding-bottom: var(--space-xl);
+    padding-top: calc(var(--nav-height) + clamp(4rem, 5vw, 5rem));
+    padding-bottom: 0;
     background-color: var(--color-cream);
   }
 
   .page-hero-title {
+    color: var(--madlen-blue);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2.25rem, 4.45vw, 4rem);
+    font-weight: 700;
+    line-height: 0.98;
+    letter-spacing: -0.045em;
     margin-top: var(--space-sm);
     margin-bottom: var(--space-md);
   }
 
   .page-hero-title em,
   h2 em {
-    font-style: italic;
-    font-weight: 300;
-    color: var(--color-bronze);
+    color: inherit;
+    font-style: normal;
+    font-weight: inherit;
   }
 
   .page-hero-desc {
+    color: var(--color-text);
+    font-size: 1.125rem;
+    line-height: 1.6;
     max-width: 55ch;
   }
 
   /* Services grid */
   .services-section {
-    background-color: var(--color-white);
+    padding-block: 2.75rem 0;
+    background-color: var(--color-cream);
   }
 
   .services-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--space-md);
+    gap: 1.25rem;
   }
 
   @media (min-width: 768px) {
@@ -170,15 +187,26 @@ const services = [
   @media (min-width: 1200px) {
     .services-grid {
       grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
     }
   }
 
   /* Process */
+  .process-section {
+    padding-block: 4.5rem 3.5rem;
+  }
+
   .process-inner {
     max-width: 800px;
   }
 
   .process-title {
+    color: var(--madlen-blue);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2rem, 3.05vw, 2.75rem);
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
     margin-top: var(--space-sm);
     margin-bottom: 0;
   }
@@ -214,15 +242,60 @@ const services = [
   }
 
   .step-title {
-    font-size: 1.1rem;
-    font-weight: 400;
+    color: var(--madlen-blue);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
     margin-bottom: var(--space-xs);
-    color: var(--color-gray-dark);
   }
 
   .process-step p {
-    font-size: 0.88rem;
-    line-height: 1.75;
+    color: var(--color-text);
+    font-size: 1.0625rem;
+    line-height: 1.6;
     max-width: 40ch;
+  }
+
+  @media (max-width: 600px) {
+    .page-hero {
+      padding-top: calc(var(--nav-height) + 2.25rem);
+    }
+
+    .page-hero-title {
+      font-size: clamp(2.25rem, 10vw, 2.5rem);
+    }
+
+    .page-hero-desc {
+      font-size: 1rem;
+    }
+
+    .services-section {
+      padding-top: 1.75rem;
+    }
+
+    .services-grid {
+      gap: 1.125rem;
+    }
+
+    .process-section {
+      padding-block: 2.75rem 2.25rem;
+    }
+
+    .process-title {
+      font-size: clamp(1.75rem, 8vw, 2rem);
+    }
+
+    .process-steps {
+      gap: 2rem;
+    }
+
+    .step-title {
+      font-size: 1.375rem;
+    }
+
+    .process-step p {
+      font-size: 1rem;
+    }
   }
 </style>

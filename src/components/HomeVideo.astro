@@ -3,17 +3,25 @@ interface Props {
   pauseLabel: string;
   playLabel: string;
   fallback: string;
+  src?: string;
+  poster?: string;
 }
 
-const { pauseLabel, playLabel, fallback } = Astro.props;
+const {
+  pauseLabel,
+  playLabel,
+  fallback,
+  src = "/images/hero/hero-video.mp4",
+  poster = "/images/hero/hero-video-poster.webp",
+} = Astro.props;
 ---
 
 <section class="home-video" aria-label={playLabel}>
   <div class="home-video__frame">
     <video
       class="home-video__media"
-      src="/images/hero/hero-video.mp4"
-      poster="/images/hero/hero-video-poster.webp"
+      src={src}
+      poster={poster}
       width="848"
       height="480"
       autoplay
@@ -138,10 +146,10 @@ const { pauseLabel, playLabel, fallback } = Astro.props;
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
-    border: 1px solid rgba(255, 255, 255, 0.78);
+    border: 1px solid currentColor;
     border-radius: 999px;
     background: rgba(3, 56, 218, 0.9);
-    color: #fff;
+    color: var(--madlen-pink);
     font: 700 0.73rem/1 Arial, Helvetica, sans-serif;
     letter-spacing: 0.04em;
     cursor: pointer;

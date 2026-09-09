@@ -1,0 +1,182 @@
+# EXAMPLE ONLY — deliberately outside .github/workflows and therefore inert.
+# Copy only during the separately authorized hosting connection task, after the
+# target paths, SSH host key, PHP binary and symlink behaviour are verified.
+name: Madlen production publisher (disabled example)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publication_id:
+        description: UUID created by the Madlen CMS
+        required: true
+      sequence:
+        description: Monotonically increasing publication sequence
+        required: true
+      package_sha256:
+        description: SHA-256 of the immutable CMS package
+        required: true
+      source_revision:
+        description: Exact 40-character application source commit
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: madlen-production
+  cancel-in-progress: false
+
+jobs:
+  build-verify-transfer-activate:
+    runs-on: ubuntu-latest
+    env:
+      PUBLICATION_ID: ${{ inputs.publication_id }}
+      PUBLICATION_SEQUENCE: ${{ inputs.sequence }}
+      PACKAGE_SHA256: ${{ inputs.package_sha256 }}
+      SOURCE_REVISION: ${{ inputs.source_revision }}
+      CMS_URL: ${{ secrets.MADLEN_CMS_URL }}
+      CMS_TOKEN: ${{ secrets.MADLEN_PUBLISHER_API_TOKEN }}
+    steps:
+      - name: Validate immutable identifiers
+        shell: bash
+        run: |
+          [[ "$PUBLICATION_ID" =~ ^[A-Za-z0-9-]{8,64}$ ]]
+          [[ "$PUBLICATION_SEQUENCE" =~ ^[1-9][0-9]*$ ]]
+          [[ "$PACKAGE_SHA256" =~ ^[0-9a-fA-F]{64}$ ]]
+          [[ "$SOURCE_REVISION" =~ ^[0-9a-fA-F]{40}$ ]]
+
+      - name: Check out the exact approved application source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_revision }}
+
+      - name: Use the project Node version
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Report build start and download the private package
+        shell: bash
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data '{"status":"building"}' \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/status"
+          curl --fail-with-body --silent --show-error \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --output "$RUNNER_TEMP/publication.zip" \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/package"
+          printf '%s  %s\n' "$PACKAGE_SHA256" "$RUNNER_TEMP/publication.zip" | sha256sum --check --strict
+
+      - name: Reject unsafe archive paths and extract
+        shell: bash
+        run: |
+          while IFS= read -r entry; do
+            [[ -n "$entry" ]]
+            [[ "$entry" != /* ]]
+            [[ "$entry" != *'\\'* ]]
+            [[ "$entry" != *:* ]]
+            case "/$entry/" in *'/../'*) exit 1 ;; esac
+          done < <(unzip -Z1 "$RUNNER_TEMP/publication.zip")
+          mkdir "$RUNNER_TEMP/publication"
+          unzip -q "$RUNNER_TEMP/publication.zip" -d "$RUNNER_TEMP/publication"
+
+      - name: Install locked frontend dependencies
+        run: npm ci
+
+      - name: Build and validate DE/EN routes and every published media reference
+        env:
+          MADLEN_EXPECTED_PUBLICATION_ID: ${{ inputs.publication_id }}
+          MADLEN_EXPECTED_SEQUENCE: ${{ inputs.sequence }}
+          MADLEN_EXPECTED_SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: npm run build:publication -- "$RUNNER_TEMP/publication" "$RUNNER_TEMP/site"
+
+      - name: Create the checked static release archive
+        shell: bash
+        run: |
+          (cd "$RUNNER_TEMP/site" && zip -q -r "$RUNNER_TEMP/madlen-static-release.zip" .)
+          sha256sum "$RUNNER_TEMP/madlen-static-release.zip" | cut -d ' ' -f 1 > "$RUNNER_TEMP/static.sha256"
+
+      - name: Report transfer start
+        shell: bash
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data '{"status":"uploading"}' \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/status"
+
+      - name: Configure narrowly scoped Netcup SSH access
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.NETCUP_SSH_PRIVATE_KEY }}
+          SSH_HOST_KEY: ${{ secrets.NETCUP_SSH_HOST_KEY }}
+        run: |
+          install -d -m 0700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 0600 "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$SSH_HOST_KEY" > "$HOME/.ssh/known_hosts"
+          chmod 0600 "$HOME/.ssh/known_hosts"
+
+      - name: Transfer into the dedicated Madlen incoming directory
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.NETCUP_SSH_HOST }}
+          SSH_USER: ${{ secrets.NETCUP_SSH_USER }}
+          INCOMING_ROOT: ${{ vars.NETCUP_MADLEN_INCOMING_ROOT }}
+        run: |
+          archive="madlen-static-$PUBLICATION_SEQUENCE-$PUBLICATION_ID.zip"
+          scp "$RUNNER_TEMP/madlen-static-release.zip" "$SSH_USER@$SSH_HOST:$INCOMING_ROOT/$archive"
+          printf '%s' "$archive" > "$RUNNER_TEMP/remote-archive-name"
+
+      - name: Verify and atomically activate on Netcup
+        id: activate
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.NETCUP_SSH_HOST }}
+          SSH_USER: ${{ secrets.NETCUP_SSH_USER }}
+          BACKEND_ROOT: ${{ vars.NETCUP_MADLEN_BACKEND_ROOT }}
+          PHP_BIN: ${{ vars.NETCUP_PHP_BIN }}
+        run: |
+          archive="$(cat "$RUNNER_TEMP/remote-archive-name")"
+          checksum="$(cat "$RUNNER_TEMP/static.sha256")"
+          ssh "$SSH_USER@$SSH_HOST" \
+            "cd '$BACKEND_ROOT' && '$PHP_BIN' artisan madlen:production:activate '$PUBLICATION_ID' '$PUBLICATION_SEQUENCE' '$archive' '$checksum'"
+
+      - name: Confirm the active release to the CMS
+        shell: bash
+        run: |
+          target="$PUBLICATION_SEQUENCE-$PUBLICATION_ID"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "{\"status\":\"active\",\"target_release\":\"$target\"}" \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/status"
+
+      - name: Report a failed job without changing the active site
+        if: ${{ failure() && steps.activate.outcome != 'success' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data '{"status":"failed","error":"Der externe Build oder die Übertragung ist fehlgeschlagen. Der bisherige Stand bleibt aktiv."}' \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/status"
+
+# Required before this example may become active:
+# - install/update the Laravel backend once, including the production migration;
+# - verify Webhosting 2000 account paths, quotas, SSH/SFTP and symlink rename;
+# - point only the Madlen public document root at DESTINATION_ROOT/current;
+# - create a dedicated incoming directory and a narrowly scoped SSH key;
+# - place the documented Madlen safety marker in each of those two directories;
+# - configure the matching CMS token in backend .env and GitHub repository secrets
+#   (or a protected environment only if the private-repository plan supports it);
+# - pin the Netcup host key and replace all placeholder variables;
+# - activate and verify docs/external-preview.example.yml independently before relying on hosted previews.

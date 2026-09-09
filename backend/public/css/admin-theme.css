@@ -1,0 +1,251 @@
+:root {
+  --madlen-admin-sidebar: #f3dee5;
+  --madlen-admin-workspace: #f8f2e8;
+  --madlen-admin-surface: #fffcf7;
+  --madlen-admin-table-header: #f4eee5;
+  --madlen-admin-text: #17233b;
+  --madlen-admin-text-secondary: #475569;
+  --madlen-admin-icon: #59677f;
+  --madlen-admin-blue: #0338da;
+  --madlen-admin-blue-hover: #002caf;
+  --madlen-admin-active: #e7edff;
+  --madlen-admin-border: #d9cbd0;
+  --madlen-admin-control: #7b879a;
+  --madlen-admin-row-hover: #f2f5ff;
+}
+
+.fi-body {
+  background: var(--madlen-admin-workspace);
+  color: var(--madlen-admin-text);
+}
+
+.fi-sidebar,
+.fi-sidebar-header {
+  background: var(--madlen-admin-sidebar);
+}
+
+.fi-logo,
+.fi-header-heading {
+  color: var(--madlen-admin-text);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.fi-sidebar-group-label,
+.fi-sidebar-item-label,
+.fi-sidebar-database-notifications-btn-label {
+  color: var(--madlen-admin-text-secondary);
+  font-weight: 500;
+}
+
+.fi-sidebar-item-btn > .fi-icon,
+.fi-sidebar-group-btn .fi-icon,
+.fi-sidebar-group-dropdown-trigger-btn .fi-icon,
+.fi-sidebar-database-notifications-btn > .fi-icon {
+  color: var(--madlen-admin-icon);
+}
+
+.fi-icon-btn:not(.fi-color) > .fi-icon,
+.fi-link:not(.fi-color) > .fi-icon {
+  color: var(--madlen-admin-icon);
+}
+
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover,
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:focus-visible {
+  background: var(--madlen-admin-surface);
+}
+
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:focus-visible {
+  outline: 2px solid var(--madlen-admin-blue);
+  outline-offset: 2px;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+  background: var(--madlen-admin-active);
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn::before {
+  position: absolute;
+  inset-block: 0.45rem;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--madlen-admin-blue);
+  content: "";
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label,
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon {
+  color: var(--madlen-admin-blue);
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
+  font-weight: 600;
+}
+
+.fi-section,
+.fi-ta-ctn,
+.fi-tabs:not(.fi-contained),
+.fi-wi-stats-overview-stat {
+  border: 1px solid var(--madlen-admin-border);
+  background: var(--madlen-admin-surface);
+}
+
+.fi-section-header-heading,
+.fi-ta-header-heading,
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-label {
+  color: var(--madlen-admin-text);
+  font-weight: 600;
+}
+
+.fi-section-header-description,
+.fi-ta-header-description,
+.fi-fo-field-wrp-helper-text,
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description,
+.fi-breadcrumbs-item-label {
+  color: var(--madlen-admin-text-secondary);
+}
+
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value {
+  color: var(--madlen-admin-blue);
+}
+
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description {
+  align-items: flex-start;
+  line-height: 1.45;
+}
+
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description .fi-icon {
+  margin-top: 0.15rem;
+  color: var(--madlen-admin-blue);
+}
+
+a.fi-wi-stats-overview-stat {
+  cursor: pointer;
+}
+
+a.fi-wi-stats-overview-stat:hover {
+  border-color: var(--madlen-admin-blue);
+  background: var(--madlen-admin-row-hover);
+}
+
+a.fi-wi-stats-overview-stat:focus-visible {
+  outline: 3px solid var(--madlen-admin-blue);
+  outline-offset: 3px;
+}
+
+.fi-ta-header-cell,
+.fi-ta-header-group-cell {
+  background: var(--madlen-admin-table-header);
+  color: var(--madlen-admin-text);
+  font-weight: 600;
+}
+
+.fi-ta-row:not(.fi-selected):hover > td {
+  background: var(--madlen-admin-row-hover);
+}
+
+.fi-tabs-item .fi-tabs-item-label {
+  color: var(--madlen-admin-text-secondary);
+  font-weight: 500;
+}
+
+.fi-tabs-item > .fi-icon {
+  color: var(--madlen-admin-icon);
+}
+
+.fi-tabs-item.fi-active {
+  background: var(--madlen-admin-active);
+}
+
+.fi-tabs-item.fi-active .fi-tabs-item-label,
+.fi-tabs-item.fi-active > .fi-icon {
+  color: var(--madlen-admin-blue);
+}
+
+.fi-tabs-item.fi-active .fi-tabs-item-label {
+  font-weight: 600;
+}
+
+.fi-input-wrp:not(.fi-disabled):not(.fi-invalid) {
+  box-shadow: 0 0 0 1px var(--madlen-admin-control);
+}
+
+.fi-input-wrp:not(.fi-disabled):not(.fi-invalid):focus-within {
+  box-shadow: 0 0 0 2px var(--madlen-admin-blue);
+}
+
+.fi-input-wrp.fi-disabled {
+  border-color: var(--madlen-admin-border);
+  background: var(--madlen-admin-table-header);
+  opacity: 0.72;
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined) {
+  background: var(--madlen-admin-blue);
+  color: #fff;
+  box-shadow: none;
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined) > .fi-icon {
+  color: #fff;
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-disabled):not([disabled]):hover {
+  background: var(--madlen-admin-blue-hover);
+  color: #fff;
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-disabled):not([disabled]):focus-visible {
+  outline: 3px solid var(--madlen-admin-blue);
+  outline-offset: 2px;
+}
+
+.madlen-media-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3rem;
+}
+
+.madlen-media-option img,
+.madlen-media-option__video {
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 3rem;
+  border-radius: 0.4rem;
+  object-fit: cover;
+  background: var(--madlen-admin-sidebar);
+}
+
+.madlen-media-option__video {
+  display: grid;
+  place-items: center;
+  color: var(--madlen-admin-blue);
+}
+
+.madlen-media-option strong,
+.madlen-media-option small,
+.madlen-media-preview strong {
+  display: block;
+}
+
+.madlen-media-option small {
+  margin-top: 0.15rem;
+  color: var(--madlen-admin-text-secondary);
+}
+
+.madlen-media-preview {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 28rem;
+}
+
+.madlen-media-preview img,
+.madlen-media-preview video {
+  display: block;
+  width: 100%;
+  max-height: 18rem;
+  border-radius: 0.75rem;
+  object-fit: contain;
+  background: var(--madlen-admin-surface);
+}

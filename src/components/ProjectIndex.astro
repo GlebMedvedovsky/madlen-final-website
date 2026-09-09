@@ -1,42 +1,31 @@
 ---
-import { projects } from "../data/projects";
+import { projects } from "../content/cms";
 import ProjectCard from "./ProjectCard.astro";
+import { useTranslations } from "../i18n/utils";
 
 interface Props {
   lang: "de" | "en";
 }
 
 const { lang } = Astro.props;
-const copy =
-  lang === "de"
-    ? {
-        label: "Ausgewählte Arbeiten",
-        title: "portfolio",
-        intro:
-          "Filmische, editoriale und dokumentarische Bildwelten – von Hochzeiten und Events bis zu Mode, Marken und Landschaft.",
-      }
-    : {
-        label: "Selected work",
-        title: "portfolio",
-        intro:
-          "Cinematic, editorial and documentary visual stories — from weddings and events to fashion, brands and landscape.",
-      };
+const t = useTranslations(lang);
+const copy = t.portfolio;
 
 const filters =
   lang === "de"
     ? [
-        ["all", "Alle"],
-        ["editorial", "Editorial"],
-        ["events", "Events"],
-        ["weddings", "Hochzeiten"],
-        ["landscape", "Landschaft"],
+        ["all", copy.filters.all],
+        ["editorial", copy.filters.editorial],
+        ["events", copy.filters.events],
+        ["weddings", copy.filters.weddings],
+        ["landscape", copy.filters.landscape],
       ]
     : [
-        ["all", "All"],
-        ["editorial", "Editorial"],
-        ["events", "Events"],
-        ["weddings", "Weddings"],
-        ["landscape", "Landscape"],
+        ["all", copy.filters.all],
+        ["editorial", copy.filters.editorial],
+        ["events", copy.filters.events],
+        ["weddings", copy.filters.weddings],
+        ["landscape", copy.filters.landscape],
       ];
 ---
 

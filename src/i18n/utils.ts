@@ -1,9 +1,8 @@
-import { de } from "./de";
-import { en } from "./en";
+import { translations } from "../content/cms";
 
 export const languages = {
-  de,
-  en,
+  de: translations.de,
+  en: translations.en,
 };
 
 export type Language = keyof typeof languages;

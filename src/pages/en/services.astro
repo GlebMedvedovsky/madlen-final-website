@@ -1,5 +1,11 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import ServiceCard from "../../components/ServiceCard.astro";
+import { getServices } from "../../content/cms";
+import { useTranslations } from "../../i18n/utils";
+
+const services = getServices("en");
+const t = useTranslations("en");
 ---
 
 <Layout
@@ -7,50 +13,33 @@ import Layout from "../../layouts/Layout.astro";
   title="Services – Foto & Video Madlen"
   description="Portrait, wedding and event photography, videography, editing and editorial photography by Madlen Medvedovskyy."
 >
-  <section class="page-hero">
+  <section class="page-hero services-page">
     <div class="container">
-      <span class="section-label">Services</span>
+      <span class="section-label">{t.services.eyebrow}</span>
 
-      <h1>
-        What I can<br />
-        <em>create for you.</em>
+      <h1 class="page-hero-title">
+        {t.services.titleLead}<br />
+        <em>{t.services.titleEmphasis}</em>
       </h1>
 
-      <p>
-        Every project is different. Tell me about your plans and
-        I will prepare an individual offer tailored to your needs.
+      <p class="page-hero-desc">
+        {t.services.intro}
       </p>
+    </div>
+  </section>
 
+  <section class="services-section">
+    <div class="container">
       <div class="services-grid">
-        <article>
-          <h2>Portrait Photography</h2>
-          <p>Natural and expressive portraits shaped by light, personality and atmosphere.</p>
-        </article>
-
-        <article>
-          <h2>Couples & Families</h2>
-          <p>Authentic photographs of shared moments without forced poses.</p>
-        </article>
-
-        <article>
-          <h2>Wedding Photography</h2>
-          <p>Emotional and timeless images of the moments that make your wedding unique.</p>
-        </article>
-
-        <article>
-          <h2>Events</h2>
-          <p>Professional photography for private events, cultural occasions and celebrations.</p>
-        </article>
-
-        <article>
-          <h2>Videography & Editing</h2>
-          <p>Cinematic wedding films, event videos and carefully edited visual stories.</p>
-        </article>
-
-        <article>
-          <h2>Editorial & Commercial</h2>
-          <p>Photography for magazines, brands, shops, campaigns and creative projects.</p>
-        </article>
+        {services.map((service) => (
+          <ServiceCard
+            title={service.title}
+            description={service.description}
+            icon={service.icon}
+            highlighted={service.highlighted}
+            headingLevel="h2"
+          />
+        ))}
       </div>
 
       <a href="/en/contact" class="page-button">
@@ -62,42 +51,43 @@ import Layout from "../../layouts/Layout.astro";
 
 <style>
   .page-hero {
-    padding-top: calc(var(--nav-height) + var(--space-3xl));
-    padding-bottom: var(--space-3xl);
+    padding-top: calc(var(--nav-height) + clamp(4rem, 5vw, 5rem));
+    padding-bottom: 0;
     background: var(--color-cream);
   }
 
-  h1 {
+  .page-hero-title {
+    color: var(--madlen-blue);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2.25rem, 4.45vw, 4rem);
+    font-weight: 700;
+    line-height: 0.98;
+    letter-spacing: -0.045em;
     margin: var(--space-sm) 0 var(--space-md);
   }
 
-  h1 em {
-    color: var(--color-bronze);
-    font-style: italic;
-    font-weight: 300;
+  .page-hero-title em {
+    color: inherit;
+    font-style: normal;
+    font-weight: inherit;
   }
 
-  .page-hero > .container > p {
+  .page-hero-desc {
+    color: var(--color-text);
+    font-size: 1.125rem;
+    line-height: 1.6;
     max-width: 58ch;
+  }
+
+  .services-section {
+    padding-block: 2.75rem 3.5rem;
+    background: var(--color-cream);
   }
 
   .services-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-    margin-top: 3rem;
-  }
-
-  article {
-    padding: 1.5rem;
-    background: #ffffff;
-    border: 1px solid var(--color-beige);
-    border-radius: 12px;
-  }
-
-  article h2 {
-    margin-bottom: 0.75rem;
-    font-size: 1.35rem;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 
   .page-button {
@@ -112,9 +102,38 @@ import Layout from "../../layouts/Layout.astro";
     text-transform: uppercase;
   }
 
-  @media (max-width: 900px) {
+  @media (min-width: 768px) {
     .services-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .services-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .page-hero {
+      padding-top: calc(var(--nav-height) + 2.25rem);
+    }
+
+    .page-hero-title {
+      font-size: clamp(2.25rem, 10vw, 2.5rem);
+    }
+
+    .page-hero-desc {
+      font-size: 1rem;
+    }
+
+    .services-section {
+      padding-block: 1.75rem 2.25rem;
+    }
+
+    .services-grid {
+      gap: 1.125rem;
     }
   }
 </style>

@@ -1,6 +1,7 @@
 ---
-import type { Project } from "../data/projects";
-import { getAdjacentProjects } from "../data/projects";
+import type { Project } from "../content/cms";
+import { getAdjacentProjects } from "../content/cms";
+import { useTranslations } from "../i18n/utils";
 
 interface Props {
   project: Project;
@@ -14,7 +15,7 @@ const next = adjacent.next!;
 const prefix = lang === "en" ? "/en/portfolio" : "/portfolio";
 const backLabel = lang === "de" ? "Alle Projekte" : "All projects";
 const previousLabel = lang === "de" ? "Vorheriges Projekt" : "Previous project";
-const nextLabel = lang === "de" ? "Nächstes Projekt" : "Next project";
+const nextLabel = useTranslations(lang).portfolio.nextProject;
 ---
 
 <article class="project-detail">

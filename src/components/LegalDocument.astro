@@ -1,0 +1,107 @@
+---
+interface Props {
+  content: string;
+}
+
+const { content } = Astro.props;
+const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+const label = lines.shift() ?? "";
+const title = lines.shift() ?? "";
+const namedHeadings = new Set([
+  "Angaben gemäß § 5 DDG",
+  "Kontakt",
+  "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV",
+  "Verbraucherstreitbeilegung",
+  "Allgemeine Hinweise",
+  "Contact form",
+  "External services and cookies",
+]);
+const isHeading = (line: string) => /^\d+(?:\.\d+)?\.\s/.test(line) || namedHeadings.has(line);
+const intro: string[] = [];
+const sections: Array<{ heading: string; body: string[] }> = [];
+
+for (const line of lines) {
+  if (isHeading(line)) {
+    sections.push({ heading: line, body: [] });
+  } else if (sections.length) {
+    sections.at(-1)?.body.push(line);
+  } else {
+    intro.push(line);
+  }
+}
+---
+
+<section class="legal-page">
+  <div class="container legal-container">
+    <span class="section-label">{label}</span>
+    <h1>{title}</h1>
+    {intro.length > 0 && <p class="legal-intro">{intro.join(" ")}</p>}
+    {sections.map((section) => (
+      <div class="legal-block">
+        <h2>{section.heading}</h2>
+        <p>{section.body.join(" ")}</p>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .legal-page {
+    padding-top: calc(var(--nav-height) + var(--space-3xl));
+    padding-bottom: var(--space-3xl);
+    background: linear-gradient(var(--madlen-pink-soft) 0 13rem, #fff 13rem);
+  }
+
+  .legal-container { max-width: 860px; }
+
+  .section-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--madlen-blue);
+  }
+
+  h1 {
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-2xl);
+    color: var(--madlen-blue);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+  }
+
+  .legal-intro,
+  .legal-block { max-width: 68ch; }
+
+  .legal-intro {
+    margin-bottom: var(--space-xl);
+    line-height: 1.8;
+  }
+
+  .legal-block {
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--madlen-pink);
+  }
+
+  .legal-block:last-child { border-bottom: 0; }
+
+  .legal-block h2 {
+    margin-bottom: var(--space-sm);
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--madlen-blue);
+  }
+
+  .legal-block p {
+    margin: 0;
+    color: var(--madlen-black);
+    line-height: 1.8;
+  }
+
+  @media (max-width: 560px) {
+    .legal-page { padding-top: calc(var(--nav-height) + var(--space-2xl)); }
+  }
+</style>

@@ -1,0 +1,15 @@
+.git
+.github
+.astro
+.env
+.env.*
+dist
+node_modules
+backend/.env
+backend/vendor
+backend/node_modules
+backend/storage/app
+backend/storage/framework
+backend/storage/logs
+public/design-reference
+public/images
