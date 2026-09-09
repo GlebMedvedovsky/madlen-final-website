@@ -6,6 +6,8 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
+    "build:publication": "node scripts/production/build-publication.mjs",
+    "build:preview": "node scripts/preview/build-preview.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },

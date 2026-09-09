@@ -1,0 +1,1791 @@
+{
+  "schemaVersion": 1,
+  "source": "tracked Astro content",
+  "projects": [
+    {
+      "slug": "rainbow",
+      "title": {
+        "de": "Rainbow",
+        "en": "Rainbow"
+      },
+      "category": "editorial",
+      "cover": "/images/projects/rainbow/0-titelfoto-rainbow-orange.webp",
+      "description": {
+        "de": "Editoriale Fotografie mit einem filmischen Blick für Farbe, Form und Persönlichkeit.",
+        "en": "Editorial photography with a cinematic eye for colour, form and personality."
+      },
+      "images": [
+        {
+          "src": "/images/projects/rainbow/1-rainbow-violett.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/rainbow/2-rainbow-rosa.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/rainbow/3-rainbow-violett.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/rainbow/4-rainbow-rosa.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/rainbow/5-rainbow-violett.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/rainbow/6-rainbow-rosa.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/rainbow/7-rainbow-rosa.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/rainbow/8-rainbow-rosa.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/rainbow/9-rainbow-blau.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 900,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/rainbow/10-rainbow-blau.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 1000,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/rainbow/11-rainbow-grun.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 1100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/rainbow/12-rainbow-grun.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 1200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/rainbow/13-rainbow-grun.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 1300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/rainbow/14-rainbow-grun.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 1400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/rainbow/14-rainbow-orange.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 1400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/rainbow/15-rainbow-orange.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 1500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/rainbow/16-rainbow-orange.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 1600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/rainbow/17-rainbow-orange.webp",
+          "altDe": "Rainbow – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Rainbow — photography by Madlen Medvedovskyy",
+          "order": 1700,
+          "side": "left"
+        }
+      ]
+    },
+    {
+      "slug": "renaissance",
+      "title": {
+        "de": "Renaissance",
+        "en": "Renaissance"
+      },
+      "category": "editorial",
+      "cover": "/images/projects/renaissance/0-renaissance.webp",
+      "description": {
+        "de": "Editoriale Fotografie mit einem filmischen Blick für Farbe, Form und Persönlichkeit.",
+        "en": "Editorial photography with a cinematic eye for colour, form and personality."
+      },
+      "images": [
+        {
+          "src": "/images/projects/renaissance/1-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/renaissance/2-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/renaissance/3-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/renaissance/4-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/renaissance/5-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/renaissance/6-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/renaissance/7-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/renaissance/8-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/renaissance/9-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 900,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/renaissance/10-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 1000,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/renaissance/11-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 1100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/renaissance/12-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 1200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/renaissance/13-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 1300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/renaissance/14-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 1400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/renaissance/15-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 1500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/renaissance/17-renaissance.webp",
+          "altDe": "Renaissance – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Renaissance — photography by Madlen Medvedovskyy",
+          "order": 1700,
+          "side": "left"
+        }
+      ]
+    },
+    {
+      "slug": "many-facets",
+      "title": {
+        "de": "Many Facets",
+        "en": "Many Facets"
+      },
+      "category": "editorial",
+      "cover": "/images/projects/many-facets/0-manyfacets.webp",
+      "description": {
+        "de": "Editoriale Fotografie mit einem filmischen Blick für Farbe, Form und Persönlichkeit.",
+        "en": "Editorial photography with a cinematic eye for colour, form and personality."
+      },
+      "images": [
+        {
+          "src": "/images/projects/many-facets/1-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/many-facets/2-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/many-facets/3-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/many-facets/4-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/many-facets/5-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/many-facets/6-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/many-facets/7-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/many-facets/8-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/many-facets/9-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 900,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/many-facets/10-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 1000,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/many-facets/11-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 1100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/many-facets/12-manyfacets.webp",
+          "altDe": "Many Facets – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Many Facets — photography by Madlen Medvedovskyy",
+          "order": 1200,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "slug": "easy-morning",
+      "title": {
+        "de": "Easy Morning",
+        "en": "Easy Morning"
+      },
+      "category": "editorial",
+      "cover": "/images/projects/easy-morning/0-easymorning.webp",
+      "description": {
+        "de": "Editoriale Fotografie mit einem filmischen Blick für Farbe, Form und Persönlichkeit.",
+        "en": "Editorial photography with a cinematic eye for colour, form and personality."
+      },
+      "images": [
+        {
+          "src": "/images/projects/easy-morning/1-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/easy-morning/2-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/easy-morning/3-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/easy-morning/4-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/easy-morning/5-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/easy-morning/6-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/easy-morning/7-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/easy-morning/8-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/easy-morning/9-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 900,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/easy-morning/10-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 1000,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/easy-morning/11-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 1100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/easy-morning/12-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 1200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/easy-morning/13-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 1300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/easy-morning/14-easymorning.webp",
+          "altDe": "Easy Morning – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Easy Morning — photography by Madlen Medvedovskyy",
+          "order": 1400,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "slug": "she-blooms-in-blue",
+      "title": {
+        "de": "She Blooms in Blue",
+        "en": "She Blooms in Blue"
+      },
+      "category": "editorial",
+      "cover": "/images/projects/she-blooms-in-blue/0-shebloomsinblue.webp",
+      "description": {
+        "de": "Editoriale Fotografie mit einem filmischen Blick für Farbe, Form und Persönlichkeit.",
+        "en": "Editorial photography with a cinematic eye for colour, form and personality."
+      },
+      "images": [
+        {
+          "src": "/images/projects/she-blooms-in-blue/1-shebloomsinblue.webp",
+          "altDe": "She Blooms in Blue – Fotografie von Madlen Medvedovskyy",
+          "altEn": "She Blooms in Blue — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/she-blooms-in-blue/2-shebloomsinblue.webp",
+          "altDe": "She Blooms in Blue – Fotografie von Madlen Medvedovskyy",
+          "altEn": "She Blooms in Blue — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/she-blooms-in-blue/3-shebloomsinblue.webp",
+          "altDe": "She Blooms in Blue – Fotografie von Madlen Medvedovskyy",
+          "altEn": "She Blooms in Blue — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/she-blooms-in-blue/4-shebloomsinblue.webp",
+          "altDe": "She Blooms in Blue – Fotografie von Madlen Medvedovskyy",
+          "altEn": "She Blooms in Blue — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/she-blooms-in-blue/5-shebloomsinblue.webp",
+          "altDe": "She Blooms in Blue – Fotografie von Madlen Medvedovskyy",
+          "altEn": "She Blooms in Blue — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        }
+      ]
+    },
+    {
+      "slug": "about-pop",
+      "title": {
+        "de": "ABOUT POP",
+        "en": "ABOUT POP"
+      },
+      "category": "events",
+      "cover": "/images/projects/about-pop/0-aboutpop.webp",
+      "description": {
+        "de": "Eine atmosphärische Eventreportage mit Blick für Menschen, Details und echte Momente.",
+        "en": "An atmospheric event story focused on people, details and genuine moments."
+      },
+      "images": [
+        {
+          "src": "/images/projects/about-pop/1-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/2-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/3-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/4-1-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 401,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/4-2-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 402,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/5-1-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 501,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/5-2-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 502,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/6-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/7-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/8-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/9-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 900,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/10-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1000,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/11-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/12-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/13-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/14-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/15-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/16-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/17-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/18-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1800,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/19-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 1900,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/about-pop/20-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 2000,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/about-pop/21-aboutpop.webp",
+          "altDe": "ABOUT POP – Fotografie von Madlen Medvedovskyy",
+          "altEn": "ABOUT POP — photography by Madlen Medvedovskyy",
+          "order": 2100,
+          "side": "left"
+        }
+      ]
+    },
+    {
+      "slug": "personio-2",
+      "title": {
+        "de": "Personio 2.0",
+        "en": "Personio 2.0"
+      },
+      "category": "events",
+      "cover": "/images/projects/personio-2/0-personio.webp",
+      "description": {
+        "de": "Eine atmosphärische Eventreportage mit Blick für Menschen, Details und echte Momente.",
+        "en": "An atmospheric event story focused on people, details and genuine moments."
+      },
+      "images": [
+        {
+          "src": "/images/projects/personio-2/1-personio.webp",
+          "altDe": "Personio 2.0 – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Personio 2.0 — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/personio-2/2-personio.webp",
+          "altDe": "Personio 2.0 – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Personio 2.0 — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/personio-2/3-personio.webp",
+          "altDe": "Personio 2.0 – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Personio 2.0 — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/personio-2/4-personio.webp",
+          "altDe": "Personio 2.0 – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Personio 2.0 — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/personio-2/5-personio.webp",
+          "altDe": "Personio 2.0 – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Personio 2.0 — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/personio-2/6-personio.webp",
+          "altDe": "Personio 2.0 – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Personio 2.0 — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "slug": "partscloud",
+      "title": {
+        "de": "PartsCloud",
+        "en": "PartsCloud"
+      },
+      "category": "events",
+      "cover": "/images/projects/partscloud/0-sps.webp",
+      "description": {
+        "de": "Eine atmosphärische Eventreportage mit Blick für Menschen, Details und echte Momente.",
+        "en": "An atmospheric event story focused on people, details and genuine moments."
+      },
+      "images": [
+        {
+          "src": "/images/projects/partscloud/1-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/partscloud/2-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/partscloud/3-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/partscloud/4-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/partscloud/5-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/partscloud/6-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/partscloud/7-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/partscloud/8-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/partscloud/9-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 900,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/partscloud/10-sps.webp",
+          "altDe": "PartsCloud – Fotografie von Madlen Medvedovskyy",
+          "altEn": "PartsCloud — photography by Madlen Medvedovskyy",
+          "order": 1000,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "slug": "porsche-postcards",
+      "title": {
+        "de": "Porsche Postcards",
+        "en": "Porsche Postcards"
+      },
+      "category": "events",
+      "cover": "/images/projects/porsche-postcards/0-porschepostcards.webp",
+      "description": {
+        "de": "Eine atmosphärische Eventreportage mit Blick für Menschen, Details und echte Momente.",
+        "en": "An atmospheric event story focused on people, details and genuine moments."
+      },
+      "images": [
+        {
+          "src": "/images/projects/porsche-postcards/1-porschepostcards.webp",
+          "altDe": "Porsche Postcards – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Porsche Postcards — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/porsche-postcards/2-porschepostcards.webp",
+          "altDe": "Porsche Postcards – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Porsche Postcards — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/porsche-postcards/3-porschepostcards.webp",
+          "altDe": "Porsche Postcards – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Porsche Postcards — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/porsche-postcards/4-porschepostcards.webp",
+          "altDe": "Porsche Postcards – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Porsche Postcards — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/porsche-postcards/5-porschepostcards.webp",
+          "altDe": "Porsche Postcards – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Porsche Postcards — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/porsche-postcards/6-porschepostcards.webp",
+          "altDe": "Porsche Postcards – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Porsche Postcards — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/porsche-postcards/7-porschepostcards.webp",
+          "altDe": "Porsche Postcards – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Porsche Postcards — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/porsche-postcards/8-porschepostcards.webp",
+          "altDe": "Porsche Postcards – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Porsche Postcards — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "slug": "sicherheitspolitischer-dialog",
+      "title": {
+        "de": "Sicherheitspolitischer Dialog",
+        "en": "Security Policy Dialogue"
+      },
+      "category": "events",
+      "cover": "/images/projects/sicherheitspolitischer-dialog/0-sicherheitspolitischer-dialog-pressestatement.webp",
+      "description": {
+        "de": "Eine atmosphärische Eventreportage mit Blick für Menschen, Details und echte Momente.",
+        "en": "An atmospheric event story focused on people, details and genuine moments."
+      },
+      "images": [
+        {
+          "src": "/images/projects/sicherheitspolitischer-dialog/1-sicherheitspolitischer-dialog-pressestatement.webp",
+          "altDe": "Sicherheitspolitischer Dialog – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Security Policy Dialogue — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/sicherheitspolitischer-dialog/2-sicherheitspolitischer-dialog-pressestatement.webp",
+          "altDe": "Sicherheitspolitischer Dialog – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Security Policy Dialogue — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/sicherheitspolitischer-dialog/3-sicherheitspolitischer-dialog-pressestatement.webp",
+          "altDe": "Sicherheitspolitischer Dialog – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Security Policy Dialogue — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        }
+      ]
+    },
+    {
+      "slug": "laura-micha",
+      "title": {
+        "de": "Laura & Micha",
+        "en": "Laura & Micha"
+      },
+      "category": "weddings",
+      "cover": "/images/projects/laura-micha/0-laura-micha.webp",
+      "description": {
+        "de": "Eine persönliche Hochzeitsreportage, ruhig beobachtet und emotional erzählt.",
+        "en": "A personal wedding story, quietly observed and emotionally told."
+      },
+      "images": [
+        {
+          "src": "/images/projects/laura-micha/2-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/laura-micha/2-laura-micha-1.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/laura-micha/3-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/laura-micha/4-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/laura-micha/5-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/laura-micha/6-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/laura-micha/7-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/laura-micha/8-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/laura-micha/9-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 900,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/laura-micha/10-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 1000,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/laura-micha/11-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 1100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/laura-micha/12-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 1200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/laura-micha/13-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 1300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/laura-micha/14-laura-micha.webp",
+          "altDe": "Laura & Micha – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Laura & Micha — photography by Madlen Medvedovskyy",
+          "order": 1400,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "slug": "simon-lena",
+      "title": {
+        "de": "Simon & Lena",
+        "en": "Simon & Lena"
+      },
+      "category": "weddings",
+      "cover": "/images/projects/simon-lena/0-simonlena.webp",
+      "description": {
+        "de": "Eine persönliche Hochzeitsreportage, ruhig beobachtet und emotional erzählt.",
+        "en": "A personal wedding story, quietly observed and emotionally told."
+      },
+      "images": [
+        {
+          "src": "/images/projects/simon-lena/1-simonlena.webp",
+          "altDe": "Simon & Lena – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Simon & Lena — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/simon-lena/2-simonlena.webp",
+          "altDe": "Simon & Lena – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Simon & Lena — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/simon-lena/3-simonlena.webp",
+          "altDe": "Simon & Lena – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Simon & Lena — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/simon-lena/4-simonlena.webp",
+          "altDe": "Simon & Lena – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Simon & Lena — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/simon-lena/5-simonlena.webp",
+          "altDe": "Simon & Lena – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Simon & Lena — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/simon-lena/6-simonlena.webp",
+          "altDe": "Simon & Lena – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Simon & Lena — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "slug": "joko-erik",
+      "title": {
+        "de": "Joko & Erik",
+        "en": "Joko & Erik"
+      },
+      "category": "weddings",
+      "cover": "/images/projects/joko-erik/0-johannaerik.webp",
+      "description": {
+        "de": "Eine persönliche Hochzeitsreportage, ruhig beobachtet und emotional erzählt.",
+        "en": "A personal wedding story, quietly observed and emotionally told."
+      },
+      "images": [
+        {
+          "src": "/images/projects/joko-erik/1-johannaerik.webp",
+          "altDe": "Joko & Erik – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Joko & Erik — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/joko-erik/2-johannaerik.webp",
+          "altDe": "Joko & Erik – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Joko & Erik — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/joko-erik/3-johannaerik.webp",
+          "altDe": "Joko & Erik – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Joko & Erik — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/joko-erik/4-johannaerik.webp",
+          "altDe": "Joko & Erik – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Joko & Erik — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/joko-erik/5-johannaerik.webp",
+          "altDe": "Joko & Erik – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Joko & Erik — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/joko-erik/6-johannaerik.webp",
+          "altDe": "Joko & Erik – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Joko & Erik — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/joko-erik/7-johannaerik.webp",
+          "altDe": "Joko & Erik – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Joko & Erik — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/joko-erik/8-johannaerik.webp",
+          "altDe": "Joko & Erik – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Joko & Erik — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "slug": "johanna-karle",
+      "title": {
+        "de": "Johanna & Karle",
+        "en": "Johanna & Karle"
+      },
+      "category": "weddings",
+      "cover": "/images/projects/johanna-karle/0-johannakarle.webp",
+      "description": {
+        "de": "Eine persönliche Hochzeitsreportage, ruhig beobachtet und emotional erzählt.",
+        "en": "A personal wedding story, quietly observed and emotionally told."
+      },
+      "images": [
+        {
+          "src": "/images/projects/johanna-karle/1-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/johanna-karle/2-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/johanna-karle/3-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/johanna-karle/4-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/johanna-karle/5-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/johanna-karle/6-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/johanna-karle/7-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/johanna-karle/8-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/johanna-karle/9-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 900,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/johanna-karle/10-johannakarle.webp",
+          "altDe": "Johanna & Karle – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Johanna & Karle — photography by Madlen Medvedovskyy",
+          "order": 1000,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "slug": "eibsee",
+      "title": {
+        "de": "Eibsee",
+        "en": "Eibsee"
+      },
+      "category": "landscape",
+      "cover": "/images/projects/eibsee/eibsee-1.webp",
+      "description": {
+        "de": "Landschaftsfotografie zwischen Ruhe, Weite und natürlichem Licht.",
+        "en": "Landscape photography shaped by stillness, space and natural light."
+      },
+      "images": [
+        {
+          "src": "/images/projects/eibsee/eibsee-2.webp",
+          "altDe": "Eibsee – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Eibsee — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/eibsee/eibsee-3.webp",
+          "altDe": "Eibsee – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Eibsee — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/eibsee/eibsee-4.webp",
+          "altDe": "Eibsee – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Eibsee — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/eibsee/eibsee-5.webp",
+          "altDe": "Eibsee – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Eibsee — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/eibsee/eibsee-7.webp",
+          "altDe": "Eibsee – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Eibsee — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        }
+      ]
+    },
+    {
+      "slug": "norway-sweden",
+      "title": {
+        "de": "Norwegen & Schweden",
+        "en": "Norway & Sweden"
+      },
+      "category": "landscape",
+      "cover": "/images/projects/norway-sweden/0-schweden-norwegen.webp",
+      "description": {
+        "de": "Landschaftsfotografie zwischen Ruhe, Weite und natürlichem Licht.",
+        "en": "Landscape photography shaped by stillness, space and natural light."
+      },
+      "images": [
+        {
+          "src": "/images/projects/norway-sweden/1-schweden-norwegen.webp",
+          "altDe": "Norwegen & Schweden – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Norway & Sweden — photography by Madlen Medvedovskyy",
+          "order": 100,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/norway-sweden/2-schweden-norwegen.webp",
+          "altDe": "Norwegen & Schweden – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Norway & Sweden — photography by Madlen Medvedovskyy",
+          "order": 200,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/norway-sweden/3-schweden-norwegen.webp",
+          "altDe": "Norwegen & Schweden – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Norway & Sweden — photography by Madlen Medvedovskyy",
+          "order": 300,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/norway-sweden/4-schweden-norwegen.webp",
+          "altDe": "Norwegen & Schweden – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Norway & Sweden — photography by Madlen Medvedovskyy",
+          "order": 400,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/norway-sweden/5-schweden-norwegen.webp",
+          "altDe": "Norwegen & Schweden – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Norway & Sweden — photography by Madlen Medvedovskyy",
+          "order": 500,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/norway-sweden/6-schweden-norwegen.webp",
+          "altDe": "Norwegen & Schweden – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Norway & Sweden — photography by Madlen Medvedovskyy",
+          "order": 600,
+          "side": "right"
+        },
+        {
+          "src": "/images/projects/norway-sweden/7-schweden-norwegen.webp",
+          "altDe": "Norwegen & Schweden – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Norway & Sweden — photography by Madlen Medvedovskyy",
+          "order": 700,
+          "side": "left"
+        },
+        {
+          "src": "/images/projects/norway-sweden/8-schweden-norwegen.webp",
+          "altDe": "Norwegen & Schweden – Fotografie von Madlen Medvedovskyy",
+          "altEn": "Norway & Sweden — photography by Madlen Medvedovskyy",
+          "order": 800,
+          "side": "right"
+        }
+      ]
+    }
+  ],
+  "translations": {
+    "de": {
+      "lang": "de",
+      "locale": "de-DE",
+      "nav": {
+        "home": "Startseite",
+        "portfolio": "Portfolio",
+        "services": "Leistungen",
+        "about": "Über Mich",
+        "contact": "Kontakt",
+        "inquiry": "Anfrage senden",
+        "questions": "Fragen"
+      },
+      "home": {
+        "eyebrow": "Hallo, ich bin",
+        "name": "Madlen",
+        "intro": "Zwischen Vancouver, Kanada und Stuttgart, Deutschland. Weltweit verfügbar.",
+        "description": "Filmische und editoriale Fotografie, geprägt von echten Momenten, Farbe und individuellem Charakter.",
+        "viewPortfolio": "Portfolio ansehen",
+        "sendInquiry": "Anfrage senden",
+        "moreAboutMe": "Mehr über mich",
+        "video": {
+          "pause": "Video pausieren",
+          "play": "Video abspielen",
+          "fallback": "Dein Browser kann dieses Video nicht abspielen."
+        },
+        "memories": {
+          "title": "Erinnerungen, die du fühlen kannst.",
+          "paragraphs": [
+            "Ich halte dich so fest, wie du bist – nah, authentisch und immer von deiner schönsten Seite.",
+            "Mit feinem Gespür für die leisen und doch bedeutungsvollen Momente:"
+          ],
+          "highlight": "Ein Lachen. Ein Blick. Eine Träne.",
+          "continuation": [
+            "Die kleinen Dinge, die oft am meisten bedeuten – und im Trubel des Tages leicht übersehen werden.",
+            "Mit ruhiger Präsenz, achtsamer Aufmerksamkeit und einem Blick für das, was wirklich zählt, begleite ich dich ganz natürlich und halte dich in deinem besten Licht fest. So bewahre ich, was bleibt:"
+          ],
+          "closing": [
+            "ehrliche, lebendige Erinnerungen",
+            "in zeitloser Schönheit."
+          ],
+          "imageAlt": "Helles Portrait einer lächelnden Frau mit einem Strohhut"
+        },
+        "workApart": {
+          "title": "Was meine Arbeit ausmacht",
+          "items": [
+            {
+              "title": "Geschichten voller Gefühl",
+              "text": "Die bedeutungsvollsten Momente sind oft die dazwischen — ein Blick, ein Lachen, eine leise Geste. Mich berühren echte Emotionen und Bilder, die ehrlich, persönlich und lebendig wirken."
+            },
+            {
+              "title": "Ein filmischer Blick",
+              "text": "Mein Hintergrund in Film und Regie prägt meinen Blick auf Licht, Farbe, Bewegung und Komposition. Ich schaffe Bilder, die filmisch wirken, ohne ihre Natürlichkeit zu verlieren."
+            },
+            {
+              "title": "Bilder, in denen du dich wiedererkennst",
+              "text": "Ich möchte keinen Trends hinterherlaufen. Ich möchte, dass sich deine Fotografien auch Jahre später noch echt anfühlen — persönlich, elegant und voller Atmosphäre dieses Tages."
+            },
+            {
+              "title": "Eine ruhige Präsenz",
+              "text": "Ich gebe Orientierung, wenn sie gebraucht wird, und trete zurück, wenn der Moment für sich spricht. Das Ziel ist einfach: Du sollst ganz im Moment sein, dich entspannen und beinahe vergessen, dass die Kamera da ist."
+            }
+          ]
+        }
+      },
+      "portfolio": {
+        "label": "Ausgewählte Arbeiten",
+        "title": "portfolio",
+        "intro": "Eine Auswahl meiner Arbeiten aus Portraits, Hochzeiten, Events sowie Editorial & Commercial.",
+        "filters": {
+          "all": "Alles",
+          "portraits": "Portraits",
+          "weddings": "Hochzeiten",
+          "events": "Events",
+          "editorial": "Editorial",
+          "landscape": "Landschaft"
+        },
+        "nextProject": "Nächstes Projekt"
+      },
+      "services": {
+        "title": "leistungen",
+        "headline": "Lass uns etwas schaffen, das in Erinnerung bleibt.",
+        "eyebrow": "Leistungen",
+        "titleLead": "Was ich",
+        "titleEmphasis": "für Sie tue",
+        "intro": "Ich biete keine festen Pakete an – denn kein Projekt ist wie das andere. Schreiben Sie mir, und ich erstelle Ihnen ein individuelles Angebot."
+      },
+      "about": {
+        "title": "Über mich",
+        "introTitle": "Hallo, ich bin Madlen.",
+        "text": [
+          "Seit mehr als sieben Jahren gebe ich besonderen Momenten ein „Für immer“, indem ich sie fotografisch festhalte.",
+          "Meine Inspiration finde ich in Mode, Farben, Bewegung, Begegnungen und Situationen, die oft nur für einen kurzen Augenblick entstehen. Mich interessiert dabei nicht nur, wie etwas aussieht, sondern vor allem, wie es sich anfühlt.",
+          "Meine visuelle Perspektive wurde durch meine Zeit an der Hochschule der Medien geprägt und entwickelt sich heute an der Filmakademie Baden-Württemberg weiter.",
+          "Meine Arbeit bewegt sich zwischen Planung und Intuition. Manche Bilder entstehen aus einer klaren Idee, einer sorgfältig entwickelten Bildwelt oder bewusster Inszenierung. Andere entstehen spontan – aus einer Bewegung, einem Blick oder einem Moment, den man nicht wiederholen kann.",
+          "Ob Event, Lovestory, Portrait oder Werbeproduktion: Jedes Projekt bringt seine eigene Atmosphäre und Persönlichkeit mit. Deshalb arbeite ich nicht nach einem festen Schema. Ich entwickle eine visuelle Sprache, die zu den Menschen, zur Geschichte und zum jeweiligen Projekt passt.",
+          "Was meine Arbeiten verbindet, ist ein filmischer und editorialer Blick, die Freude an Farbe und Komposition sowie die Suche nach echten Momenten. Ich möchte Bilder schaffen, die persönlich wirken, Charakter haben und auch nach Jahren noch etwas auslösen."
+        ],
+        "closing": "Lass uns etwas Unvergessliches schaffen.",
+        "clientsTitle": "Kunden, mit denen ich gearbeitet habe:"
+      },
+      "contact": {
+        "title": "kontakt",
+        "intro": "Schreibt mir gerne eine Nachricht. Ich melde mich zeitnah.",
+        "emailText": "contact@madlenmedvedovskyy.de oder fülle das Kontaktformular aus.",
+        "formName": "Name",
+        "namePlaceholder": "Ihr Name",
+        "formEmail": "E-Mail",
+        "emailPlaceholder": "ihre@email.de",
+        "formPhone": "Telefonnummer",
+        "optional": "optional",
+        "requestType": "Art der Anfrage",
+        "requestSelect": "Bitte wählen",
+        "preferredDate": "Wunschtermin(e)",
+        "datePlaceholder": "z. B. 05.–07.09.2026 oder mehrere Termine",
+        "location": "Ort der Aufnahme",
+        "locationPlaceholder": "z. B. Ludwigsburg, Stuttgart",
+        "formMessage": "Nachricht",
+        "messagePlaceholder": "Erzählen Sie mir kurz von Ihrem Projekt …",
+        "privacyStart": "Ich habe die",
+        "privacyLink": "Datenschutzerklärung",
+        "privacyEnd": "gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Anfrage einverstanden.",
+        "requiredNote": "* Pflichtfelder",
+        "formSubmit": "Anfrage senden",
+        "subject": "Neue Anfrage über madlenmedvedovskyy.de",
+        "requestOptions": [
+          "Portraitshooting",
+          "Paare & Familien",
+          "Hochzeit",
+          "Event",
+          "Editorial & Commercial",
+          "Videografie",
+          "Videoschnitt",
+          "Sonstiges"
+        ]
+      },
+      "footer": {
+        "impressum": "Impressum",
+        "datenschutz": "Datenschutz",
+        "agb": "AGB/Hinweise",
+        "copyright": "© 2026 Foto & Video Madlen · Alle Rechte vorbehalten"
+      }
+    },
+    "en": {
+      "lang": "en",
+      "locale": "en-US",
+      "nav": {
+        "home": "Home",
+        "portfolio": "Portfolio",
+        "services": "Services",
+        "about": "About Me",
+        "contact": "Contact",
+        "inquiry": "Send inquiry",
+        "questions": "Questions"
+      },
+      "home": {
+        "eyebrow": "hello, I’m",
+        "name": "Madlen",
+        "intro": "Based between Vancouver, Canada and Stuttgart, Germany. Available worldwide.",
+        "description": "Cinematic and editorial photography shaped by real moments, colour and individual character.",
+        "viewPortfolio": "View Portfolio",
+        "sendInquiry": "Send inquiry",
+        "moreAboutMe": "More About Me",
+        "video": {
+          "pause": "Pause video",
+          "play": "Play video",
+          "fallback": "Your browser cannot play this video."
+        },
+        "memories": {
+          "title": "Memories you can feel.",
+          "paragraphs": [
+            "I’ll capture you as you are – close, authentic, and always at your most beautiful.",
+            "With a subtle sensitivity for the quiet yet meaningful moments:"
+          ],
+          "highlight": "A laugh. A glance. A tear.",
+          "continuation": [
+            "The little things that often mean the most – and can easily be overlooked in the whirlwind of the day.",
+            "With a gentle presence, careful attention, and an eye for what truly matters, I guide you naturally and capture you in your best light, preserving what lasts:"
+          ],
+          "closing": [
+            "honest, vibrant memories",
+            "in timeless beauty."
+          ],
+          "imageAlt": "Bright portrait of a smiling woman with a straw hat"
+        },
+        "workApart": {
+          "title": "What sets my work apart",
+          "items": [
+            {
+              "title": "emotional storytelling",
+              "text": "The moments that matter most are often the ones in between — a look, a laugh, a quiet gesture. I’m drawn to real emotion and images that feel honest, personal and alive."
+            },
+            {
+              "title": "cinematic eye",
+              "text": "My background in film and directing shapes the way I see light, colour, movement and composition. I create images that feel cinematic without losing their naturalness."
+            },
+            {
+              "title": "images that still feel like you",
+              "text": "I’m not interested in chasing trends. I want your photographs to still feel true years from now — personal, elegant and full of the atmosphere of the day."
+            },
+            {
+              "title": "a calm presence",
+              "text": "I guide when needed and step back when the moment speaks for itself. The goal is simple: for you to feel present, relaxed and almost forget the camera is there."
+            }
+          ]
+        }
+      },
+      "portfolio": {
+        "label": "Selected work",
+        "title": "portfolio",
+        "intro": "A selection of my work across portraits, weddings, events, editorial and commercial projects.",
+        "filters": {
+          "all": "All",
+          "portraits": "Portraits",
+          "weddings": "Weddings",
+          "events": "Events",
+          "editorial": "Editorial",
+          "landscape": "Landscape"
+        },
+        "nextProject": "Next project"
+      },
+      "services": {
+        "title": "services",
+        "headline": "Let’s create something worth remembering.",
+        "eyebrow": "Services",
+        "titleLead": "What I can",
+        "titleEmphasis": "create for you.",
+        "intro": "Every project is different. Tell me about your plans and I will prepare an individual offer tailored to your needs."
+      },
+      "about": {
+        "title": "About Me",
+        "introTitle": "Hello, I’m Madlen.",
+        "text": [
+          "For more than seven years, I have been giving special moments a sense of forever by capturing them through photography.",
+          "I find inspiration in fashion, colour, movement, encounters and situations that often exist only for a brief moment. I am not only interested in how something looks, but above all in how it feels.",
+          "My visual perspective was shaped by my time at Hochschule der Medien and continues to develop today at Filmakademie Baden-Württemberg.",
+          "My work moves between planning and intuition. Some images are created from a clear idea, a carefully developed visual world or conscious staging. Others happen spontaneously — through movement, a glance or a moment that cannot be repeated.",
+          "Whether event, lovestory, portrait or commercial production: every project brings its own atmosphere and personality. That is why I do not work according to a fixed formula. I develop a visual language that fits the people, the story and the project.",
+          "What connects my work is a cinematic and editorial eye, the joy of colour and composition, and the search for real moments. I want to create images that feel personal, have character and still evoke something years later."
+        ],
+        "closing": "Let’s create something worth remembering.",
+        "clientsTitle": "Clients I’ve Worked With:"
+      },
+      "contact": {
+        "title": "contact",
+        "intro": "Feel free to send me a message. I will get back to you soon.",
+        "emailText": "contact@madlenmedvedovskyy.de or fill out the contact form.",
+        "formName": "Name",
+        "namePlaceholder": "Your name",
+        "formEmail": "Email",
+        "emailPlaceholder": "your@email.com",
+        "formPhone": "Phone number",
+        "optional": "optional",
+        "requestType": "Type of inquiry",
+        "requestSelect": "Please select",
+        "preferredDate": "Preferred date(s)",
+        "datePlaceholder": "e.g. 05–07 September 2026",
+        "location": "Location",
+        "locationPlaceholder": "e.g. Stuttgart, Vancouver",
+        "formMessage": "Message",
+        "messagePlaceholder": "Tell me briefly about your project …",
+        "privacyStart": "I have read the",
+        "privacyLink": "Privacy Policy",
+        "privacyEnd": "and consent to the processing of my information for the purpose of responding to my inquiry.",
+        "requiredNote": "* Required fields",
+        "formSubmit": "Send inquiry",
+        "subject": "New inquiry via madlenmedvedovskyy.de",
+        "requestOptions": [
+          "Portrait photography",
+          "Couples & families",
+          "Wedding",
+          "Event",
+          "Editorial & Commercial",
+          "Videography",
+          "Video editing",
+          "Other"
+        ]
+      },
+      "footer": {
+        "impressum": "Legal Notice",
+        "datenschutz": "Privacy Policy",
+        "agb": "Terms / Notes",
+        "copyright": "© 2026 Foto & Video Madlen · All rights reserved"
+      }
+    }
+  },
+  "services": [
+    {
+      "key": "portraits",
+      "order": 1,
+      "titleDe": "Portraitshooting",
+      "titleEn": "Portrait Photography",
+      "descriptionDe": "Ein Portraitshooting mit mir ist kein Fotoshooting im klassischen Sinne – es ist ein Gespräch mit Licht und Zeit. Ich arbeite mit natürlichem Licht, echten Orten und Ihrer Persönlichkeit. Das Ergebnis sind Bilder, die Sie so zeigen, wie Sie wirklich sind.",
+      "descriptionEn": "Natural and expressive portraits shaped by light, personality and atmosphere.",
+      "icon": "◎",
+      "highlighted": false
+    },
+    {
+      "key": "couples-families",
+      "order": 2,
+      "titleDe": "Paare & Familien",
+      "titleEn": "Couples & Families",
+      "descriptionDe": "Ob frisch verliebt, seit Jahren zusammen oder mit Kindern unterwegs: gemeinsame Momente verdienen Bilder, die man nicht wegpackt. Ich begleite Sie an einem Ort, der Ihnen etwas bedeutet – ohne Regie, mit viel Raum für das Echte.",
+      "descriptionEn": "Authentic photographs of shared moments without forced poses.",
+      "icon": "♡",
+      "highlighted": false
+    },
+    {
+      "key": "weddings",
+      "order": 3,
+      "titleDe": "Hochzeiten",
+      "titleEn": "Wedding Photography",
+      "descriptionDe": "Hochzeitsfotografie ist Vertrauen. Ich bin an Ihrem großen Tag dabei – ruhig, aufmerksam und im Hintergrund – und halte die Momente fest, die keine Kamera bemerkt hat. Von der Vorbereitung bis zum Tanz.",
+      "descriptionEn": "Emotional and timeless images of the moments that make your wedding unique.",
+      "icon": "◇",
+      "highlighted": true
+    },
+    {
+      "key": "events",
+      "order": 4,
+      "titleDe": "Events",
+      "titleEn": "Events",
+      "descriptionDe": "Firmenfeiern, Kulturveranstaltungen, private Events – jedes Event hat seine eigene Energie. Ich dokumentiere Ihre Veranstaltung authentisch und in einer Qualität, die Sie stolz zeigen können.",
+      "descriptionEn": "Professional photography for private events, cultural occasions and celebrations.",
+      "icon": "✦",
+      "highlighted": false
+    },
+    {
+      "key": "videography",
+      "order": 5,
+      "titleDe": "Videografie",
+      "titleEn": "Videography & Editing",
+      "descriptionDe": "Bewegte Bilder erzählen Momente auf eine besondere Weise. Ich drehe mit ruhigem Blick und natürlicher Bildsprache – ob Hochzeitsfilm, Event-Video oder kreative Kurzproduktion. Ohne Überdramatik, dafür mit Seele.",
+      "descriptionEn": "Cinematic wedding films, event videos and carefully edited visual stories.",
+      "icon": "▷",
+      "highlighted": false
+    },
+    {
+      "key": "editing",
+      "order": 6,
+      "titleDe": "Videoschnitt",
+      "titleEn": "",
+      "descriptionDe": "Sie haben bereits Rohmaterial und suchen jemanden, der daraus etwas Stimmiges macht? Ich übernehme auch reine Schnitt-Projekte – strukturiert, sorgfältig und mit dem Gespür für Rhythmus und Atmosphäre.",
+      "descriptionEn": "",
+      "icon": "⊞",
+      "highlighted": false
+    },
+    {
+      "key": "editorial-commercial",
+      "order": 7,
+      "titleDe": "Editorial & Commercial",
+      "titleEn": "Editorial & Commercial",
+      "descriptionDe": "Fotografie für Magazine, Marken, Shops und kreative Projekte. Ob Produktfotografie, Brand-Shooting oder editoriale Bildwelten: Ich verstehe, was Ihr Projekt braucht, und liefere Bilder, die kommunizieren.",
+      "descriptionEn": "Photography for magazines, brands, shops, campaigns and creative projects.",
+      "icon": "▣",
+      "highlighted": true
+    }
+  ],
+  "legalPages": [
+    {
+      "key": "legal-notice",
+      "type": "legal_document",
+      "valueDe": "Rechtliches\nImpressum\nAngaben gemäß § 5 DDG\nMadlen Medvedovskyy\nFreie Fotografin, Videografin und Regisseurin\nReichenberger Str. 22\n71638 Ludwigsburg\nDeutschland\nKontakt\nTelefon:\n+49 1522 3337700\nE-Mail:\nmadlen.medvedovskyy@live.de\nVerantwortlich für den Inhalt nach § 18 Abs. 2 MStV\nMadlen Medvedovskyy\nReichenberger Str. 22\n71638 Ludwigsburg\nDeutschland\nVerbraucherstreitbeilegung\nWir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren\nvor einer Verbraucherschlichtungsstelle teilzunehmen.",
+      "valueEn": "Legal\nLegal Notice\nEditable placeholder: add the complete provider information required\nunder German law before publishing the website."
+    },
+    {
+      "key": "privacy",
+      "type": "legal_document",
+      "valueDe": "Rechtliches\nDatenschutzerklärung\n1. Datenschutz auf einen Blick\nAllgemeine Hinweise\nDie folgenden Hinweise geben einen Überblick darüber, was mit Ihren\npersonenbezogenen Daten passiert, wenn Sie diese Website besuchen.\nPersonenbezogene Daten sind alle Daten, mit denen Sie persönlich\nidentifiziert werden können.\nWir verarbeiten personenbezogene Daten nur, soweit dies zur Bereitstellung\ndieser Website, zur Bearbeitung von Anfragen oder aufgrund gesetzlicher\nVorgaben erforderlich ist.\n2. Verantwortliche Stelle\nVerantwortlich für die Datenverarbeitung auf dieser Website ist:\nMadlen Medvedovskyy\nFreie Fotografin, Videografin und Regisseurin\nReichenberger Str. 22\n71638 Ludwigsburg\nDeutschland\nTelefon:\n+49 1522 3337700\nE-Mail:\nmadlen.medvedovskyy@live.de\n3. Hosting und Server-Logfiles\nDiese Website wird bei folgendem Hosting-Anbieter bereitgestellt:\n[Hosting-Anbieter vor Veröffentlichung ergänzen]\nBeim Aufruf dieser Website werden durch den Hosting-Anbieter automatisch\nInformationen in sogenannten Server-Logfiles verarbeitet. Dazu können\ninsbesondere folgende Daten gehören:\nIP-Adresse des anfragenden Endgeräts\nDatum und Uhrzeit des Zugriffs\naufgerufene Seite oder Datei\nübertragene Datenmenge\nBrowsertyp und Browserversion\nverwendetes Betriebssystem\nReferrer-URL\nHTTP-Statuscode\nDie Verarbeitung dieser Daten erfolgt, um die technische Bereitstellung,\nStabilität und Sicherheit der Website zu gewährleisten. Rechtsgrundlage\nist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse liegt in\nder sicheren und fehlerfreien Bereitstellung unseres Online-Angebots.\nEine Zusammenführung dieser Daten mit anderen Datenquellen erfolgt durch\nuns nicht. Die Speicherdauer richtet sich nach den technischen und\nsicherheitsbezogenen Vorgaben des jeweiligen Hosting-Anbieters.\n4. Kontaktaufnahme per E-Mail, Telefon oder Kontaktformular\nWenn Sie uns per E-Mail, Telefon oder über ein Kontaktformular kontaktieren,\nwerden die von Ihnen mitgeteilten Angaben verarbeitet. Dazu können\ninsbesondere gehören:\nName\nE-Mail-Adresse\nTelefonnummer\nArt der Anfrage\ngewünschtes Datum\nOrt der Aufnahme\nInhalt Ihrer Nachricht\nDiese Daten verarbeiten wir ausschließlich zur Bearbeitung Ihrer Anfrage,\nzur Kommunikation mit Ihnen und gegebenenfalls zur Vorbereitung oder\nDurchführung eines Vertrags.\nRechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, soweit Ihre Anfrage mit\nder Anbahnung oder Durchführung eines Vertrags zusammenhängt. In allen\nübrigen Fällen erfolgt die Verarbeitung auf Grundlage unseres berechtigten\nInteresses an der Bearbeitung der an uns gerichteten Anfragen gemäß\nArt. 6 Abs. 1 lit. f DSGVO.\nDie von Ihnen übermittelten Daten verbleiben bei uns, bis der Zweck der\nDatenverarbeitung entfällt, Sie uns zur Löschung auffordern oder gesetzliche\nAufbewahrungspflichten entgegenstehen.\n5. Darstellung von Bildern und Videos\nAuf dieser Website werden Bilder und gegebenenfalls Videos aus dem\nPortfolio von Foto & Video Madlen dargestellt. Die Medien werden lokal\nauf der Website eingebunden und nicht über externe Plattformen wie\nYouTube, Vimeo oder soziale Netzwerke geladen.\nSoweit auf Bildern identifizierbare Personen zu sehen sind, erfolgt die\nVeröffentlichung nur auf Grundlage einer entsprechenden Einwilligung,\nvertraglichen Vereinbarung oder einer sonstigen rechtlichen Grundlage.\n6. Cookies, Tracking und Analyse-Tools\n6.1 Cookie-Einstellungen\nDiese Website verwendet notwendige technische Funktionen, die für den Betrieb\nder Website erforderlich sind. Darüber hinaus können optionale Statistik-Dienste\neingesetzt werden, wenn Besucherinnen und Besucher hierfür ihre Einwilligung\nerteilen.\nBeim ersten Besuch der Website erscheint ein Cookie-Banner. Dort können Nutzerinnen\nund Nutzer auswählen, ob sie nur notwendige Funktionen zulassen oder zusätzlich\nStatistik-Cookies akzeptieren möchten. Die Auswahl kann jederzeit über die runde\nSchaltfläche unten links auf der Website geändert oder widerrufen werden.\n6.2 Notwendige Cookies / lokale Speicherung\nZur Speicherung der Cookie-Auswahl wird eine technische Information im Browser\ngespeichert. Diese Speicherung ist erforderlich, damit die Website die getroffene\nAuswahl beim nächsten Besuch wieder berücksichtigen kann.\n6.3 Google Analytics\nDiese Website ist für die Nutzung von Google Analytics vorbereitet. Google Analytics\nist ein Webanalysedienst von Google Ireland Limited, Gordon House, Barrow Street,\nDublin 4, Irland.\nGoogle Analytics wird nur aktiviert, wenn Nutzerinnen und Nutzer im Cookie-Banner\nder Kategorie „Statistik / Google Analytics“ zustimmen. Ohne diese Zustimmung wird\nGoogle Analytics nicht geladen.\nBei aktivierter Zustimmung können Informationen über die Nutzung der Website\nverarbeitet werden, zum Beispiel aufgerufene Seiten, Verweildauer, technische\nInformationen zum verwendeten Gerät und Browser sowie Interaktionen mit der Website.\nDiese Informationen dienen dazu, die Website zu verbessern und besser zu verstehen,\nwelche Inhalte für Besucherinnen und Besucher relevant sind.\nDie Rechtsgrundlage für die Nutzung von Google Analytics ist die Einwilligung gemäß\nArt. 6 Abs. 1 lit. a DSGVO. Eine erteilte Einwilligung kann jederzeit über die\nCookie-Einstellungen unten links auf der Website widerrufen werden.\nWeitere Informationen zur Datenverarbeitung durch Google finden Sie hier:\nDatenschutzerklärung von Google\nund hier:\nDatenschutz bei Google Analytics\n.\n6.4 Google Consent Mode\nFür die technische Umsetzung der Einwilligung kann der Google Consent Mode verwendet\nwerden. Dabei werden Google-Dienste entsprechend der getroffenen Cookie-Auswahl\ngesteuert. Statistikfunktionen werden nur nach Zustimmung aktiviert.\n8. Speicherdauer\nWir speichern personenbezogene Daten nur so lange, wie dies für den\njeweiligen Zweck erforderlich ist oder gesetzliche Aufbewahrungspflichten\nbestehen. Sobald der jeweilige Zweck entfällt und keine gesetzlichen\nAufbewahrungspflichten entgegenstehen, werden die Daten gelöscht.\n9. Ihre Rechte\nSie haben im Rahmen der geltenden gesetzlichen Bestimmungen jederzeit\ndas Recht auf:\nAuskunft über Ihre gespeicherten personenbezogenen Daten\nBerichtigung unrichtiger Daten\nLöschung Ihrer Daten\nEinschränkung der Verarbeitung\nDatenübertragbarkeit\nWiderspruch gegen bestimmte Datenverarbeitungen\nWiderruf einer erteilten Einwilligung mit Wirkung für die Zukunft\nWenn Sie eines dieser Rechte ausüben möchten, können Sie sich jederzeit\nan uns wenden.\n10. Beschwerderecht bei der Aufsichtsbehörde\nWenn Sie der Ansicht sind, dass die Verarbeitung Ihrer personenbezogenen\nDaten gegen die DSGVO verstößt, haben Sie das Recht, sich bei einer\nDatenschutzaufsichtsbehörde zu beschweren.\nZuständige Aufsichtsbehörde in Baden-Württemberg:\nDer Landesbeauftragte für den Datenschutz und die Informationsfreiheit\nBaden-Württemberg\nHeilbronner Straße 35\n70191 Stuttgart\nDeutschland\nTelefon:\n+49 711 615541-0\nE-Mail:\npoststelle@lfdi.bwl.de\n11. SSL- bzw. TLS-Verschlüsselung\nDiese Website nutzt aus Sicherheitsgründen und zum Schutz der Übertragung\nvertraulicher Inhalte eine SSL- bzw. TLS-Verschlüsselung. Eine verschlüsselte\nVerbindung erkennen Sie daran, dass die Adresszeile des Browsers mit\n„https://“ beginnt.\n12. Aktualität dieser Datenschutzerklärung\nDiese Datenschutzerklärung kann angepasst werden, wenn sich technische,\nrechtliche oder organisatorische Änderungen ergeben.\nStand: Juni 2026",
+      "valueEn": "Legal\nPrivacy Policy\nThis page is an editable placeholder. The final privacy policy must be\ncompleted and legally reviewed before publication.\nContact form\nInformation submitted through the contact form is used solely to\nprocess and respond to the inquiry.\nExternal services and cookies\nAdd the final details for hosting, analytics, embedded media and linked\nsocial platforms here."
+    },
+    {
+      "key": "terms",
+      "type": "legal_document",
+      "valueDe": "Rechtliches\nAGB / Hinweise\nDie folgenden Hinweise geben einen Überblick über die Zusammenarbeit mit\nFoto & Video Madlen. Konkrete Leistungen, Termine, Preise und Nutzungsrechte\nwerden individuell im jeweiligen Angebot oder Auftrag vereinbart.\n1. Anbieterin\nFoto & Video Madlen\nMadlen Medvedovskyy\nFreie Fotografin, Videografin und Regisseurin\nReichenberger Str. 22\n71638 Ludwigsburg\nDeutschland\nTelefon:\n+49 1522 3337700\nE-Mail:\nmadlen.medvedovskyy@live.de\n2. Leistungen\nFoto & Video Madlen bietet fotografische und audiovisuelle Leistungen an,\ninsbesondere Portraitshootings, Paar- und Familienshootings,\nHochzeitsfotografie, Eventfotografie, Editorial- und Commercial-Projekte\nsowie Videografie und Videoschnitt.\nDer genaue Leistungsumfang richtet sich nach der individuellen Absprache,\ndem jeweiligen Angebot und der schriftlichen Auftragsbestätigung.\n3. Anfragen und Vertragsschluss\nAnfragen über diese Website, per E-Mail, Telefon oder über soziale Medien\nsind unverbindlich. Ein Vertrag kommt erst zustande, wenn ein individuelles\nAngebot angenommen oder ein Auftrag ausdrücklich bestätigt wurde.\nAutomatische Online-Buchungen, Online-Zahlungen oder verbindliche\nSofortkäufe werden über diese Website derzeit nicht angeboten.\n4. Preise und Zahlungsbedingungen\nPreise werden individuell vereinbart und richten sich nach Art, Umfang,\nOrt und Dauer des Projekts sowie nach dem gewünschten Leistungsumfang.\nSoweit nicht anders vereinbart, gelten die im jeweiligen Angebot oder in\nder Auftragsbestätigung genannten Preise und Zahlungsbedingungen.\n5. Termine, Verschiebung und Absage\nTermine werden individuell abgestimmt. Eine Terminreservierung ist erst\nverbindlich, wenn sie ausdrücklich bestätigt wurde.\nSollte ein Termin aus wichtigen Gründen verschoben werden müssen, bemühen\nsich beide Seiten um eine faire und passende Ersatzlösung. Konkrete\nRegelungen zu Stornierung, Ausfallhonorar oder Verschiebung können im\njeweiligen Angebot oder Auftrag gesondert vereinbart werden.\n6. Bildauswahl, Bearbeitung und Lieferung\nDie Auswahl, Bearbeitung und Lieferung der Bilder oder Videos richtet sich\nnach der individuellen Vereinbarung. Die kreative und technische Bearbeitung\nerfolgt im Stil von Foto & Video Madlen.\nRohdaten, unbearbeitete Bilddateien oder Projektdateien werden nur\nherausgegeben, wenn dies ausdrücklich vereinbart wurde.\n7. Nutzungsrechte\nDie urheberrechtlichen Rechte an den erstellten Bildern und Videos verbleiben,\nsoweit gesetzlich vorgesehen, bei der Urheberin.\nKundinnen und Kunden erhalten die jeweils vereinbarten Nutzungsrechte.\nOhne abweichende Vereinbarung umfasst dies die private Nutzung der gelieferten\nBilder oder Videos. Eine kommerzielle Nutzung, Weitergabe an Dritte,\nBearbeitung oder Veröffentlichung zu werblichen Zwecken bedarf einer\ngesonderten Vereinbarung.\n8. Veröffentlichung und Portfolio\nEine Veröffentlichung von Bildern oder Videos durch Foto & Video Madlen,\nzum Beispiel auf dieser Website, in sozialen Medien oder in einem Portfolio,\nerfolgt nur, wenn hierfür eine entsprechende Einwilligung, vertragliche\nVereinbarung oder eine sonstige rechtliche Grundlage vorliegt.\nKundinnen und Kunden sind dafür verantwortlich, Foto & Video Madlen vorab\nzu informieren, wenn bestimmte Personen, Orte, Marken, Kunstwerke oder\nsonstige Inhalte nicht veröffentlicht oder nur eingeschränkt genutzt\nwerden dürfen.\n9. Mitwirkungspflichten\nFür eine erfolgreiche Umsetzung des Projekts sind rechtzeitige Informationen\nwichtig, zum Beispiel zu Ort, Zeitplan, gewünschten Motiven, besonderen\nAbläufen, Ansprechpartnern oder Einschränkungen am Aufnahmeort.\nVerzögerungen oder fehlende Informationen können Einfluss auf den Ablauf\nund das Ergebnis der Produktion haben.\n10. Haftung\nFoto & Video Madlen arbeitet sorgfältig und professionell. Eine Haftung\nbesteht nach den gesetzlichen Vorschriften.\nFür Umstände, die außerhalb des Einflussbereichs von Foto & Video Madlen\nliegen, zum Beispiel Wetter, behördliche Einschränkungen, Ausfall von\nLocations, Verzögerungen durch Dritte oder fehlende Mitwirkung, kann keine\nVerantwortung übernommen werden.\n11. Widerrufsrecht bei Verbrauchern\nSoweit ein Vertrag mit Verbraucherinnen oder Verbrauchern ausschließlich\nüber Fernkommunikationsmittel zustande kommt und ein gesetzliches\nWiderrufsrecht besteht, wird hierüber gesondert vor Vertragsschluss\ninformiert.\nDa über diese Website derzeit keine automatische Online-Buchung und keine\nOnline-Zahlung erfolgt, werden konkrete Widerrufsinformationen im Einzelfall\nim Zusammenhang mit dem jeweiligen Angebot oder Auftrag bereitgestellt,\nsofern dies gesetzlich erforderlich ist.\n12. Verbraucherstreitbeilegung\nWir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren\nvor einer Verbraucherschlichtungsstelle teilzunehmen.\n13. Schlussbestimmungen\nEs gilt das Recht der Bundesrepublik Deutschland.\nSollten einzelne Bestimmungen dieser Hinweise unwirksam sein oder werden,\nbleibt die Wirksamkeit der übrigen Hinweise unberührt.\nStand: Juni 2026",
+      "valueEn": "Legal\nTerms / Notes\nEditable placeholder for future terms covering bookings, payment,\nrescheduling, cancellation, image usage and delivery."
+    }
+  ],
+  "settings": {
+    "primaryLocale": "de",
+    "contactEmail": "contact@madlenmedvedovskyy.de",
+    "siteUrl": "https://foto-video-madlen.de"
+  }
+}

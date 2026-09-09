@@ -65,6 +65,7 @@ export const de = {
 },
 
   portfolio: {
+    label: "Ausgewählte Arbeiten",
     title: "portfolio",
     intro:
       "Eine Auswahl meiner Arbeiten aus Portraits, Hochzeiten, Events sowie Editorial & Commercial.",
@@ -74,6 +75,7 @@ export const de = {
       weddings: "Hochzeiten",
       events: "Events",
       editorial: "Editorial",
+      landscape: "Landschaft",
     },
     nextProject: "Nächstes Projekt",
   },
@@ -81,6 +83,11 @@ export const de = {
   services: {
     title: "leistungen",
     headline: "Lass uns etwas schaffen, das in Erinnerung bleibt.",
+    eyebrow: "Leistungen",
+    titleLead: "Was ich",
+    titleEmphasis: "für Sie tue",
+    intro:
+      "Ich biete keine festen Pakete an – denn kein Projekt ist wie das andere. Schreiben Sie mir, und ich erstelle Ihnen ein individuelles Angebot.",
   },
 
   about: {
@@ -105,9 +112,36 @@ export const de = {
     emailText:
       "contact@madlenmedvedovskyy.de oder fülle das Kontaktformular aus.",
     formName: "Name",
+    namePlaceholder: "Ihr Name",
     formEmail: "E-Mail",
+    emailPlaceholder: "ihre@email.de",
+    formPhone: "Telefonnummer",
+    optional: "optional",
+    requestType: "Art der Anfrage",
+    requestSelect: "Bitte wählen",
+    preferredDate: "Wunschtermin(e)",
+    datePlaceholder: "z. B. 05.–07.09.2026 oder mehrere Termine",
+    location: "Ort der Aufnahme",
+    locationPlaceholder: "z. B. Ludwigsburg, Stuttgart",
     formMessage: "Nachricht",
+    messagePlaceholder: "Erzählen Sie mir kurz von Ihrem Projekt …",
+    privacyStart: "Ich habe die",
+    privacyLink: "Datenschutzerklärung",
+    privacyEnd:
+      "gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Anfrage einverstanden.",
+    requiredNote: "* Pflichtfelder",
     formSubmit: "Anfrage senden",
+    subject: "Neue Anfrage über madlenmedvedovskyy.de",
+    requestOptions: [
+      "Portraitshooting",
+      "Paare & Familien",
+      "Hochzeit",
+      "Event",
+      "Editorial & Commercial",
+      "Videografie",
+      "Videoschnitt",
+      "Sonstiges",
+    ],
   },
 
   footer: {

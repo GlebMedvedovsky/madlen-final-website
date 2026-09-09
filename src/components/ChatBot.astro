@@ -1,6 +1,6 @@
 ---
 import { getLanguageFromUrl } from "../i18n/utils";
-import { projects } from "../data/projects";
+import { projects } from "../content/cms";
 import { copy as chatCopy } from "../lib/madlen-assist";
 const lang = getLanguageFromUrl(Astro.url);
 const copy = chatCopy[lang];
@@ -16,7 +16,9 @@ const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title,
     aria-controls="madlen-chat-window"
     data-chat-toggle
   >
-    <img src="/images/bot.jpg" alt="" width="1411" height="736" />
+    <svg class="chat-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h9a4 4 0 0 1 4 4Z"></path>
+    </svg>
   </button>
 
   <section id="madlen-chat-window" class="chat-window" aria-label={copy.title} hidden data-chat-window>
@@ -65,6 +67,7 @@ const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title,
       const restoreFocus = !open && panel.contains(document.activeElement);
       panel.hidden = !open;
       toggle.setAttribute("aria-expanded", String(open));
+      window.dispatchEvent(new CustomEvent("madlen:chat-state-change"));
       if (open) input.focus();
       else if (restoreFocus) toggle.focus();
     }
@@ -115,8 +118,8 @@ const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title,
 <style>
   .madlen-chat {
     position: fixed;
-    right: calc(24px + env(safe-area-inset-right, 0px));
-    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    right: calc(var(--floating-control-edge, 24px) + env(safe-area-inset-right, 0px));
+    bottom: calc(var(--floating-control-bottom, 24px) + env(safe-area-inset-bottom, 0px));
     z-index: 9997;
     font-family: Arial, Helvetica, sans-serif;
   }
@@ -139,16 +142,16 @@ const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title,
   }
 
   .chat-toggle {
-    display: block;
-    width: 140px;
+    display: grid;
+    place-items: center;
+    width: var(--floating-control-size, 48px);
+    height: var(--floating-control-size, 48px);
     padding: 0;
-    overflow: hidden;
     border: 0;
-    border-radius: 24px;
-    background: #ead9df;
+    border-radius: 50%;
+    background: var(--madlen-blue);
+    color: var(--madlen-pink);
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(30, 25, 20, 0.16);
-    transition: transform 180ms ease;
   }
 
   .madlen-chat:has(.chat-window:not([hidden])) {
@@ -156,18 +159,23 @@ const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title,
   }
 
   .chat-toggle:hover {
-    transform: translateY(-2px);
+    background: var(--madlen-pink);
+    color: var(--madlen-blue);
   }
 
   .chat-toggle:focus-visible {
-    outline: 3px solid var(--madlen-blue);
-    outline-offset: 4px;
+    outline: 3px solid var(--madlen-pink);
+    outline-offset: 3px;
   }
 
-  .chat-toggle img {
-    display: block;
-    width: 100%;
-    height: auto;
+  .chat-toggle__icon {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .chat-form button:hover,
@@ -329,16 +337,6 @@ const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title,
   }
 
   @media (max-width: 760px) {
-    .madlen-chat {
-      right: calc(12px + env(safe-area-inset-right, 0px));
-      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    }
-
-    .chat-toggle {
-      width: 120px;
-      border-radius: 22px;
-    }
-
     .chat-window {
       position: fixed;
       right: calc(12px + env(safe-area-inset-right, 0px));

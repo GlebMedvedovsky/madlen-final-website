@@ -5,6 +5,7 @@ interface StoryItem {
 }
 
 interface Props {
+  imageSrc?: string;
   memories: {
     title: string;
     paragraphs: string[];
@@ -19,7 +20,11 @@ interface Props {
   };
 }
 
-const { memories, workApart } = Astro.props;
+const {
+  memories,
+  workApart,
+  imageSrc = "/images/hero/memories-photo.webp",
+} = Astro.props;
 ---
 
 <div class="homepage-story" data-homepage-story>
@@ -43,7 +48,7 @@ const { memories, workApart } = Astro.props;
     <div class="memories__inner">
       <figure class="memories__photo-frame" data-line-photo-frame>
         <img
-          src="/images/hero/memories-photo.webp"
+          src={imageSrc}
           alt={memories.imageAlt}
           width="1901"
           height="2400"

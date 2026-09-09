@@ -1,7 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import ProjectDetail from "../../components/ProjectDetail.astro";
-import { projects, type Project } from "../../data/projects";
+import { projects, type Project } from "../../content/cms";
 
 export function getStaticPaths() {
   return projects.map((project) => ({

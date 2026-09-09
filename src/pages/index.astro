@@ -4,6 +4,7 @@ import HeroV2 from "../components/HeroV2.astro";
 import HomeVideo from "../components/HomeVideo.astro";
 import HomepageStory from "../components/HomepageStory.astro";
 import { getLanguageFromUrl, useTranslations } from "../i18n/utils";
+import { mediaSlots } from "../content/cms";
 
 const lang = getLanguageFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -18,8 +19,14 @@ const t = useTranslations(lang);
     pauseLabel={t.home.video.pause}
     playLabel={t.home.video.play}
     fallback={t.home.video.fallback}
+    src={mediaSlots.home_video}
+    poster={mediaSlots.home_video_poster}
   />
-  <HomepageStory memories={t.home.memories} workApart={t.home.workApart} />
+  <HomepageStory
+    memories={t.home.memories}
+    workApart={t.home.workApart}
+    imageSrc={mediaSlots.memories_photo}
+  />
   <HeroV2
   followsStory
   eyebrow={t.home.eyebrow}

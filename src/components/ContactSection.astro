@@ -7,80 +7,31 @@ import {
 const lang = getLanguageFromUrl(Astro.url);
 const t = useTranslations(lang);
 
-const content =
-  lang === "de"
-    ? {
-        title: "kontakt",
-        intro:
-          "Schreib mir gerne eine Nachricht. Ich melde mich zeitnah. Du erreichst mich unter contact@madlenmedvedovskyy.de oder über das Kontaktformular.",
-        name: "Name",
-        namePlaceholder: "Ihr Name",
-        email: "E-Mail",
-        emailPlaceholder: "ihre@email.de",
-        phone: "Telefonnummer",
-        optional: "optional",
-        requestType: "Art der Anfrage",
-        select: "Bitte wählen",
-        date: "Wunschtermin(e)",
-        datePlaceholder: "z. B. 05.–07.09.2026 oder mehrere Termine",
-        location: "Ort der Aufnahme",
-        locationPlaceholder: "z. B. Ludwigsburg, Stuttgart",
-        message: "Nachricht",
-        messagePlaceholder: "Erzählen Sie mir kurz von Ihrem Projekt …",
-        privacyStart: "Ich habe die",
-        privacyLink: "Datenschutzerklärung",
-        privacyEnd:
-          "gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Anfrage einverstanden.",
-        required: "* Pflichtfelder",
-        submit: "Anfrage senden",
-        subject: "Neue Anfrage über madlenmedvedovskyy.de",
-        options: [
-          "Portraitshooting",
-          "Paare & Familien",
-          "Hochzeit",
-          "Event",
-          "Editorial & Commercial",
-          "Videografie",
-          "Videoschnitt",
-          "Sonstiges",
-        ],
-      }
-    : {
-        title: "contact",
-        intro:
-          "Feel free to send me a message. I will get back to you soon. Reach me at contact@madlenmedvedovskyy.de or use the contact form.",
-        name: "Name",
-        namePlaceholder: "Your name",
-        email: "Email",
-        emailPlaceholder: "your@email.com",
-        phone: "Phone number",
-        optional: "optional",
-        requestType: "Type of inquiry",
-        select: "Please select",
-        date: "Preferred date(s)",
-        datePlaceholder: "e.g. 05–07 September 2026",
-        location: "Location",
-        locationPlaceholder: "e.g. Stuttgart, Vancouver",
-        message: "Message",
-        messagePlaceholder: "Tell me briefly about your project …",
-        privacyStart: "I have read the",
-        privacyLink: "Privacy Policy",
-        privacyEnd:
-          "and consent to the processing of my information for the purpose of responding to my inquiry.",
-        required: "* Required fields",
-        submit: "Send inquiry",
-        subject: "New inquiry via madlenmedvedovskyy.de",
-        options: [
-          "Portrait photography",
-          "Couples & families",
-          "Wedding",
-          "Event",
-          "Editorial & Commercial",
-          "Videography",
-          "Video editing",
-          "Other",
-        ],
-      };
+const content = {
+  title: t.contact.title,
+  intro: `${t.contact.intro} ${t.contact.emailText}`.trim(),
+  name: t.contact.formName,
+  namePlaceholder: t.contact.namePlaceholder,
+  email: t.contact.formEmail,
+  emailPlaceholder: t.contact.emailPlaceholder,
+  phone: t.contact.formPhone,
+  optional: t.contact.optional,
+  requestType: t.contact.requestType,
+  select: t.contact.requestSelect,
+  date: t.contact.preferredDate,
+  datePlaceholder: t.contact.datePlaceholder,
+  location: t.contact.location,
+  locationPlaceholder: t.contact.locationPlaceholder,
+  message: t.contact.formMessage,
+  messagePlaceholder: t.contact.messagePlaceholder,
+  privacyStart: t.contact.privacyStart,
+  privacyLink: t.contact.privacyLink,
+  privacyEnd: t.contact.privacyEnd,
+  required: t.contact.requiredNote,
+  submit: t.contact.formSubmit,
+  subject: t.contact.subject,
+  options: t.contact.requestOptions,
+};
 ---
 
 <section class="contact-section" id="contact">

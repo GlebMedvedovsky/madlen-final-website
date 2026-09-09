@@ -1,0 +1,148 @@
+name: madlen
+
+services:
+  runtime-init:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    image: madlen-cms-app:local
+    working_dir: /workspace/backend
+    entrypoint: ["sh", "/workspace/docker/php/runtime-init.sh"]
+    user: "0:0"
+    network_mode: none
+    volumes:
+      - ./:/workspace
+      - madlen_vendor_data:/workspace/backend/vendor
+      - madlen_node_modules_data:/workspace/node_modules
+      - madlen_media_data:/workspace/backend/storage/app/private/media
+      - madlen_release_data:/workspace/backend/storage/app/releases
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    image: madlen-cms-app:local
+    working_dir: /workspace/backend
+    command: ["php-fpm", "-F"]
+    user: "www-data:www-data"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:${MADLEN_HTTP_PORT:-8088}
+      APP_LOCALE: de
+      APP_FALLBACK_LOCALE: de
+      APP_TIMEZONE: Europe/Berlin
+      HOME: /workspace/backend/storage/app/runtime-home
+      XDG_CONFIG_HOME: /workspace/backend/storage/app/runtime-home/.config
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${MADLEN_DB_DATABASE:-madlen}
+      DB_USERNAME: ${MADLEN_DB_USERNAME:-madlen}
+      DB_PASSWORD: ${MADLEN_DB_PASSWORD:-change-me-locally}
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      MADLEN_REPOSITORY_ROOT: /workspace
+      MADLEN_RELEASE_ROOT: /workspace/backend/storage/app/releases
+      MADLEN_PUBLIC_URL: http://localhost:${MADLEN_SITE_PORT:-8089}
+      MADLEN_RESTORE_DB_HOST: db_test
+      MADLEN_RESTORE_DB_DATABASE: madlen_restore_test
+      MADLEN_RESTORE_DB_USERNAME: madlen_restore
+      MADLEN_RESTORE_DB_PASSWORD: ${MADLEN_RESTORE_DB_PASSWORD:-restore-only-locally}
+    volumes:
+      - ./:/workspace
+      - madlen_vendor_data:/workspace/backend/vendor
+      - madlen_node_modules_data:/workspace/node_modules
+      - madlen_media_data:/workspace/backend/storage/app/private/media
+      - madlen_release_data:/workspace/backend/storage/app/releases
+    depends_on:
+      runtime-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    networks:
+      - madlen_internal
+    restart: unless-stopped
+
+  web:
+    image: nginx:1.27-alpine
+    ports:
+      - "127.0.0.1:${MADLEN_HTTP_PORT:-8088}:80"
+    volumes:
+      - ./:/workspace:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - madlen_release_data:/releases:ro
+    depends_on:
+      - app
+    networks:
+      - madlen_internal
+    restart: unless-stopped
+
+  site:
+    image: nginx:1.27-alpine
+    ports:
+      - "127.0.0.1:${MADLEN_SITE_PORT:-8089}:80"
+    volumes:
+      - ./docker/nginx/site.conf:/etc/nginx/conf.d/default.conf:ro
+      - madlen_release_data:/releases:ro
+    networks:
+      - madlen_internal
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${MADLEN_DB_DATABASE:-madlen}
+      MYSQL_USER: ${MADLEN_DB_USERNAME:-madlen}
+      MYSQL_PASSWORD: ${MADLEN_DB_PASSWORD:-change-me-locally}
+      MYSQL_ROOT_PASSWORD: ${MADLEN_DB_ROOT_PASSWORD:-change-root-locally}
+    volumes:
+      - madlen_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - madlen_internal
+    restart: unless-stopped
+
+  db_test:
+    image: mysql:8.4
+    profiles: ["testing"]
+    environment:
+      MYSQL_DATABASE: madlen_restore_test
+      MYSQL_USER: madlen_restore
+      MYSQL_PASSWORD: ${MADLEN_RESTORE_DB_PASSWORD:-restore-only-locally}
+      MYSQL_ROOT_PASSWORD: ${MADLEN_RESTORE_DB_ROOT_PASSWORD:-restore-root-only-locally}
+    volumes:
+      - madlen_test_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -umadlen_restore -p$${MYSQL_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - madlen_internal
+
+networks:
+  madlen_internal:
+    name: madlen_internal
+
+volumes:
+  madlen_db_data:
+    name: madlen_db_data
+  madlen_media_data:
+    name: madlen_media_data
+  madlen_release_data:
+    name: madlen_release_data
+  madlen_vendor_data:
+    name: madlen_vendor_data
+  madlen_node_modules_data:
+    name: madlen_node_modules_data
+  madlen_test_db_data:
+    name: madlen_test_db_data

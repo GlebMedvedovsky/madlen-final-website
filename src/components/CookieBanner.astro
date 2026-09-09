@@ -7,11 +7,19 @@ const openLabel = getLanguageFromUrl(Astro.url) === "de"
 const gaMeasurementId = "G-XXXXXXXXXX";
 ---
 
-<button class="cookie-floating-button" id="cookie-floating-button" type="button" aria-label={openLabel}>
-  <span class="cookie-floating-button__image" aria-hidden="true">
-    <img src="/images/Kukes.jpg" alt="" width="1411" height="736" />
-  </span>
-  <span class="cookie-floating-button__label">Cookies</span>
+<button
+  class="cookie-floating-button"
+  id="cookie-floating-button"
+  type="button"
+  aria-label={openLabel}
+  aria-haspopup="dialog"
+  aria-controls="cookie-modal"
+  aria-expanded="false"
+>
+  <svg class="cookie-floating-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5Z"></path>
+    <path d="M8.5 8.5h.01M7.5 13.5h.01M12.5 16.5h.01"></path>
+  </svg>
 </button>
 
 <div class="cookie-banner" id="cookie-banner" aria-hidden="true">
@@ -124,6 +132,8 @@ const gaMeasurementId = "G-XXXXXXXXXX";
   const modalRejectButton = document.getElementById("cookie-modal-reject");
   const saveSettingsButton = document.getElementById("cookie-save-settings");
   const statisticsCheckbox = document.getElementById("cookie-statistics");
+  /** @type {HTMLElement | null} */
+  let modalReturnFocus = null;
 
   window.dataLayer = window.dataLayer || [];
 
@@ -210,17 +220,33 @@ const gaMeasurementId = "G-XXXXXXXXXX";
   function openModal() {
     const saved = readConsent();
 
+    modalReturnFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : floatingButton;
+
     if (statisticsCheckbox) {
       statisticsCheckbox.checked = Boolean(saved?.statistics);
     }
 
     modal?.setAttribute("aria-hidden", "false");
     modal?.classList.add("is-visible");
+    floatingButton?.setAttribute("aria-expanded", "true");
+    closeButton?.focus();
   }
 
   function closeModal() {
+    const wasOpen = modal?.classList.contains("is-visible");
     modal?.setAttribute("aria-hidden", "true");
     modal?.classList.remove("is-visible");
+    floatingButton?.setAttribute("aria-expanded", "false");
+
+    if (wasOpen) {
+      const targetIsHidden = modalReturnFocus?.closest('[aria-hidden="true"]');
+      const focusTarget = modalReturnFocus?.isConnected && !targetIsHidden
+        ? modalReturnFocus
+        : floatingButton;
+      focusTarget?.focus();
+    }
   }
 
   acceptAllButton?.addEventListener("click", () => {
@@ -273,24 +299,21 @@ const gaMeasurementId = "G-XXXXXXXXXX";
     left: calc(24px + env(safe-area-inset-left, 0px));
     bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     z-index: 9996;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 82px;
-    padding: 0 0 8px;
-    overflow: hidden;
-    border-radius: 22px;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
     border: 0;
-    background: #ead9df;
-    color: #303b77;
+    background: var(--madlen-blue);
+    color: var(--madlen-pink);
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(30, 25, 20, 0.16);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   .cookie-floating-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 45px rgba(30, 25, 20, 0.22);
+    background: var(--madlen-pink);
+    color: var(--madlen-blue);
   }
 
   .cookie-banner {
@@ -392,33 +415,18 @@ const gaMeasurementId = "G-XXXXXXXXXX";
   }
 
   .cookie-floating-button:focus-visible {
-    outline: 3px solid var(--madlen-blue);
-    outline-offset: 4px;
+    outline: 3px solid var(--madlen-pink);
+    outline-offset: 3px;
   }
 
-  .cookie-floating-button__image {
-    position: relative;
-    display: block;
-    width: 100%;
-    aspect-ratio: 1.2;
-    overflow: hidden;
-  }
-
-  .cookie-floating-button__image img {
-    position: absolute;
-    /* Original crop: x=470..950, y=130..530; excludes the baked-in KUKES. */
-    width: 293.958333%;
-    max-width: none;
-    height: auto;
-    left: -97.916667%;
-    top: -32.5%;
-  }
-
-  .cookie-floating-button__label {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.3;
+  .cookie-floating-button__icon {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .cookie-btn-primary:hover,
@@ -569,8 +577,8 @@ const gaMeasurementId = "G-XXXXXXXXXX";
     .cookie-floating-button {
       left: calc(12px + env(safe-area-inset-left, 0px));
       bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-      width: 76px;
-      border-radius: 20px;
+      width: 44px;
+      height: 44px;
     }
 
     .cookie-banner {

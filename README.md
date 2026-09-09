@@ -2,7 +2,10 @@
 
 A production-ready static portfolio website for a freelance photographer and videographer.
 
-**Tech Stack:** Astro · TypeScript · plain CSS · no backend · no database
+**Public site:** Astro · TypeScript · plain CSS<br>
+**Local CMS feature branch:** Laravel 12 · Filament 5 · MySQL 8.4 · isolated Docker Compose
+
+The accepted static frontend remains intact. The new CMS, private preview, release pipeline, backup/restore procedures and exact local commands are documented in [ADMIN_CMS.md](ADMIN_CMS.md). Production deployment remains unconfigured.
 
 ---
 

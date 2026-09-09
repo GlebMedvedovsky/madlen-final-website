@@ -9,8 +9,9 @@ const t = useTranslations(lang);
 
 const isGerman = lang === "de";
 
-const titlePrefix = isGerman ? "Über" : "About";
-const titleRest = isGerman ? "ich" : "e";
+const titleMIndex = t.about.title.toLowerCase().lastIndexOf("m");
+const titlePrefix = titleMIndex >= 0 ? t.about.title.slice(0, titleMIndex).trimEnd() : t.about.title;
+const titleRest = titleMIndex >= 0 ? t.about.title.slice(titleMIndex + 1).trimStart() : "";
 
 const portfolioPath = isGerman
   ? "/portfolio"
@@ -20,17 +21,9 @@ const contactPath = isGerman
   ? "/kontakt"
   : "/en/contact";
 
-const introTitle = isGerman
-  ? "Hallo, ich bin Madlen"
-  : "Hello, I’m Madlen";
-
-const clientsTitle = isGerman
-  ? "Kunden, mit denen ich gearbeitet habe:"
-  : "Clients I’ve worked with:";
-
-const closingText = isGerman
-  ? "Lass uns etwas Unvergessliches schaffen."
-  : "Let’s create something worth remembering.";
+const introTitle = t.about.introTitle;
+const clientsTitle = t.about.clientsTitle;
+const closingText = t.about.closing;
 
 const clients = [
   {
@@ -77,20 +70,21 @@ const clients = [
     <div class="about-content">
       <h1 class="about-title">
         <span>{titlePrefix}</span>
-
-        <span
-  class:list={[
-    "about-title-word",
-    isGerman ? "about-title-word--de" : "about-title-word--en",
-  ]}
->
-          <img
-            src="/images/brand/M_buchstabe.svg"
-            alt=""
-            aria-hidden="true"
-          />
-          <span>{titleRest}</span>
-        </span>
+        {titleMIndex >= 0 && (
+          <span
+            class:list={[
+              "about-title-word",
+              isGerman ? "about-title-word--de" : "about-title-word--en",
+            ]}
+          >
+            <img
+              src="/images/brand/M_buchstabe.svg"
+              alt=""
+              aria-hidden="true"
+            />
+            <span>{titleRest}</span>
+          </span>
+        )}
       </h1>
 
       <h2 class="about-intro-title">
