@@ -71,6 +71,39 @@ const renderPreviewTab = (title, text) => {
 };
 
 const triggerButton = $event.currentTarget;
+const csrfRefreshUrl = triggerButton.dataset.previewCsrfUrl;
+const loginUrl = triggerButton.dataset.previewLoginUrl;
+const refreshCsrfToken = async () => {
+    if (! csrfRefreshUrl) throw new Error('Die CSRF-Aktualisierungsadresse fehlt.');
+    const response = await window.fetch(csrfRefreshUrl, {
+        method: 'GET',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    });
+    if (! response.ok) throw new Error(`CSRF-Aktualisierung fehlgeschlagen (${response.status}).`);
+    const payload = await response.json();
+    const token = typeof payload?.csrfToken === 'string' ? payload.csrfToken.trim() : '';
+    if (token.length < 20) throw new Error('Die CSRF-Antwort ist ungültig.');
+
+    let updated = false;
+    document.querySelectorAll('meta[name=csrf-token]').forEach((element) => {
+        element.setAttribute('content', token);
+        updated = true;
+    });
+    document.querySelectorAll('[data-csrf]').forEach((element) => {
+        element.setAttribute('data-csrf', token);
+        updated = true;
+    });
+    if (window.livewireScriptConfig && typeof window.livewireScriptConfig === 'object') {
+        window.livewireScriptConfig.csrf = token;
+        updated = true;
+    }
+    if (! updated) throw new Error('Livewire-CSRF-Quelle wurde nicht gefunden.');
+};
 window.__madlenProjectPreviewRecover = (failedRequestId, failedAttempt, status = 503) => {
     const current = window.__madlenProjectPreviewOperation;
     if (! current || current.requestId !== failedRequestId || current.attempt !== failedAttempt) return;
@@ -107,14 +140,33 @@ window.__madlenProjectPreviewRecover = (failedRequestId, failedAttempt, status =
     retryButton.type = 'button';
     retryButton.style.cssText = 'border:0;border-radius:999px;padding:.65rem 1rem;background:#0338da;color:#fff;font-weight:700;cursor:pointer';
     retryButton.textContent = 'Erneut versuchen';
-    retryButton.addEventListener('click', () => {
+    retryButton.addEventListener('click', async () => {
+        const pending = window.__madlenProjectPreviewOperation;
+        if (! pending || pending.requestId !== failedRequestId || pending.attempt !== failedAttempt || ! pending.retry) return;
+        retryButton.disabled = true;
+        retryButton.textContent = sessionExpired ? 'Sitzung wird geprüft …' : 'Vorschau wird erneut angefragt …';
+        if (sessionExpired) {
+            try {
+                await refreshCsrfToken();
+            } catch {
+                const stillPending = window.__madlenProjectPreviewOperation;
+                if (! stillPending || stillPending.requestId !== failedRequestId || stillPending.attempt !== failedAttempt) return;
+                panelText.textContent = 'Die Anmeldung ist noch nicht wiederhergestellt. Öffnen Sie die Anmeldung in einem neuen Tab, melden Sie sich an und versuchen Sie danach erneut. Ihre Eingaben bleiben erhalten.';
+                retryButton.disabled = false;
+                retryButton.textContent = 'Erneut versuchen';
+
+                return;
+            }
+        }
+        const stillPending = window.__madlenProjectPreviewOperation;
+        if (! stillPending || stillPending.requestId !== failedRequestId || stillPending.attempt !== failedAttempt || ! stillPending.retry) return;
         panel.remove();
         triggerButton.click();
     });
     panel.append(panelTitle, panelText, retryButton);
     if (sessionExpired) {
         const loginLink = document.createElement('a');
-        loginLink.href = '/admin/login';
+        loginLink.href = loginUrl;
         loginLink.target = '_blank';
         loginLink.rel = 'noopener noreferrer';
         loginLink.style.cssText = 'display:inline-block;margin-left:.75rem;color:#0338da;text-decoration:underline';
@@ -201,7 +253,11 @@ JS;
             Action::make('preview')
                 ->label('Vorschau')
                 ->icon('heroicon-o-eye')
-                ->extraAttributes(['x-on:click.capture' => self::PREPARE_PREVIEW_TAB_JS])
+                ->extraAttributes([
+                    'x-on:click.capture' => self::PREPARE_PREVIEW_TAB_JS,
+                    'data-preview-csrf-url' => route('admin.session.csrf', absolute: false),
+                    'data-preview-login-url' => route('filament.admin.auth.login', absolute: false),
+                ])
                 ->action(function (): void {
                     $requestId = (string) $this->previewRequestId;
                     $attempt = (int) $this->previewRequestAttempt;

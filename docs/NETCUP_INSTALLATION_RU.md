@@ -164,20 +164,22 @@ Apply отказывается при отсутствии прежнего comp
 
 Этот раздел описывает **будущее отдельное обновление после merge и review** ветки `fix/preview-editor-flow`. На Netcup команды из него в рамках подготовки PR не выполняются. Старый `madlen-netcup-preview-runtime-overlay-…` из раздела 4.2 использовать нельзя: он проверяет другой набор существующих файлов, не добавляет PHP-классы, не обновляет Composer autoload и не применяет миграции.
 
-Новый checksummed backend-overlay должен быть собран из итогового merge commit и содержать ровно следующие десять production-файлов:
+Новый checksummed backend-overlay должен быть собран из итогового merge commit и содержать ровно следующие двенадцать production-файлов:
 
 1. `backend/app/Data/ProjectPreviewSnapshot.php` — новый класс;
 2. `backend/app/Filament/Resources/Projects/Pages/EditProject.php`;
-3. `backend/app/Http/Controllers/PreviewController.php`;
-4. `backend/app/Models/PreviewBuild.php`;
-5. `backend/app/Services/ContentManifestService.php`;
-6. `backend/app/Services/ExternalPreviewBuilder.php`;
-7. `backend/app/Services/ExternalPreviewPackager.php`;
-8. `backend/app/Services/PreviewBuilder.php`;
-9. `backend/app/Services/ProjectPreviewSnapshotFactory.php` — новый класс;
-10. `backend/database/migrations/2026_09_10_000005_add_target_path_to_preview_builds_table.php` — новая миграция для `target_path` и идемпотентного `request_id`.
+3. `backend/app/Http/Controllers/AdminSessionController.php` — новый класс защищённого обновления CSRF-токена;
+4. `backend/app/Http/Controllers/PreviewController.php`;
+5. `backend/app/Models/PreviewBuild.php`;
+6. `backend/app/Services/ContentManifestService.php`;
+7. `backend/app/Services/ExternalPreviewBuilder.php`;
+8. `backend/app/Services/ExternalPreviewPackager.php`;
+9. `backend/app/Services/PreviewBuilder.php`;
+10. `backend/app/Services/ProjectPreviewSnapshotFactory.php` — новый класс;
+11. `backend/database/migrations/2026_09_10_000005_add_target_path_to_preview_builds_table.php` — новая миграция для `target_path` и идемпотентного `request_id`;
+12. `backend/routes/web.php` — защищённый endpoint обновления CSRF-токена для восстановления исходной вкладки редактора после повторного входа.
 
-Тестовые файлы `backend/tests/Feature/ProjectEditorPreviewTest.php`, `backend/tests/Feature/ExternalPreviewPreparationTest.php` и `scripts/tests/project-preview-client-recovery.test.mjs`, а также его npm-команда входят в Git/PR, но не в production-overlay. `vendor`, `.env`, база, private media и frontend media в overlay не входят. Перед сборкой нового overlay нужно зафиксировать точный merge SHA и точные исходные checksums семи заменяемых файлов на установленной версии. Apply-скрипт должен отказаться при несовпадении исходных checksums, наличии симлинка вместо целевого файла, уже существующем неожиданном новом файле или неверной базовой ревизии; для семи заменяемых файлов он должен сохранить originals, а два новых класса и миграцию отметить как созданные им файлы для обратимого удаления. Архив, внутренний file manifest и внешний `.sha256` проверяются до распаковки в приложение.
+Тестовые файлы `backend/tests/Feature/ProjectEditorPreviewTest.php`, `backend/tests/Feature/ExternalPreviewPreparationTest.php` и `scripts/tests/project-preview-client-recovery.test.mjs`, а также его npm-команда входят в Git/PR, но не в production-overlay. `vendor`, `.env`, база, private media и frontend media в overlay не входят. Перед сборкой нового overlay нужно зафиксировать точный merge SHA и точные исходные checksums восьми заменяемых файлов на установленной версии. Apply-скрипт должен отказаться при несовпадении исходных checksums, наличии симлинка вместо целевого файла, уже существующем неожиданном новом файле или неверной базовой ревизии; для восьми заменяемых файлов он должен сохранить originals, а три новых класса и миграцию отметить как созданные им файлы для обратимого удаления. Архив, внутренний file manifest и внешний `.sha256` проверяются до распаковки в приложение.
 
 #### Резервное копирование и окно обслуживания
 
@@ -190,7 +192,7 @@ Apply отказывается при отсутствии прежнего comp
    ```
 
 3. Проверить статус `ready`, SHA-256 архива и его внутренних `database.sql`, `media.tar.gz`, `checksums.json`; скопировать архив в защищённое хранилище вне document root. Restore-test выполнять только на отдельной базе с суффиксом `_restore_test`, как описано в разделе 2. Никогда не проверять восстановление поверх рабочей базы.
-4. Отдельно сохранить текущие семь заменяемых PHP-файлов, `backend/vendor/composer/`, `backend/composer.lock`, приватный `.env` и список/состояние прежних overlay. Не включать секреты в новый архив или лог. Убедиться, что резервная копия создана и проверена **до** изменения `/madebymadlen.de/app`.
+4. Отдельно сохранить текущие восемь заменяемых PHP-файлов, `backend/vendor/composer/`, `backend/composer.lock`, приватный `.env` и список/состояние прежних overlay. Не включать секреты в новый архив или лог. Убедиться, что резервная копия создана и проверена **до** изменения `/madebymadlen.de/app`.
 
 #### Порядок установки после отдельного одобрения
 
@@ -220,7 +222,7 @@ PHP_BIN="$PHP_BIN" bash apply-overlay.sh "$APP_ROOT"
 cd "$BACKEND_ROOT"
 "$PHP_BIN" "$COMPOSER_PHAR" dump-autoload \
   --no-dev --optimize --classmap-authoritative --no-interaction --no-scripts
-"$PHP_BIN" -r 'require "vendor/autoload.php"; foreach (["App\\Data\\ProjectPreviewSnapshot", "App\\Services\\ProjectPreviewSnapshotFactory"] as $class) { if (!class_exists($class)) { fwrite(STDERR, "Autoload fehlt: {$class}\n"); exit(1); } } echo "Autoload OK\n";'
+"$PHP_BIN" -r 'require "vendor/autoload.php"; foreach (["App\\Data\\ProjectPreviewSnapshot", "App\\Http\\Controllers\\AdminSessionController", "App\\Services\\ProjectPreviewSnapshotFactory"] as $class) { if (!class_exists($class)) { fwrite(STDERR, "Autoload fehlt: {$class}\n"); exit(1); } } echo "Autoload OK\n";'
 
 "$PHP_BIN" artisan migrate:status --no-ansi
 "$PHP_BIN" artisan migrate --pretend --path=database/migrations/2026_09_10_000005_add_target_path_to_preview_builds_table.php
@@ -228,20 +230,21 @@ cd "$BACKEND_ROOT"
 "$PHP_BIN" artisan migrate:status --no-ansi
 
 "$PHP_BIN" artisan config:clear
+"$PHP_BIN" artisan route:clear
 ```
 
 Перед командой `migrate` оператор вручную подтверждает, что единственная ожидаемая новая pending-миграция — `2026_09_10_000005_add_target_path_to_preview_builds_table`; при любой другой pending-миграции установка останавливается. `--path` ограничивает применение именно этим файлом. Миграция добавляет nullable `preview_builds.target_path` и nullable unique `preview_builds.request_id`; она не изменяет Projects, пользователей или media.
 
-`dump-autoload` выполняется с `--no-scripts`, потому что зависимости и package discovery не меняются, а требуется только обновить authoritative classmap для двух новых классов. После него обязательна отдельная проверка `class_exists()` выше. Не запускать Composer напрямую (`composer ...`) или через системный `php`: shebang/default CLI выберет неверную версию PHP.
+`dump-autoload` выполняется с `--no-scripts`, потому что зависимости и package discovery не меняются, а требуется только обновить authoritative classmap для трёх новых классов. После него обязательна отдельная проверка `class_exists()` выше. Не запускать Composer напрямую (`composer ...`) или через системный `php`: shebang/default CLI выберет неверную версию PHP.
 
-На установленном layout **не выполнять** `artisan config:cache`: `HostingPathResolver` намеренно вычисляет разные абсолютные пути для CLI и FastCGI, а CLI-generated config cache зафиксирует неверный FPM-путь. Выполняется только `/usr/local/php84/bin/php artisan config:clear`, чтобы FPM снова вычислил пути в своём контексте. `cache:clear`, `route:clear`, `route:cache`, `view:clear` и `optimize:*` для этого обновления не нужны: application cache, routes и Blade-файлы не меняются. Если после проверки FPM всё ещё исполняет старый opcode, использовать отдельный штатный restart PHP 8.4 в WCP; не подменять его Artisan cache-командами.
+На установленном layout **не выполнять** `artisan config:cache`: `HostingPathResolver` намеренно вычисляет разные абсолютные пути для CLI и FastCGI, а CLI-generated config cache зафиксирует неверный FPM-путь. Выполняется `/usr/local/php84/bin/php artisan config:clear`, чтобы FPM снова вычислил пути в своём контексте, и `artisan route:clear`, потому что overlay добавляет защищённый маршрут обновления CSRF. Новый route cache не создавать. `cache:clear`, `view:clear` и `optimize:*` для этого обновления не нужны. Если после проверки FPM всё ещё исполняет старый opcode, использовать отдельный штатный restart PHP 8.4 в WCP; не подменять его Artisan cache-командами.
 
 После команд проверить в таком порядке: `artisan about`, admin login, существующее сохранение черновика, открытие preview в новой вкладке, несохранённый текст в preview при неизменной записи БД, ожидание с переходом на выбранный проект, Renaissance DE → EN → DE с одним preview-префиксом, popup-blocked fallback link, двойное нажатие и owner/expiry isolation. Не запускать реальную публикацию. Только после успешного smoke-test снять окно обслуживания. Обновление `MADLEN_PREVIEW_SOURCE_REVISION` до итогового merge SHA потребуется отдельно для external runner, но оно **не заменяет** backend-overlay, Composer autoload refresh и миграцию.
 
 #### Восстановление при ошибке
 
 - Если apply не начался или остановился до изменения файлов, оставить действующий `/app` без изменений, сохранить диагностику и удалить только созданный staging-каталог после проверки.
-- Если файлы изменены, но миграция ещё не применена, восстановить семь originals из проверенного overlay-record, удалить только три созданных overlay-файла, восстановить сохранённый `vendor/composer/`, затем снова выполнить Composer `dump-autoload` через `/usr/local/php84/bin/php` и `artisan config:clear`. Не удалять `.env`, storage или media.
+- Если файлы изменены, но миграция ещё не применена, восстановить восемь originals из проверенного overlay-record, удалить только четыре созданных overlay-файла, восстановить сохранённый `vendor/composer/`, затем снова выполнить Composer `dump-autoload` через `/usr/local/php84/bin/php`, `artisan config:clear` и `artisan route:clear`. Не удалять `.env`, storage или media.
 - Если миграция сообщила об ошибке, **не восстанавливать всю рабочую БД автоматически**. Сначала сохранить ошибку и проверить отдельно запись `2026_09_10_000005_add_target_path_to_preview_builds_table` в `artisan migrate:status`, наличие `preview_builds.target_path` и `preview_builds.request_id` через `Schema::hasColumn`, а также unique index `preview_builds_request_id_unique`. Для проверки колонок без вывода данных CMS:
 
   ```bash

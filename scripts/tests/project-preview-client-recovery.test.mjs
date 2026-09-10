@@ -25,6 +25,7 @@ class MockElement {
     this.ownerDocument = ownerDocument;
     this.children = [];
     this.attributes = {};
+    this.dataset = {};
     this.style = { cssText: '' };
     this.parent = null;
     this.textContent = '';
@@ -48,12 +49,16 @@ class MockElement {
     this.attributes[name] = String(value);
   }
 
+  getAttribute(name) {
+    return this.attributes[name] ?? null;
+  }
+
   addEventListener(name, callback) {
     this[`on${name}`] = callback;
   }
 
   click() {
-    this.onclick?.();
+    return this.onclick?.();
   }
 
   remove() {
@@ -81,6 +86,22 @@ function createDocument() {
       };
       return visit(document.body);
     },
+    querySelectorAll(selector) {
+      const matches = (element) => {
+        if (selector === 'meta[name=csrf-token]') {
+          return element.tagName === 'META' && element.getAttribute('name') === 'csrf-token';
+        }
+        if (selector === '[data-csrf]') return element.getAttribute('data-csrf') !== null;
+        return false;
+      };
+      const found = [];
+      const visit = (element) => {
+        if (matches(element)) found.push(element);
+        for (const child of element.children) visit(child);
+      };
+      visit(document.body);
+      return found;
+    },
   };
   document.body = new MockElement('body', document);
   return document;
@@ -103,6 +124,15 @@ function makeHarness() {
   let nextTimer = 1;
   let uuidNumber = 1;
   let reloads = 0;
+  let authenticated = false;
+  const fetchCalls = [];
+
+  const metaCsrf = document.createElement('meta');
+  metaCsrf.setAttribute('name', 'csrf-token');
+  metaCsrf.setAttribute('content', 'old-csrf-token-that-is-long-enough');
+  const scriptCsrf = document.createElement('script');
+  scriptCsrf.setAttribute('data-csrf', 'old-csrf-token-that-is-long-enough');
+  document.body.append(metaCsrf, scriptCsrf);
 
   const window = {
     crypto: {
@@ -114,6 +144,26 @@ function makeHarness() {
       reload() {
         reloads++;
       },
+    },
+    livewireScriptConfig: { csrf: 'old-csrf-token-that-is-long-enough' },
+    async fetch(url, options) {
+      fetchCalls.push({ url, options });
+      if (!authenticated) {
+        return {
+          ok: false,
+          status: 404,
+          async json() {
+            return {};
+          },
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          return { csrfToken: 'fresh-csrf-token-after-login-1234567890' };
+        },
+      };
     },
     Livewire: {
       hook(name, callback) {
@@ -176,6 +226,8 @@ function makeHarness() {
       this.stopped++;
     },
   };
+  event.currentTarget.dataset.previewCsrfUrl = '/admin/session/csrf-token';
+  event.currentTarget.dataset.previewLoginUrl = '/admin/login';
   const executePrepare = () => {
     Function('$event', '$wire', 'window', 'document', prepareSource)(event, wire, window, document);
   };
@@ -224,6 +276,12 @@ function makeHarness() {
     openPreview,
     closePreview,
     reloadCount: () => reloads,
+    fetchCalls,
+    metaCsrf,
+    scriptCsrf,
+    setAuthenticated(value) {
+      authenticated = value;
+    },
     tabs,
     timers,
     window,
@@ -280,9 +338,10 @@ test('HTTP 500 uses the recoverable German error instead of Livewire error UI', 
   assert.equal(harness.reloadCount(), 0);
 });
 
-test('HTTP 419 keeps the editor and offers re-authentication without automatic reload', () => {
+test('HTTP 419 refreshes CSRF after login and retries the same operation without reloading the editor', async () => {
   const harness = makeHarness();
   harness.executePrepare();
+  const firstOperation = { ...harness.window.__madlenProjectPreviewOperation };
   assert.equal(harness.failLatestRequest(419), 1);
   const panel = harness.document.getElementById('madlen-project-preview-recovery');
   assert.ok(panel);
@@ -290,6 +349,23 @@ test('HTTP 419 keeps the editor and offers re-authentication without automatic r
   const loginLink = findTag(panel, 'a');
   assert.equal(loginLink.href, '/admin/login');
   assert.equal(loginLink.target, '_blank');
+
+  const retryButton = findTag(panel, 'button');
+  await retryButton.click();
+  assert.equal(harness.fetchCalls.length, 1);
+  assert.equal(harness.window.__madlenProjectPreviewOperation.attempt, firstOperation.attempt);
+  assert.match(panel.children.map((child) => child.textContent).join(' '), /noch nicht wiederhergestellt/);
+
+  harness.setAuthenticated(true);
+  await retryButton.click();
+  const retriedOperation = harness.window.__madlenProjectPreviewOperation;
+  assert.equal(retriedOperation.requestId, firstOperation.requestId);
+  assert.ok(retriedOperation.attempt > firstOperation.attempt);
+  assert.equal(harness.metaCsrf.getAttribute('content'), 'fresh-csrf-token-after-login-1234567890');
+  assert.equal(harness.scriptCsrf.getAttribute('data-csrf'), 'fresh-csrf-token-after-login-1234567890');
+  assert.equal(harness.window.livewireScriptConfig.csrf, 'fresh-csrf-token-after-login-1234567890');
+  assert.equal(harness.fetchCalls[1].options.credentials, 'same-origin');
+  assert.equal(harness.fetchCalls[1].options.cache, 'no-store');
   assert.equal(harness.wireValues.title_de, 'Ungespeicherter Titel bleibt erhalten');
   assert.equal(harness.reloadCount(), 0);
 });

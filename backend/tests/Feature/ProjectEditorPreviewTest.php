@@ -189,6 +189,26 @@ class ProjectEditorPreviewTest extends TestCase
         $this->assertSame($original->status, $project->fresh()->status);
     }
 
+    public function test_csrf_refresh_requires_admin_authentication_and_is_not_cached(): void
+    {
+        [$user] = $this->fixture();
+
+        $this->app['auth']->guard()->logout();
+        $this->getJson(route('admin.session.csrf'))
+            ->assertNotFound();
+
+        $csrfToken = str_repeat('a', 40);
+        $response = $this->actingAs($user)
+            ->withSession(['_token' => $csrfToken])
+            ->getJson(route('admin.session.csrf'));
+
+        $response
+            ->assertOk()
+            ->assertExactJson(['csrfToken' => $csrfToken])
+            ->assertHeader('Cache-Control', 'no-store, private')
+            ->assertHeader('Pragma', 'no-cache');
+    }
+
     public function test_validation_failure_and_duplicate_launch_keep_the_form_and_database_unchanged(): void
     {
         [$user, $project] = $this->fixture();
