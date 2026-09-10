@@ -26,13 +26,15 @@ done
 }
 (cd "$(dirname "${original_archive}")" && sha256sum -c "$(basename "${original_archive}").sha256" >/dev/null)
 
-source_revision="$(git -C "${repository_root}" rev-parse HEAD)"
+git_repository=(git -c "safe.directory=${repository_root}" -c core.autocrlf=true -C "${repository_root}")
+
+source_revision="$("${git_repository[@]}" rev-parse HEAD)"
 [[ "${source_revision}" =~ ^[0-9a-f]{40}$ ]] || exit 1
 [[ "${source_revision}" != "${expected_base_revision}" ]] || {
     echo "Refusing to label current preview fixes with the old base revision." >&2
     exit 1
 }
-[[ -z "$(git -C "${repository_root}" status --porcelain --untracked-files=normal)" ]] || {
+[[ -z "$("${git_repository[@]}" status --porcelain --untracked-files=normal)" ]] || {
     echo "Commit and review the preview changes before building the server overlay." >&2
     exit 1
 }
