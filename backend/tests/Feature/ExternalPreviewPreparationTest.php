@@ -155,10 +155,12 @@ class ExternalPreviewPreparationTest extends TestCase
                 ['media_asset_id' => $media->id, 'side' => 'right'],
             ],
         ]);
-        $preview = app(PreviewBuilder::class)->build($snapshot);
+        $requestId = (string) Str::uuid();
+        $preview = app(PreviewBuilder::class)->build($snapshot, $requestId);
         $this->assertSame('queued', $preview->status);
         $this->assertSame('external', $preview->execution_mode);
         $this->assertSame('portfolio/external-preview-draft', $preview->target_path);
+        $this->assertSame($requestId, $preview->request_id);
         $this->assertSame('Unveränderlicher Entwurf Deutsch', $project->fresh()->title_de);
         $this->assertSame('left', $project->mediaItems()->firstOrFail()->side);
         $this->assertStringStartsWith('madlen-preview-storage-v1://', $preview->package_path);

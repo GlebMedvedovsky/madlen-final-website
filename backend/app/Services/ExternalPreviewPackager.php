@@ -19,7 +19,7 @@ class ExternalPreviewPackager
         private ExternalPreviewStorage $storage,
     ) {}
 
-    public function prepare(?ProjectPreviewSnapshot $projectSnapshot = null): PreviewBuild
+    public function prepare(?ProjectPreviewSnapshot $projectSnapshot = null, ?string $requestId = null): PreviewBuild
     {
         $sourceRevision = strtolower(trim((string) config('madlen.preview_runner.source_revision')));
         if (! preg_match('/\A[0-9a-f]{40}\z/', $sourceRevision)) {
@@ -50,6 +50,7 @@ class ExternalPreviewPackager
                 'manifest_path' => $this->storage->manifestLocator('pending'),
                 'build_path' => $this->storage->buildLocator($token),
                 'target_path' => $projectSnapshot?->targetPath(),
+                'request_id' => $requestId,
                 'user_id' => Auth::id(),
                 'expires_at' => $expiresAt,
                 'progress_message' => 'Der unveränderliche Entwurfsstand wird vorbereitet.',

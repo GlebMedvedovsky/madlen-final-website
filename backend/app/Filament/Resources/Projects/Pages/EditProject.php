@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Projects\Pages;
 
 use App\Filament\Resources\Projects\ProjectResource;
+use App\Models\PreviewBuild;
 use App\Services\PreviewBuilder;
 use App\Services\ProjectPreviewSnapshotFactory;
 use App\Services\ReleasePublisher;
@@ -12,11 +13,16 @@ use Filament\Actions\RestoreAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class EditProject extends EditRecord
 {
     protected static string $resource = ProjectResource::class;
+
+    public string $previewRequestId = '';
+
+    public int $previewRequestAttempt = 0;
 
     private const PREPARE_PREVIEW_TAB_JS = <<<'JS'
 if (window.__madlenProjectPreviewPending) {
@@ -24,46 +30,168 @@ if (window.__madlenProjectPreviewPending) {
     $event.stopImmediatePropagation();
     return;
 }
+const previousOperation = window.__madlenProjectPreviewOperation;
+const isRetry = previousOperation?.retry === true && typeof previousOperation.requestId === 'string';
+const requestId = isRetry
+    ? previousOperation.requestId
+    : (window.crypto?.randomUUID?.() ?? 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+        const random = Math.floor(Math.random() * 16);
+        return (character === 'x' ? random : ((random & 0x3) | 0x8)).toString(16);
+    }));
+const attempt = (window.__madlenProjectPreviewAttemptCounter ?? 0) + 1;
+window.__madlenProjectPreviewAttemptCounter = attempt;
 window.__madlenProjectPreviewPending = true;
-const previewTab = window.open('', `madlen-project-preview-${Date.now()}`);
-window.__madlenProjectPreviewTab = previewTab;
-if (previewTab) {
+let previewTab = isRetry ? previousOperation.tab : null;
+if (! previewTab || previewTab.closed) {
+    previewTab = window.open('', `madlen-project-preview-${Date.now()}`);
+}
+const operation = { requestId, attempt, tab: previewTab, retry: false, watchdog: null };
+window.__madlenProjectPreviewOperation = operation;
+
+const oldRecovery = document.getElementById('madlen-project-preview-recovery');
+if (oldRecovery) oldRecovery.remove();
+
+const renderPreviewTab = (title, text) => {
+    if (! previewTab || previewTab.closed) return;
     previewTab.opener = null;
     const previewDocument = previewTab.document;
     previewDocument.documentElement.lang = 'de';
-    previewDocument.title = 'Vorschau wird vorbereitet · Madlen';
+    previewDocument.title = `${title} · Madlen`;
     previewDocument.body.style.cssText = 'margin:0;min-height:100vh;display:grid;place-items:center;background:#fffaf5;color:#111;font:16px/1.55 Arial,sans-serif';
     previewDocument.body.replaceChildren();
     const placeholder = previewDocument.createElement('main');
     placeholder.style.cssText = 'width:min(34rem,calc(100% - 2rem));box-sizing:border-box;padding:2rem;border:1px solid #eadde0;background:#fff';
     const heading = previewDocument.createElement('h1');
     heading.style.cssText = 'margin:0 0 1rem;color:#0338da';
-    heading.textContent = 'Vorschau wird vorbereitet';
+    heading.textContent = title;
     const message = previewDocument.createElement('p');
-    message.textContent = 'Der aktuelle Formularstand wird unveränderlich übernommen.';
+    message.textContent = text;
     placeholder.append(heading, message);
     previewDocument.body.append(placeholder);
-}
+};
+
+const triggerButton = $event.currentTarget;
+window.__madlenProjectPreviewRecover = (failedRequestId, failedAttempt, status = 503) => {
+    const current = window.__madlenProjectPreviewOperation;
+    if (! current || current.requestId !== failedRequestId || current.attempt !== failedAttempt) return;
+    if (current.watchdog) window.clearTimeout(current.watchdog);
+    current.watchdog = null;
+    current.retry = true;
+    window.__madlenProjectPreviewPending = false;
+
+    const statusCode = Number(status || 503);
+    const sessionExpired = statusCode === 419;
+    const serverFailed = statusCode >= 500 && statusCode !== 503;
+    const title = sessionExpired
+        ? 'Sitzung abgelaufen'
+        : (serverFailed ? 'Serverantwort fehlgeschlagen' : 'Verbindung unterbrochen');
+    const text = sessionExpired
+        ? 'Ihre Eingaben bleiben in diesem Editor-Tab sichtbar. Öffnen Sie die Anmeldung in einem neuen Tab und versuchen Sie danach denselben Vorgang erneut.'
+        : 'Die Antwort der Vorschau ist verloren gegangen. Ihre Eingaben bleiben erhalten; eine Wiederholung fragt denselben Vorgang ab und startet keine zweite Vorschau.';
+    renderPreviewTab(title, `${text} Kehren Sie zum Editor zurück.`);
+
+    const existing = document.getElementById('madlen-project-preview-recovery');
+    if (existing) existing.remove();
+    const panel = document.createElement('section');
+    panel.id = 'madlen-project-preview-recovery';
+    panel.setAttribute('role', 'alert');
+    panel.setAttribute('aria-live', 'assertive');
+    panel.style.cssText = 'position:fixed;z-index:60;right:1rem;top:5rem;width:min(30rem,calc(100vw - 2rem));box-sizing:border-box;padding:1rem 1.1rem;border:1px solid #e8c9cf;border-radius:.75rem;background:#fffaf5;color:#18181b;box-shadow:0 12px 35px rgba(24,24,27,.18);font:14px/1.5 Arial,sans-serif';
+    const panelTitle = document.createElement('strong');
+    panelTitle.style.cssText = 'display:block;margin-bottom:.35rem;color:#0338da;font-size:16px';
+    panelTitle.textContent = title;
+    const panelText = document.createElement('p');
+    panelText.style.cssText = 'margin:0 0 .75rem';
+    panelText.textContent = text;
+    const retryButton = document.createElement('button');
+    retryButton.type = 'button';
+    retryButton.style.cssText = 'border:0;border-radius:999px;padding:.65rem 1rem;background:#0338da;color:#fff;font-weight:700;cursor:pointer';
+    retryButton.textContent = 'Erneut versuchen';
+    retryButton.addEventListener('click', () => {
+        panel.remove();
+        triggerButton.click();
+    });
+    panel.append(panelTitle, panelText, retryButton);
+    if (sessionExpired) {
+        const loginLink = document.createElement('a');
+        loginLink.href = '/admin/login';
+        loginLink.target = '_blank';
+        loginLink.rel = 'noopener noreferrer';
+        loginLink.style.cssText = 'display:inline-block;margin-left:.75rem;color:#0338da;text-decoration:underline';
+        loginLink.textContent = 'Anmeldung öffnen';
+        panel.append(loginLink);
+    }
+    document.body.append(panel);
+};
+
+renderPreviewTab('Vorschau wird vorbereitet', 'Der aktuelle Formularstand wird unveränderlich übernommen.');
+$wire.$set('previewRequestId', requestId, false);
+$wire.$set('previewRequestAttempt', attempt, false);
+
+const componentId = $wire.$id;
+const cleanupRequestHook = window.Livewire.hook('request', ({ options, fail }) => {
+    let payload;
+    try {
+        payload = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+    } catch {
+        return;
+    }
+    const isThisPreviewRequest = payload?.components?.some((componentPayload) => {
+        try {
+            const snapshot = JSON.parse(componentPayload.snapshot);
+            return snapshot.memo?.id === componentId
+                && componentPayload.calls?.some((call) => call.method === 'mountAction' && call.params?.[0] === 'preview');
+        } catch {
+            return false;
+        }
+    });
+    if (! isThisPreviewRequest) return;
+    cleanupRequestHook();
+    fail(({ status, preventDefault }) => {
+        preventDefault?.();
+        window.__madlenProjectPreviewRecover?.(requestId, attempt, status);
+    });
+});
+
+operation.watchdog = window.setTimeout(() => {
+    window.__madlenProjectPreviewRecover?.(requestId, attempt, 503);
+}, 90000);
 JS;
 
     private const OPEN_PREVIEW_TAB_JS = <<<'JS'
-(url) => {
-    const previewTab = window.__madlenProjectPreviewTab;
+(url, requestId, attempt) => {
+    const operation = window.__madlenProjectPreviewOperation;
+    if (! operation || operation.requestId !== requestId || operation.attempt !== attempt) return;
+    if (operation.watchdog) window.clearTimeout(operation.watchdog);
+    const previewTab = operation.tab;
     if (previewTab && ! previewTab.closed) {
         previewTab.location.assign(url);
         previewTab.focus();
     }
-    window.__madlenProjectPreviewTab = null;
+    document.getElementById('madlen-project-preview-recovery')?.remove();
+    window.__madlenProjectPreviewOperation = null;
+    window.__madlenProjectPreviewRecover = null;
     window.__madlenProjectPreviewPending = false;
 }
 JS;
 
     private const CLOSE_PREVIEW_TAB_JS = <<<'JS'
-() => {
-    const previewTab = window.__madlenProjectPreviewTab;
+(requestId, attempt) => {
+    const operation = window.__madlenProjectPreviewOperation;
+    if (! operation || operation.requestId !== requestId || operation.attempt !== attempt) return;
+    if (operation.watchdog) window.clearTimeout(operation.watchdog);
+    const previewTab = operation.tab;
     if (previewTab && ! previewTab.closed) previewTab.close();
-    window.__madlenProjectPreviewTab = null;
+    document.getElementById('madlen-project-preview-recovery')?.remove();
+    window.__madlenProjectPreviewOperation = null;
+    window.__madlenProjectPreviewRecover = null;
     window.__madlenProjectPreviewPending = false;
+}
+JS;
+
+    private const RETRY_PREVIEW_TAB_JS = <<<'JS'
+(requestId, attempt, status) => {
+    window.__madlenProjectPreviewRecover?.(requestId, attempt, status);
 }
 JS;
 
@@ -75,6 +203,26 @@ JS;
                 ->icon('heroicon-o-eye')
                 ->extraAttributes(['x-on:click.capture' => self::PREPARE_PREVIEW_TAB_JS])
                 ->action(function (): void {
+                    $requestId = (string) $this->previewRequestId;
+                    $attempt = (int) $this->previewRequestAttempt;
+                    if (! Str::isUuid($requestId) || $attempt < 1) {
+                        $this->closePendingPreviewTab($requestId, $attempt);
+                        Notification::make()
+                            ->title('Vorschau konnte nicht sicher gestartet werden')
+                            ->body('Ihre Eingaben bleiben erhalten. Bitte versuchen Sie es erneut.')
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
+                    if ($existing = $this->existingPreview($requestId)) {
+                        $this->openPreviewTab($existing, $requestId, $attempt, reused: true);
+
+                        return;
+                    }
+
                     try {
                         // Unlike Schema::getState(), validate() does not persist relationship repeaters.
                         $this->form->validate();
@@ -83,7 +231,7 @@ JS;
                             $this->data ?? [],
                         );
                     } catch (ValidationException $error) {
-                        $this->closePendingPreviewTab();
+                        $this->closePendingPreviewTab($requestId, $attempt);
                         Notification::make()
                             ->title('Vorschau kann noch nicht erstellt werden')
                             ->body('Bitte korrigieren Sie die markierten Felder. Ihre Eingaben bleiben im Editor erhalten.')
@@ -92,7 +240,7 @@ JS;
                             ->send();
                         throw $error;
                     } catch (\Throwable $error) {
-                        $this->closePendingPreviewTab();
+                        $this->closePendingPreviewTab($requestId, $attempt);
                         report($error);
                         Notification::make()
                             ->title('Vorschau konnte nicht vorbereitet werden')
@@ -104,12 +252,18 @@ JS;
                         return;
                     }
 
-                    $lock = Cache::lock($this->previewLockKey(), 180);
+                    $lock = Cache::lock($this->previewLockKey($requestId), 180);
                     if (! $lock->get()) {
-                        $this->closePendingPreviewTab();
+                        if ($existing = $this->existingPreview($requestId)) {
+                            $this->openPreviewTab($existing, $requestId, $attempt, reused: true);
+
+                            return;
+                        }
+
+                        $this->js(self::RETRY_PREVIEW_TAB_JS, $requestId, $attempt, 409);
                         Notification::make()
                             ->title('Vorschau wird bereits vorbereitet')
-                            ->body('Bitte warten Sie, bis der bereits gestartete Vorgang abgeschlossen ist. Ihre Eingaben bleiben erhalten.')
+                            ->body('Ihre Eingaben bleiben erhalten. Versuchen Sie denselben Vorgang gleich erneut; es wird keine zweite Vorschau gestartet.')
                             ->warning()
                             ->persistent()
                             ->send();
@@ -118,26 +272,22 @@ JS;
                     }
 
                     try {
-                        $preview = app(PreviewBuilder::class)->build($snapshot);
-                        $previewUrl = route('admin.preview', [
-                            'token' => $preview->token,
-                            'path' => $snapshot->targetPath(),
-                        ], absolute: false);
-                        $this->js(self::OPEN_PREVIEW_TAB_JS, $previewUrl);
+                        if ($existing = $this->existingPreview($requestId)) {
+                            $this->openPreviewTab($existing, $requestId, $attempt, reused: true);
 
-                        Notification::make()
-                            ->title('Projektvorschau wurde gestartet')
-                            ->body('Die Vorschau öffnet sich in einem neuen Tab. Falls Ihr Browser den Tab blockiert hat, verwenden Sie den folgenden Link.')
-                            ->success()
-                            ->actions([
-                                Action::make('openProjectPreview')
-                                    ->label('Vorschau öffnen')
-                                    ->url($previewUrl, shouldOpenInNewTab: true),
-                            ])
-                            ->persistent()
-                            ->send();
+                            return;
+                        }
+
+                        $preview = app(PreviewBuilder::class)->build($snapshot, $requestId);
+                        $this->openPreviewTab($preview, $requestId, $attempt);
                     } catch (\Throwable $error) {
-                        $this->closePendingPreviewTab();
+                        if (($existing = $this->existingPreview($requestId)) && $existing->status !== 'failed') {
+                            $this->openPreviewTab($existing, $requestId, $attempt, reused: true);
+
+                            return;
+                        }
+
+                        $this->closePendingPreviewTab($requestId, $attempt);
                         $notConfigured = $error->getMessage() === PreviewBuilder::NOT_CONFIGURED_MESSAGE;
                         if (! $notConfigured) {
                             report($error);
@@ -189,13 +339,45 @@ JS;
         ];
     }
 
-    private function previewLockKey(): string
+    private function previewLockKey(string $requestId): string
     {
-        return 'madlen-project-preview:'.auth()->id().':'.$this->getRecord()->getKey();
+        return 'madlen-project-preview:'.auth()->id().':'.$this->getRecord()->getKey().':'.$requestId;
     }
 
-    private function closePendingPreviewTab(): void
+    private function existingPreview(string $requestId): ?PreviewBuild
     {
-        $this->js(self::CLOSE_PREVIEW_TAB_JS);
+        return PreviewBuild::query()
+            ->where('request_id', $requestId)
+            ->where('user_id', auth()->id())
+            ->where('target_path', 'portfolio/'.$this->getRecord()->slug)
+            ->first();
+    }
+
+    private function openPreviewTab(PreviewBuild $preview, string $requestId, int $attempt, bool $reused = false): void
+    {
+        $previewUrl = route('admin.preview', [
+            'token' => $preview->token,
+            'path' => $preview->target_path,
+        ], absolute: false);
+        $this->js(self::OPEN_PREVIEW_TAB_JS, $previewUrl, $requestId, $attempt);
+
+        Notification::make()
+            ->title($reused ? 'Bereits gestartete Projektvorschau gefunden' : 'Projektvorschau wurde gestartet')
+            ->body($reused
+                ? 'Der frühere Vorgang wird weiterverwendet; es wurde keine zweite Vorschau gestartet.'
+                : 'Die Vorschau öffnet sich in einem neuen Tab. Falls Ihr Browser den Tab blockiert hat, verwenden Sie den folgenden Link.')
+            ->success()
+            ->actions([
+                Action::make('openProjectPreview')
+                    ->label('Vorschau öffnen')
+                    ->url($previewUrl, shouldOpenInNewTab: true),
+            ])
+            ->persistent()
+            ->send();
+    }
+
+    private function closePendingPreviewTab(string $requestId, int $attempt): void
+    {
+        $this->js(self::CLOSE_PREVIEW_TAB_JS, $requestId, $attempt);
     }
 }

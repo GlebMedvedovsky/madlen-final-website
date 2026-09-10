@@ -14,14 +14,14 @@ class ExternalPreviewBuilder
         private ExternalPreviewStatus $statuses,
     ) {}
 
-    public function build(?ProjectPreviewSnapshot $projectSnapshot = null): PreviewBuild
+    public function build(?ProjectPreviewSnapshot $projectSnapshot = null, ?string $requestId = null): PreviewBuild
     {
         if (! config('madlen.external_preview_connected')
             || config('madlen.preview_runner.driver') !== 'github-actions') {
             throw new RuntimeException('Die externe Vorschau ist nicht verbunden. Die lokale Vorschau bleibt unverändert verfügbar.');
         }
 
-        $preview = $this->packager->prepare($projectSnapshot);
+        $preview = $this->packager->prepare($projectSnapshot, $requestId);
         try {
             $this->dispatcher->dispatch($preview);
 

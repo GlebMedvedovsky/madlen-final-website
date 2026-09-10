@@ -16,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -80,6 +81,7 @@ class ProjectEditorPreviewTest extends TestCase
         $original = $project->fresh();
         $originalGallery = $project->mediaItems()->get()->map->only(['media_asset_id', 'position', 'side'])->all();
         $editorUrl = EditProject::getUrl(['record' => $project]);
+        $requestId = (string) Str::uuid();
 
         $component = Livewire::test(EditProject::class, ['record' => $project->getRouteKey()])
             ->assertActionExists('preview', function (Action $action): bool {
@@ -90,9 +92,16 @@ class ProjectEditorPreviewTest extends TestCase
                     && str_contains($handler, '__madlenProjectPreviewPending')
                     && str_contains($handler, 'stopImmediatePropagation')
                     && str_contains($handler, 'createElement')
+                    && str_contains($handler, "Livewire.hook('request'")
+                    && str_contains($handler, 'statusCode === 419')
+                    && str_contains($handler, 'preventDefault?.()')
+                    && str_contains($handler, 'previewRequestAttempt')
+                    && ! str_contains($handler, 'window.location.reload')
                     && ! str_contains($handler, 'innerHTML')
                     && filled($action->getLivewireClickHandler());
             })
+            ->set('previewRequestId', $requestId)
+            ->set('previewRequestAttempt', 1)
             ->fillForm([
                 'title_de' => 'Ungespeicherter Vorschautitel Deutsch',
                 'title_en' => 'Unsaved English preview title',
@@ -115,6 +124,10 @@ class ProjectEditorPreviewTest extends TestCase
         $preview = PreviewBuild::query()->latest()->firstOrFail();
         $this->assertSame('queued', $preview->status);
         $this->assertSame('portfolio/'.$project->slug, $preview->target_path);
+        $this->assertSame($requestId, $preview->request_id);
+        $this->assertTrue(collect(Schema::getIndexes('preview_builds'))->contains(
+            fn (array $index): bool => $index['name'] === 'preview_builds_request_id_unique' && $index['unique'],
+        ));
         $manifest = json_decode(
             file_get_contents(app(ExternalPreviewStorage::class)->manifestPath($preview->id)),
             true,
@@ -152,6 +165,23 @@ class ProjectEditorPreviewTest extends TestCase
 
         $this->actingAs($user);
         $component
+            ->set('previewRequestAttempt', 2)
+            ->fillForm(['title_de' => 'Späterer Stand nach verlorener Antwort'])
+            ->callAction('preview')
+            ->assertNoRedirect()
+            ->assertNotified('Bereits gestartete Projektvorschau gefunden');
+        $this->assertDatabaseCount('preview_builds', 1);
+        $this->assertSame($preview->id, PreviewBuild::query()->sole()->id);
+        $manifestAfterRetry = json_decode(
+            file_get_contents(app(ExternalPreviewStorage::class)->manifestPath($preview->id)),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $retriedSnapshot = collect($manifestAfterRetry['projects'])->firstWhere('slug', $project->slug);
+        $this->assertSame('Ungespeicherter Vorschautitel Deutsch', $retriedSnapshot['title']['de']);
+        $this->assertSame($original->title_de, $project->fresh()->title_de);
+
+        $component
             ->fillForm(['title_de' => 'Bewusst gespeicherter Titel'])
             ->call('save', false)
             ->assertHasNoFormErrors();
@@ -163,8 +193,11 @@ class ProjectEditorPreviewTest extends TestCase
     {
         [$user, $project] = $this->fixture();
         $originalTitle = $project->title_de;
+        $validationRequestId = (string) Str::uuid();
 
         Livewire::test(EditProject::class, ['record' => $project->getRouteKey()])
+            ->set('previewRequestId', $validationRequestId)
+            ->set('previewRequestAttempt', 1)
             ->fillForm(['title_de' => ''])
             ->callAction('preview')
             ->assertHasFormErrors(['title_de' => 'required'])
@@ -174,10 +207,13 @@ class ProjectEditorPreviewTest extends TestCase
         $this->assertDatabaseCount('preview_builds', 0);
         $this->assertSame($originalTitle, $project->fresh()->title_de);
 
-        $lock = Cache::lock('madlen-project-preview:'.$user->id.':'.$project->id, 180);
+        $lockedRequestId = (string) Str::uuid();
+        $lock = Cache::lock('madlen-project-preview:'.$user->id.':'.$project->id.':'.$lockedRequestId, 180);
         $this->assertTrue($lock->get());
         try {
             Livewire::test(EditProject::class, ['record' => $project->getRouteKey()])
+                ->set('previewRequestId', $lockedRequestId)
+                ->set('previewRequestAttempt', 1)
                 ->fillForm(['title_de' => 'Nicht gespeicherter Doppelklick'])
                 ->callAction('preview')
                 ->assertSet('data.title_de', 'Nicht gespeicherter Doppelklick')
@@ -199,11 +235,13 @@ class ProjectEditorPreviewTest extends TestCase
         $builder = Mockery::mock(PreviewBuilder::class);
         $builder->shouldReceive('build')
             ->once()
-            ->with(Mockery::type(ProjectPreviewSnapshot::class))
+            ->with(Mockery::type(ProjectPreviewSnapshot::class), Mockery::type('string'))
             ->andThrow(new RuntimeException('Simulierter Vorschaufehler'));
         $this->app->instance(PreviewBuilder::class, $builder);
 
         Livewire::test(EditProject::class, ['record' => $project->getRouteKey()])
+            ->set('previewRequestId', (string) Str::uuid())
+            ->set('previewRequestAttempt', 1)
             ->fillForm(['title_en' => 'Unsaved state after failed build'])
             ->callAction('preview')
             ->assertSet('data.title_en', 'Unsaved state after failed build')
@@ -265,6 +303,7 @@ class ProjectEditorPreviewTest extends TestCase
             'manifest_path' => $this->testRoot.'/manifest.json',
             'build_path' => $buildRoot,
             'target_path' => 'portfolio/editor-preview-synthetic',
+            'request_id' => (string) Str::uuid(),
             'user_id' => $owner->id,
             'expires_at' => now()->addMinutes(20),
             'progress_message' => 'Das gewählte Projekt wird gebaut.',

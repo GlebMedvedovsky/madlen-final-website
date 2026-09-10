@@ -175,9 +175,9 @@ Apply отказывается при отсутствии прежнего comp
 7. `backend/app/Services/ExternalPreviewPackager.php`;
 8. `backend/app/Services/PreviewBuilder.php`;
 9. `backend/app/Services/ProjectPreviewSnapshotFactory.php` — новый класс;
-10. `backend/database/migrations/2026_09_10_000005_add_target_path_to_preview_builds_table.php` — новая миграция.
+10. `backend/database/migrations/2026_09_10_000005_add_target_path_to_preview_builds_table.php` — новая миграция для `target_path` и идемпотентного `request_id`.
 
-Тестовые файлы `backend/tests/Feature/ProjectEditorPreviewTest.php` и `backend/tests/Feature/ExternalPreviewPreparationTest.php` входят в Git/PR, но не в production-overlay. `vendor`, `.env`, база, private media и frontend media в overlay не входят. Перед сборкой нового overlay нужно зафиксировать точный merge SHA и точные исходные checksums семи заменяемых файлов на установленной версии. Apply-скрипт должен отказаться при несовпадении исходных checksums, наличии симлинка вместо целевого файла, уже существующем неожиданном новом файле или неверной базовой ревизии; для семи заменяемых файлов он должен сохранить originals, а два новых класса и миграцию отметить как созданные им файлы для обратимого удаления. Архив, внутренний file manifest и внешний `.sha256` проверяются до распаковки в приложение.
+Тестовые файлы `backend/tests/Feature/ProjectEditorPreviewTest.php`, `backend/tests/Feature/ExternalPreviewPreparationTest.php` и `scripts/tests/project-preview-client-recovery.test.mjs`, а также его npm-команда входят в Git/PR, но не в production-overlay. `vendor`, `.env`, база, private media и frontend media в overlay не входят. Перед сборкой нового overlay нужно зафиксировать точный merge SHA и точные исходные checksums семи заменяемых файлов на установленной версии. Apply-скрипт должен отказаться при несовпадении исходных checksums, наличии симлинка вместо целевого файла, уже существующем неожиданном новом файле или неверной базовой ревизии; для семи заменяемых файлов он должен сохранить originals, а два новых класса и миграцию отметить как созданные им файлы для обратимого удаления. Архив, внутренний file manifest и внешний `.sha256` проверяются до распаковки в приложение.
 
 #### Резервное копирование и окно обслуживания
 
@@ -230,7 +230,7 @@ cd "$BACKEND_ROOT"
 "$PHP_BIN" artisan config:clear
 ```
 
-Перед командой `migrate` оператор вручную подтверждает, что единственная ожидаемая новая pending-миграция — `2026_09_10_000005_add_target_path_to_preview_builds_table`; при любой другой pending-миграции установка останавливается. `--path` ограничивает применение именно этим файлом. Миграция только добавляет nullable `preview_builds.target_path`; она не изменяет Projects, пользователей или media.
+Перед командой `migrate` оператор вручную подтверждает, что единственная ожидаемая новая pending-миграция — `2026_09_10_000005_add_target_path_to_preview_builds_table`; при любой другой pending-миграции установка останавливается. `--path` ограничивает применение именно этим файлом. Миграция добавляет nullable `preview_builds.target_path` и nullable unique `preview_builds.request_id`; она не изменяет Projects, пользователей или media.
 
 `dump-autoload` выполняется с `--no-scripts`, потому что зависимости и package discovery не меняются, а требуется только обновить authoritative classmap для двух новых классов. После него обязательна отдельная проверка `class_exists()` выше. Не запускать Composer напрямую (`composer ...`) или через системный `php`: shebang/default CLI выберет неверную версию PHP.
 
@@ -242,8 +242,20 @@ cd "$BACKEND_ROOT"
 
 - Если apply не начался или остановился до изменения файлов, оставить действующий `/app` без изменений, сохранить диагностику и удалить только созданный staging-каталог после проверки.
 - Если файлы изменены, но миграция ещё не применена, восстановить семь originals из проверенного overlay-record, удалить только три созданных overlay-файла, восстановить сохранённый `vendor/composer/`, затем снова выполнить Composer `dump-autoload` через `/usr/local/php84/bin/php` и `artisan config:clear`. Не удалять `.env`, storage или media.
-- Если миграция упала, не продолжать и не запускать общий `migrate:rollback`, `migrate:fresh`, `db:wipe`, import или seed. Сохранить ошибку и `migrate:status`; восстановить рабочую БД из проверенного предустановочного backup по отдельной утверждённой recovery-процедуре, затем восстановить код/autoload как в предыдущем пункте.
-- Если миграция завершилась, а smoke-test кода не прошёл, сначала вернуть предыдущие файлы и autoload. Новая nullable-колонка обратно совместима со старым кодом и может временно остаться; для точного возврата pre-update состояния восстановить проверенный backup в том же окне обслуживания. Не откатывать весь migration batch.
+- Если миграция сообщила об ошибке, **не восстанавливать всю рабочую БД автоматически**. Сначала сохранить ошибку и проверить отдельно запись `2026_09_10_000005_add_target_path_to_preview_builds_table` в `artisan migrate:status`, наличие `preview_builds.target_path` и `preview_builds.request_id` через `Schema::hasColumn`, а также unique index `preview_builds_request_id_unique`. Для проверки колонок без вывода данных CMS:
+
+  ```bash
+  /usr/local/php84/bin/php artisan migrate:status --no-ansi
+  /usr/local/php84/bin/php artisan tinker --execute="dump([\
+      'target_path' => Illuminate\\Support\\Facades\\Schema::hasColumn('preview_builds', 'target_path'),\
+      'request_id' => Illuminate\\Support\\Facades\\Schema::hasColumn('preview_builds', 'request_id'),\
+      'request_unique' => collect(Illuminate\\Support\\Facades\\Schema::getIndexes('preview_builds'))->contains(fn (array \$index) => (\$index['name'] ?? null) === 'preview_builds_request_id_unique' && (\$index['unique'] ?? false)),\
+  ]);"
+  ```
+
+  Если запись миграции отсутствует и обе колонки отсутствуют, изменения БД не произошло: достаточно восстановить код/autoload, полный restore не нужен. Если запись и обе колонки присутствуют, миграция завершилась, а ошибка возникла позже: оставить совместимые nullable-колонки и устранять следующую ошибку. Если присутствует только часть ожидаемой схемы либо запись и схема расходятся, остановиться и подготовить отдельное минимальное reviewed исправление только для отсутствующей колонки/index или migration record; не пытаться повторно применить файл вслепую.
+- Точечный `migrate:rollback --force --path=database/migrations/2026_09_10_000005_add_target_path_to_preview_builds_table.php` допустим только после проверки, что эта миграция записана, обе новые колонки существуют и она является единственной миграцией, которую должен затронуть rollback. Сначала выполнить ту же команду с `--pretend`. Общий `migrate:rollback`, `migrate:fresh`, `db:wipe`, import и seed запрещены.
+- Если миграция завершилась, а smoke-test кода не прошёл, сначала вернуть предыдущие файлы и autoload. Новые nullable-колонки обратно совместимы со старым кодом и могут временно остаться. Полное восстановление проверенного backup требуется только при доказанном повреждении/изменении других данных либо при отдельно одобренном возврате всей БД к точному предустановочному состоянию в том же окне обслуживания, когда после backup не было редакторских изменений.
 - После любого восстановления проверить admin login, неизменность CMS-данных/media, `migrate:status`, preview isolation и логи. Не возобновлять доступ, пока эти проверки не завершены.
 
 ## 5. Приватные каталоги и marker-файлы
