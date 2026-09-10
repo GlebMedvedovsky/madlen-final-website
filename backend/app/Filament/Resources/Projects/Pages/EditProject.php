@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\Projects\Pages;
 
 use App\Filament\Resources\Projects\ProjectResource;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\RestoreAction;
-use Filament\Actions\Action;
-use Filament\Notifications\Notification;
-use Filament\Resources\Pages\EditRecord;
 use App\Services\PreviewBuilder;
 use App\Services\ReleasePublisher;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
 
 class EditProject extends EditRecord
 {
@@ -27,11 +27,16 @@ class EditProject extends EditRecord
 
                         return redirect()->to(route('admin.preview', ['token' => $preview->token]));
                     } catch (\Throwable $error) {
-                        report($error);
+                        $notConfigured = $error->getMessage() === PreviewBuilder::NOT_CONFIGURED_MESSAGE;
+                        if (! $notConfigured) {
+                            report($error);
+                        }
                         Notification::make()
-                            ->title('Vorschau konnte nicht erstellt werden')
-                            ->body('Bitte versuchen Sie es erneut. Der veröffentlichte Stand wurde nicht verändert.')
-                            ->danger()
+                            ->title($notConfigured ? PreviewBuilder::NOT_CONFIGURED_MESSAGE : 'Vorschau konnte nicht erstellt werden')
+                            ->body($notConfigured
+                                ? 'Auf diesem Server fehlt der lokale Build-Dienst. Die externe Vorschau kann später verbunden werden.'
+                                : 'Bitte versuchen Sie es erneut. Der veröffentlichte Stand wurde nicht verändert.')
+                            ->color($notConfigured ? 'warning' : 'danger')
                             ->persistent()
                             ->send();
 
@@ -48,6 +53,7 @@ class EditProject extends EditRecord
                     $record = $this->getRecord();
                     if (! $record->isTranslationReady()) {
                         Notification::make()->title('Veröffentlichung nicht möglich')->body('Titel, Beschreibung und Titelbild müssen auf Deutsch und Englisch vollständig sein.')->danger()->send();
+
                         return;
                     }
                     $previousStatus = $record->status;

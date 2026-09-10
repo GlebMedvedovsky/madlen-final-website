@@ -27,11 +27,16 @@ class ListReleases extends ListRecords
 
                         return redirect()->to(route('admin.preview', ['token' => $preview->token]));
                     } catch (\Throwable $error) {
-                        report($error);
+                        $notConfigured = $error->getMessage() === PreviewBuilder::NOT_CONFIGURED_MESSAGE;
+                        if (! $notConfigured) {
+                            report($error);
+                        }
                         Notification::make()
-                            ->title('Vorschau konnte nicht erstellt werden')
-                            ->body('Bitte versuchen Sie es erneut. Der veröffentlichte Stand wurde nicht verändert.')
-                            ->danger()
+                            ->title($notConfigured ? PreviewBuilder::NOT_CONFIGURED_MESSAGE : 'Vorschau konnte nicht erstellt werden')
+                            ->body($notConfigured
+                                ? 'Auf diesem Server fehlt der lokale Build-Dienst. Die externe Vorschau kann später verbunden werden.'
+                                : 'Bitte versuchen Sie es erneut. Der veröffentlichte Stand wurde nicht verändert.')
+                            ->color($notConfigured ? 'warning' : 'danger')
                             ->persistent()
                             ->send();
 

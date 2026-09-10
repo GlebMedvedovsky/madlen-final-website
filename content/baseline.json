@@ -1529,7 +1529,7 @@
         "privacyEnd": "gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Anfrage einverstanden.",
         "requiredNote": "* Pflichtfelder",
         "formSubmit": "Anfrage senden",
-        "subject": "Neue Anfrage über madlenmedvedovskyy.de",
+        "subject": "Neue Anfrage über madebymadlen.de",
         "requestOptions": [
           "Portraitshooting",
           "Paare & Familien",
@@ -1671,7 +1671,7 @@
         "privacyEnd": "and consent to the processing of my information for the purpose of responding to my inquiry.",
         "requiredNote": "* Required fields",
         "formSubmit": "Send inquiry",
-        "subject": "New inquiry via madlenmedvedovskyy.de",
+        "subject": "New inquiry via madebymadlen.de",
         "requestOptions": [
           "Portrait photography",
           "Couples & families",
@@ -1786,6 +1786,6 @@
   "settings": {
     "primaryLocale": "de",
     "contactEmail": "contact@madlenmedvedovskyy.de",
-    "siteUrl": "https://foto-video-madlen.de"
+    "siteUrl": "https://madebymadlen.de"
   }
 }

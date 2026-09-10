@@ -84,10 +84,27 @@ class CmsWorkflowTest extends TestCase
         $this->assertTrue(Project::query()->get()->every(fn (Project $item): bool => $item->isTranslationReady()));
 
         $project = Project::query()->where('slug', 'rainbow')->firstOrFail();
-        $project->update(['title_de' => 'Redaktionell geändert']);
+        $replacementCover = MediaAsset::query()
+            ->where('kind', 'image')
+            ->whereKeyNot($project->cover_media_id)
+            ->firstOrFail();
+        $project->update([
+            'title_de' => 'Redaktionell geändert',
+            'title_en' => 'Editorially changed',
+            'cover_media_id' => $replacementCover->id,
+        ]);
+        $draft = Project::query()->create([
+            'slug' => 'cms-test-draft', 'title_de' => 'Entwurf', 'title_en' => 'Draft',
+            'description_de' => 'Nur Vorschau', 'description_en' => 'Preview only',
+            'category_id' => $project->category_id, 'cover_media_id' => $replacementCover->id,
+            'status' => 'draft', 'position' => 9999,
+        ]);
         $this->artisan('madlen:import')->assertSuccessful();
         $this->assertSame('Redaktionell geändert', $project->refresh()->title_de);
-        $this->assertDatabaseCount('projects', 16);
+        $this->assertSame('Editorially changed', $project->title_en);
+        $this->assertSame($replacementCover->id, $project->cover_media_id);
+        $this->assertDatabaseHas('projects', ['id' => $draft->id, 'status' => 'draft']);
+        $this->assertDatabaseCount('projects', 17);
         $this->assertGreaterThan(0, Revision::query()->count());
 
         $revision = Revision::query()->where('revisionable_id', $project->id)->oldest()->firstOrFail();
@@ -101,12 +118,6 @@ class CmsWorkflowTest extends TestCase
         $service = Service::query()->where('key', 'portraits')->firstOrFail();
         $service->update(['title_en' => 'CMS portrait test']);
 
-        $draft = Project::query()->create([
-            'slug' => 'cms-test-draft', 'title_de' => 'Entwurf', 'title_en' => 'Draft',
-            'description_de' => 'Nur Vorschau', 'description_en' => 'Preview only',
-            'category_id' => $project->category_id, 'cover_media_id' => $project->cover_media_id,
-            'status' => 'draft', 'position' => 9999,
-        ]);
         $manifests = app(ContentManifestService::class);
         $public = $manifests->make();
         $preview = $manifests->make(includeDrafts: true);

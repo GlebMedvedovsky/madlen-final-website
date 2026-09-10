@@ -148,6 +148,7 @@ class ProductionPublisherPreparationTest extends TestCase
         $this->assertTrue($process->isSuccessful(), $process->getErrorOutput().$process->getOutput());
         $this->assertFileExists($buildPath.'/index.html');
         $this->assertFileExists($buildPath.'/en/index.html');
+        $this->assertFileDoesNotExist($buildPath.'/images/start_seite.jpeg');
         $this->assertFileExists($buildPath.'/portfolio/production-package-check/index.html');
         $this->assertFileExists($buildPath.'/en/portfolio/production-package-check/index.html');
         $this->assertFileExists($buildPath.'/media/'.$media->id.'/published.webp');

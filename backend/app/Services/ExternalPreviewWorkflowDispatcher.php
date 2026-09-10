@@ -8,6 +8,8 @@ use RuntimeException;
 
 class ExternalPreviewWorkflowDispatcher
 {
+    public function __construct(private ExternalPreviewStatus $statuses) {}
+
     public function dispatch(PreviewBuild $preview): void
     {
         if (! config('madlen.external_preview_connected')
@@ -45,13 +47,13 @@ class ExternalPreviewWorkflowDispatcher
             ]);
 
         if (! $response->successful()) {
+            $current = $preview->fresh();
+            if ($current && in_array($current->status, ['building', 'ready'], true)) {
+                return;
+            }
             throw new RuntimeException("Der externe Vorschau-Build konnte nicht gestartet werden (HTTP {$response->status()}).");
         }
 
-        $preview->update([
-            'status' => 'queued',
-            'progress_message' => 'Die Vorschau wartet auf den externen Build.',
-            'error_message' => null,
-        ]);
+        $this->statuses->queued($preview);
     }
 }

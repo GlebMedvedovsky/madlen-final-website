@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Backup;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Symfony\Component\Process\Process;
@@ -31,7 +32,7 @@ class BackupService
             if (! $dump->isSuccessful()) throw new RuntimeException('Datenbanksicherung fehlgeschlagen: '.trim($dump->getErrorOutput()));
             $this->files->write($root.'/database.sql', $dump->getOutput());
 
-            $mediaRoot = storage_path('app/private');
+            $mediaRoot = rtrim(Storage::disk('local')->path(''), DIRECTORY_SEPARATOR);
             $media = new Process(['tar', '-czf', $root.'/media.tar.gz', '-C', $mediaRoot, 'media']);
             $media->setTimeout(180);
             $media->run();

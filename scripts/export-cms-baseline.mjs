@@ -146,7 +146,7 @@ const manifest = {
   settings: {
     primaryLocale: "de",
     contactEmail: "contact@madlenmedvedovskyy.de",
-    siteUrl: "https://foto-video-madlen.de",
+    siteUrl: "https://madebymadlen.de",
   },
 };
 

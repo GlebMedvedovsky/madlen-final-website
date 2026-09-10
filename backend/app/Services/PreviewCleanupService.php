@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\PreviewBuild;
 use Illuminate\Support\Facades\File;
-use RuntimeException;
 
 class PreviewCleanupService
 {
@@ -64,9 +63,24 @@ class PreviewCleanupService
         $resultRoot = $this->externalStorage->root('result_root');
         $incomingRoot = $this->externalStorage->root('incoming_root');
 
-        $expectedPackage = $packageRoot.'/madlen-preview-'.$preview->id.'.zip';
-        if ($preview->package_path === $expectedPackage && is_file($expectedPackage)) {
-            @unlink($expectedPackage);
+        if ($preview->package_path) {
+            $expectedPackage = $this->externalStorage->resolve(
+                (string) $preview->package_path,
+                'package_root',
+                'madlen-preview-'.$preview->id.'.zip',
+            );
+            if (is_file($expectedPackage)) {
+                @unlink($expectedPackage);
+            }
+        }
+
+        $pendingManifest = $this->externalStorage->manifestLocator('pending');
+        if (! hash_equals($pendingManifest, (string) $preview->manifest_path)) {
+            $this->externalStorage->resolve(
+                (string) $preview->manifest_path,
+                'package_root',
+                'requests/'.$preview->id.'/payload/content-manifest.json',
+            );
         }
 
         $request = $packageRoot.'/requests/'.$preview->id;
@@ -75,10 +89,11 @@ class PreviewCleanupService
             File::deleteDirectory($request);
         }
 
-        $expectedBuild = $resultRoot.'/builds/'.$preview->token;
-        if ($preview->build_path !== $expectedBuild) {
-            throw new RuntimeException('Der gespeicherte Vorschau-Buildpfad ist nicht auf den Auftrag begrenzt.');
-        }
+        $expectedBuild = $this->externalStorage->resolve(
+            (string) $preview->build_path,
+            'result_root',
+            'builds/'.$preview->token,
+        );
         $this->externalStorage->assertWithin($expectedBuild, $resultRoot);
         if (is_dir($expectedBuild)) {
             File::deleteDirectory($expectedBuild);

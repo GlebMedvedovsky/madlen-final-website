@@ -6,6 +6,25 @@ import {
 
 const lang = getLanguageFromUrl(Astro.url);
 const t = useTranslations(lang);
+const contactEndpoint = (process.env.MADLEN_CONTACT_ENDPOINT || "https://admin.madebymadlen.de/api/contact").trim();
+const fallbackEmail = "contact@madlenmedvedovskyy.de";
+const formUi = lang === "de"
+  ? {
+      sending: "Wird gesendet …",
+      success: "Vielen Dank. Ihre Anfrage wurde gesendet.",
+      error: "Die Nachricht konnte gerade nicht gesendet werden.",
+      rateLimit: "Zu viele Versuche. Bitte warten Sie, bevor Sie es erneut versuchen.",
+      fallback: "Alternativ direkt per E-Mail schreiben",
+      invalid: "Bitte prüfen Sie Ihre Angaben und versuchen Sie es erneut.",
+    }
+  : {
+      sending: "Sending …",
+      success: "Thank you. Your inquiry has been sent.",
+      error: "The message could not be sent right now.",
+      rateLimit: "Too many attempts. Please wait before trying again.",
+      fallback: "Alternatively, email Madlen directly",
+      invalid: "Please check your details and try again.",
+    };
 
 const content = {
   title: t.contact.title,
@@ -29,7 +48,6 @@ const content = {
   privacyEnd: t.contact.privacyEnd,
   required: t.contact.requiredNote,
   submit: t.contact.formSubmit,
-  subject: t.contact.subject,
   options: t.contact.requestOptions,
 };
 ---
@@ -58,13 +76,28 @@ const content = {
     <form
       class="contact-form"
       method="POST"
-      action="https://formspree.io/f/DEINE_FORM_ID"
+      action={contactEndpoint}
+      data-contact-form
+      data-endpoint={contactEndpoint}
+      data-sending={formUi.sending}
+      data-success={formUi.success}
+      data-error={formUi.error}
+      data-rate-limit={formUi.rateLimit}
+      data-invalid={formUi.invalid}
     >
-      <input
-        type="hidden"
-        name="_subject"
-        value={content.subject}
-      />
+      <input type="hidden" name="language" value={lang} />
+      <input type="hidden" name="form_started_at" value="" data-form-started-at />
+
+      <div class="contact-honeypot" aria-hidden="true">
+        <label for={`contact-website-${lang}`}>Website</label>
+        <input
+          id={`contact-website-${lang}`}
+          name="website"
+          type="text"
+          tabindex="-1"
+          autocomplete="off"
+        />
+      </div>
 
       <div class="form-row">
         <div class="form-field">
@@ -200,9 +233,22 @@ const content = {
       <p class="required-note">{content.required}</p>
 
       <button type="submit" class="contact-submit">
-        {content.submit}
+        <span data-submit-label>{content.submit}</span>
         <span aria-hidden="true">›</span>
       </button>
+
+      <div class="contact-feedback" role="status" aria-live="polite" hidden data-contact-feedback>
+        <p data-contact-status></p>
+        <a href={`mailto:${fallbackEmail}`} hidden data-contact-fallback>
+          {formUi.fallback}: {fallbackEmail}
+        </a>
+      </div>
+
+      <noscript>
+        <p class="contact-noscript">
+          {formUi.error} <a href={`mailto:${fallbackEmail}`}>{fallbackEmail}</a>
+        </p>
+      </noscript>
     </form>
   </div>
 </section>
@@ -377,6 +423,54 @@ const content = {
     transform: translateY(-1px);
   }
 
+  .contact-submit:disabled {
+    cursor: wait;
+    opacity: 0.72;
+    transform: none;
+  }
+
+  .contact-honeypot {
+    position: absolute !important;
+    left: -10000px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+  }
+
+  .contact-feedback,
+  .contact-noscript {
+    margin-top: 1rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .contact-feedback[hidden],
+  .contact-feedback a[hidden] {
+    display: none;
+  }
+
+  .contact-feedback p {
+    margin: 0;
+  }
+
+  .contact-feedback[data-state="success"] {
+    color: #176b37;
+  }
+
+  .contact-feedback[data-state="error"] {
+    color: #9c2430;
+  }
+
+  .contact-feedback a,
+  .contact-noscript a {
+    display: inline-block;
+    margin-top: 0.35rem;
+    color: var(--madlen-blue);
+    font-weight: 700;
+    text-decoration: underline;
+  }
+
 .contact-zigzag {
   position: absolute;
   z-index: 2;
@@ -486,3 +580,90 @@ const content = {
   }
 }
 </style>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>("[data-contact-form]").forEach((form) => {
+    if (form.dataset.contactReady === "true") return;
+    form.dataset.contactReady = "true";
+
+    const startedAt = form.querySelector<HTMLInputElement>("[data-form-started-at]");
+    const submitButton = form.querySelector<HTMLButtonElement>("button[type='submit']");
+    const submitLabel = form.querySelector<HTMLElement>("[data-submit-label]");
+    const feedback = form.querySelector<HTMLElement>("[data-contact-feedback]");
+    const status = form.querySelector<HTMLElement>("[data-contact-status]");
+    const fallback = form.querySelector<HTMLAnchorElement>("[data-contact-fallback]");
+    const originalLabel = submitLabel?.textContent || "";
+    let submitting = false;
+
+    const resetStartTime = () => {
+      if (startedAt) startedAt.value = String(Math.floor(Date.now() / 1000));
+    };
+    resetStartTime();
+
+    const showStatus = (message: string, state: "pending" | "success" | "error", showFallback = false) => {
+      if (!feedback || !status) return;
+      status.textContent = message;
+      feedback.hidden = false;
+      feedback.dataset.state = state;
+      if (fallback) fallback.hidden = !showFallback;
+    };
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (submitting) return;
+      if (!form.reportValidity()) {
+        showStatus(form.dataset.invalid || "Please check the form.", "error");
+        return;
+      }
+
+      submitting = true;
+      form.setAttribute("aria-busy", "true");
+      if (submitButton) submitButton.disabled = true;
+      if (submitLabel) submitLabel.textContent = form.dataset.sending || originalLabel;
+      form.querySelectorAll("[aria-invalid='true']").forEach((field) => field.removeAttribute("aria-invalid"));
+      showStatus(form.dataset.sending || "Sending …", "pending");
+
+      try {
+        const body = new URLSearchParams();
+        new FormData(form).forEach((value, key) => {
+          if (typeof value === "string") body.append(key, value);
+        });
+        const response = await fetch(form.dataset.endpoint || form.action, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          },
+          body,
+          credentials: "omit",
+          referrerPolicy: "strict-origin-when-cross-origin",
+        });
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok || payload.ok !== true) {
+          if (payload.errors && typeof payload.errors === "object") {
+            Object.keys(payload.errors).forEach((name) => {
+              form.elements.namedItem(name)?.setAttribute?.("aria-invalid", "true");
+            });
+          }
+          const message = response.status === 429
+            ? form.dataset.rateLimit
+            : (typeof payload.message === "string" ? payload.message : form.dataset.error);
+          showStatus(message || "The message could not be sent.", "error", response.status !== 422 && response.status !== 429);
+          return;
+        }
+
+        form.reset();
+        resetStartTime();
+        showStatus(typeof payload.message === "string" ? payload.message : (form.dataset.success || "Sent."), "success");
+      } catch {
+        showStatus(form.dataset.error || "The message could not be sent.", "error", true);
+      } finally {
+        submitting = false;
+        form.removeAttribute("aria-busy");
+        if (submitButton) submitButton.disabled = false;
+        if (submitLabel) submitLabel.textContent = originalLabel;
+      }
+    });
+  });
+</script>

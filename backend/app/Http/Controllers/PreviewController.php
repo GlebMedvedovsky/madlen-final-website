@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PreviewBuild;
+use App\Services\ExternalPreviewStorage;
 use App\Services\PreviewCleanupService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,8 +11,13 @@ use Symfony\Component\Mime\MimeTypes;
 
 class PreviewController extends Controller
 {
-    public function __invoke(Request $request, string $token, PreviewCleanupService $cleanup, ?string $path = null): Response
-    {
+    public function __invoke(
+        Request $request,
+        string $token,
+        PreviewCleanupService $cleanup,
+        ExternalPreviewStorage $externalStorage,
+        ?string $path = null,
+    ): Response {
         $preview = PreviewBuild::query()
             ->where('token', $token)
             ->where('user_id', $request->user()->id)
@@ -40,7 +46,18 @@ class PreviewController extends Controller
             return $this->statusPage($preview, $preview->status === 'failed' ? 422 : 202);
         }
 
-        $root = realpath($preview->build_path);
+        try {
+            $buildPath = $preview->execution_mode === 'external'
+                ? $externalStorage->resolve(
+                    (string) $preview->build_path,
+                    'result_root',
+                    'builds/'.$preview->token,
+                )
+                : (string) $preview->build_path;
+        } catch (\RuntimeException) {
+            abort(404);
+        }
+        $root = realpath($buildPath);
         abort_unless($root, 404);
         $candidate = $root.'/'.($relative ?: 'index.html');
         if (is_dir($candidate)) {

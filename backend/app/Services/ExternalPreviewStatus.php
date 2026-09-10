@@ -8,6 +8,28 @@ use RuntimeException;
 
 class ExternalPreviewStatus
 {
+    public function queued(PreviewBuild $preview): PreviewBuild
+    {
+        return DB::transaction(function () use ($preview): PreviewBuild {
+            $preview = PreviewBuild::query()->lockForUpdate()->findOrFail($preview->id);
+            $this->assertExternalAndCurrent($preview);
+            if (in_array($preview->status, ['queued', 'building', 'ready'], true)) {
+                return $preview;
+            }
+            if ($preview->status !== 'prepared') {
+                throw new RuntimeException('Der Vorschau-Auftrag kann nicht mehr in die Warteschlange gestellt werden.');
+            }
+
+            $preview->update([
+                'status' => 'queued',
+                'progress_message' => 'Die Vorschau wartet auf den externen Build.',
+                'error_message' => null,
+            ]);
+
+            return $preview->refresh();
+        });
+    }
+
     public function building(PreviewBuild $preview): PreviewBuild
     {
         return DB::transaction(function () use ($preview): PreviewBuild {

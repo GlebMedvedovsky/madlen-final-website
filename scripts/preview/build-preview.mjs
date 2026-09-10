@@ -7,12 +7,15 @@ import {
   readFileSync,
   readdirSync,
   realpathSync,
-  rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  nonPublicArtifactPaths,
+  removeNonPublicArtifacts,
+} from "../lib/non-public-artifacts.mjs";
 
 const [packageArgument, outputArgument] = process.argv.slice(2);
 if (!packageArgument || !outputArgument) {
@@ -105,23 +108,12 @@ function scopeUrls(root, base) {
   });
 }
 
-function removeNonPublicArtifacts(root) {
-  for (const path of [
-    "design-reference",
-    "start_seite.jpeg",
-    "images/Kukes1.jpg",
-    "images/Grafik Elemente/Blaues_Element_Wolke.png",
-    "images/Grafik Elemente/Linie_Blau_Klein.png",
-    "images/Grafik Elemente/Linine_Blau_Gross.png",
-    "images/Grafik Elemente/Rosa_Blau_Linie.png",
-  ]) {
-    rmSync(join(root, path), { recursive: true, force: true });
-  }
-}
-
 function validatePreview(root, content, preview) {
   for (const required of ["index.html", "en/index.html", ".madlen-preview.json"]) {
     assertFile(join(root, required), `Vorschau-Prüfung fehlgeschlagen: ${required} fehlt.`);
+  }
+  for (const excluded of nonPublicArtifactPaths) {
+    if (existsSync(join(root, excluded))) fail(`Lokale Referenz wurde in die Vorschau kopiert: ${excluded}`);
   }
   if (!Array.isArray(content.projects)) fail("Das Vorschau-Manifest enthält keine Projektliste.");
   for (const project of content.projects) {

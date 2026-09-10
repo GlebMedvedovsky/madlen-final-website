@@ -25,7 +25,7 @@ npm run dev
 ## Project Structure
 
 ```
-foto-video-madlen/
+madebymadlen/
 ├── public/
 │   ├── images/
 │   │   └── README.md          ← How to add your photos
@@ -128,30 +128,18 @@ In `src/pages/ueber-mich.astro`, replace the placeholder div with:
 
 ---
 
-## Connecting the Contact Form
+## Contact Form
 
-The form currently shows a demo confirmation message. To receive real messages:
+The DE/EN form posts to the Laravel endpoint at
+`https://admin.madebymadlen.de/api/contact`. Laravel validates the fields,
+applies bot and rate-limit checks, and sends through the configured SMTP
+mailer with server-controlled From/To addresses and the visitor as Reply-To.
 
-### Option A: Formspree (easiest)
-
-1. Create a free account at [formspree.io](https://formspree.io)
-2. Create a new form and copy your form ID
-3. In `src/components/ContactSection.astro`, update the `<form>` tag:
-   ```html
-   <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" ...>
-   ```
-4. Remove the JavaScript `submit` handler at the bottom of the component
-
-### Option B: Netlify Forms
-
-1. Add `data-netlify="true"` to the `<form>` tag
-2. Remove the JavaScript `submit` handler
-3. Deploy to Netlify — forms are automatically detected
-
-### Option C: Cloudflare Worker
-
-1. Create a Worker that sends emails via [Resend](https://resend.com) or [Mailchannels](https://mailchannels.com)
-2. In the form's submit handler, replace the demo code with a `fetch()` to your Worker endpoint
+The handler and real SMTP transport are disabled until the Netcup admin
+hostname, HTTPS and protected environment configuration have been rehearsed.
+Never put the mailbox password or another mail credential into Astro or a
+frontend environment variable. Follow `docs/NETCUP_INSTALLATION_RU.md` for the
+staged installation and activation procedure.
 
 ---
 
@@ -173,38 +161,29 @@ All three legal pages are placeholders:
 
 ### Domain in Astro Config
 
-Update `astro.config.mjs`:
+The canonical public origin is configured in `astro.config.mjs`:
 ```js
 export default defineConfig({
-  site: 'https://www.ihre-domain.de',
+  site: 'https://madebymadlen.de',
 });
 ```
 
 ---
 
-## Deploying to Cloudflare Pages
+## Deployment
 
-### First-time setup
-
-1. Push your project to GitHub or GitLab
-2. Log in to [dash.cloudflare.com](https://dash.cloudflare.com)
-3. Go to **Workers & Pages → Create application → Pages → Connect to Git**
-4. Select your repository
-5. Configure the build:
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-   - **Node.js version:** 18 or 20
-
-### Custom domain
-
-1. In Cloudflare Pages → your project → **Custom domains**
-2. Add `foto-video-madlen.de` and `www.foto-video-madlen.de`
-3. Follow the DNS configuration instructions
+Production uses the repository's immutable CMS publication architecture: an
+external Node runner builds the pinned source and only the validated static
+release is transferred to Netcup. Do not replace this with a generic direct
+Pages deployment or make the hosting account build the frontend. See
+`ADMIN_CMS.md` for the architecture and `docs/NETCUP_INSTALLATION_RU.md` for
+the staged Netcup installation procedure.
 
 ### Environment variables
 
-No environment variables are required for the static site.
-If you add a Cloudflare Worker for form handling, set any API keys there.
+The static build has no SMTP secret. `MADLEN_CONTACT_ENDPOINT` may override the
+public Laravel contact URL at build time; SMTP credentials belong only in the
+protected Laravel environment described in `docs/NETCUP_INSTALLATION_RU.md`.
 
 ---
 

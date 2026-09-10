@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 
 class PreviewBuilder
 {
+    public const NOT_CONFIGURED_MESSAGE = 'Vorschau ist noch nicht eingerichtet.';
+
     public function __construct(
         private ContentManifestService $manifests,
         private AstroBuildService $builder,
@@ -23,6 +25,9 @@ class PreviewBuilder
         }
         if ($execution !== 'local') {
             throw new \RuntimeException('Der Vorschau-Ausführungsmodus ist ungültig konfiguriert.');
+        }
+        if (! $this->builder->isAvailable()) {
+            throw new \RuntimeException(self::NOT_CONFIGURED_MESSAGE);
         }
 
         $token = Str::random(48);

@@ -131,7 +131,7 @@ export const de = {
       "gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Anfrage einverstanden.",
     requiredNote: "* Pflichtfelder",
     formSubmit: "Anfrage senden",
-    subject: "Neue Anfrage über madlenmedvedovskyy.de",
+    subject: "Neue Anfrage über madebymadlen.de",
     requestOptions: [
       "Portraitshooting",
       "Paare & Familien",

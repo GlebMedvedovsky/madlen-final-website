@@ -1,16 +1,21 @@
 <?php
 
+use App\Support\HostingPathResolver;
+
+$hostingPaths = HostingPathResolver::resolve(base_path(), env('MADLEN_INSTALL_LAYOUT'));
+
 return [
-    'repository_root' => env('MADLEN_REPOSITORY_ROOT', dirname(base_path())),
-    'baseline_path' => env('MADLEN_BASELINE_PATH', dirname(base_path()).'/content/baseline.json'),
-    'release_root' => env('MADLEN_RELEASE_ROOT', storage_path('app/releases')),
+    'repository_root' => env('MADLEN_REPOSITORY_ROOT') ?: ($hostingPaths['repository_root'] ?? dirname(base_path())),
+    'baseline_path' => env('MADLEN_BASELINE_PATH') ?: ($hostingPaths['baseline_path'] ?? dirname(base_path()).'/content/baseline.json'),
+    'release_root' => env('MADLEN_RELEASE_ROOT') ?: ($hostingPaths['release_root'] ?? storage_path('app/releases')),
     'public_url' => env('MADLEN_PUBLIC_URL', 'http://localhost:8089'),
+    'public_site_url' => env('MADLEN_PUBLIC_SITE_URL', 'https://madebymadlen.de'),
     'production_publisher' => env('MADLEN_PRODUCTION_PUBLISHER', 'unconfigured'),
     'production_connected' => filter_var(env('MADLEN_PRODUCTION_CONNECTED', false), FILTER_VALIDATE_BOOL),
     'publisher' => [
-        'package_root' => env('MADLEN_PRODUCTION_PACKAGE_ROOT') ?: storage_path('app/production-publications'),
-        'incoming_root' => env('MADLEN_PRODUCTION_INCOMING_ROOT'),
-        'destination_root' => env('MADLEN_PRODUCTION_DESTINATION_ROOT'),
+        'package_root' => env('MADLEN_PRODUCTION_PACKAGE_ROOT') ?: ($hostingPaths['production_package_root'] ?? storage_path('app/production-publications')),
+        'incoming_root' => env('MADLEN_PRODUCTION_INCOMING_ROOT') ?: ($hostingPaths['production_incoming_root'] ?? null),
+        'destination_root' => env('MADLEN_PRODUCTION_DESTINATION_ROOT') ?: ($hostingPaths['production_destination_root'] ?? null),
         'source_revision' => env('MADLEN_PRODUCTION_SOURCE_REVISION'),
         'api_token' => env('MADLEN_PUBLISHER_API_TOKEN'),
         'github_repository' => env('MADLEN_GITHUB_REPOSITORY'),
@@ -21,6 +26,7 @@ return [
     ],
     'public_exclude_paths' => [
         'design-reference',
+        'images/start_seite.jpeg',
         'start_seite.jpeg',
         'images/Kukes1.jpg',
         'images/Grafik Elemente/Blaues_Element_Wolke.png',
@@ -33,9 +39,9 @@ return [
     'external_preview_connected' => filter_var(env('MADLEN_EXTERNAL_PREVIEW_CONNECTED', false), FILTER_VALIDATE_BOOL),
     'preview_runner' => [
         'driver' => env('MADLEN_EXTERNAL_PREVIEW_DRIVER', 'unconfigured'),
-        'package_root' => env('MADLEN_PREVIEW_PACKAGE_ROOT') ?: storage_path('app/external-previews/packages'),
-        'incoming_root' => env('MADLEN_PREVIEW_INCOMING_ROOT') ?: storage_path('app/external-previews/incoming'),
-        'result_root' => env('MADLEN_PREVIEW_RESULT_ROOT') ?: storage_path('app/external-previews/results'),
+        'package_root' => env('MADLEN_PREVIEW_PACKAGE_ROOT') ?: ($hostingPaths['preview_package_root'] ?? storage_path('app/external-previews/packages')),
+        'incoming_root' => env('MADLEN_PREVIEW_INCOMING_ROOT') ?: ($hostingPaths['preview_incoming_root'] ?? storage_path('app/external-previews/incoming')),
+        'result_root' => env('MADLEN_PREVIEW_RESULT_ROOT') ?: ($hostingPaths['preview_result_root'] ?? storage_path('app/external-previews/results')),
         'source_revision' => env('MADLEN_PREVIEW_SOURCE_REVISION'),
         'api_token' => env('MADLEN_PREVIEW_API_TOKEN'),
         'github_repository' => env('MADLEN_PREVIEW_GITHUB_REPOSITORY'),
