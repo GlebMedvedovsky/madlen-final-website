@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Data\ProjectPreviewSnapshot;
 use App\Models\PreviewBuild;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -17,11 +18,11 @@ class PreviewBuilder
         private ExternalPreviewBuilder $external,
     ) {}
 
-    public function build(): PreviewBuild
+    public function build(?ProjectPreviewSnapshot $projectSnapshot = null): PreviewBuild
     {
         $execution = (string) config('madlen.preview_execution', 'local');
         if ($execution === 'external') {
-            return $this->external->build();
+            return $this->external->build($projectSnapshot);
         }
         if ($execution !== 'local') {
             throw new \RuntimeException('Der Vorschau-Ausführungsmodus ist ungültig konfiguriert.');
@@ -37,7 +38,7 @@ class PreviewBuilder
         $this->files->ensureDirectory($root.'/previews/builds');
         $manifestPath = $manifestDir.'/'.$token.'.json';
         $buildPath = $root.'/previews/builds/'.$token;
-        $manifest = $this->manifests->make(includeDrafts: true);
+        $manifest = $this->manifests->make(includeDrafts: true, projectSnapshot: $projectSnapshot);
         $this->files->write(
             $manifestPath,
             json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n",
@@ -51,6 +52,7 @@ class PreviewBuilder
             'status' => 'ready',
             'manifest_path' => $manifestPath,
             'build_path' => $buildPath,
+            'target_path' => $projectSnapshot?->targetPath(),
             'user_id' => Auth::id(),
             'expires_at' => now()->addMinutes(config('madlen.preview_ttl_minutes')),
             'progress_message' => 'Die lokale Vorschau ist bereit.',

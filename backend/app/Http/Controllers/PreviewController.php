@@ -24,6 +24,8 @@ class PreviewController extends Controller
             ->firstOrFail();
 
         $relative = trim((string) $path, '/');
+        $isStatusPath = $relative === ''
+            || (filled($preview->target_path) && hash_equals((string) $preview->target_path, $relative));
         if ($preview->expires_at->isPast() || $preview->status === 'expired') {
             try {
                 $preview = $cleanup->expire($preview);
@@ -35,13 +37,13 @@ class PreviewController extends Controller
                 ]);
             }
 
-            abort_if($relative !== '', 404);
+            abort_unless($isStatusPath, 404);
 
             return $this->statusPage($preview, 410);
         }
 
         if ($preview->status !== 'ready') {
-            abort_if($relative !== '', 404);
+            abort_unless($isStatusPath, 404);
 
             return $this->statusPage($preview, $preview->status === 'failed' ? 422 : 202);
         }

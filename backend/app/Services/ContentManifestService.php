@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Data\ProjectPreviewSnapshot;
 use App\Models\ContentEntry;
 use App\Models\MediaAsset;
 use App\Models\Project;
@@ -11,7 +12,7 @@ use App\Models\SiteMediaSlot;
 
 class ContentManifestService
 {
-    public function make(bool $includeDrafts = false): array
+    public function make(bool $includeDrafts = false, ?ProjectPreviewSnapshot $projectSnapshot = null): array
     {
         $baseline = json_decode(file_get_contents(config('madlen.baseline_path')), true, flags: JSON_THROW_ON_ERROR);
         $translations = $baseline['translations'];
@@ -38,22 +39,33 @@ class ContentManifestService
             $query->where('status', '!=', 'unpublished');
         }
 
-        $projects = $query->get()->map(function (Project $project): array {
-            return [
-                'slug' => $project->slug,
-                'title' => ['de' => $project->title_de, 'en' => $project->title_en],
-                'category' => $project->category->key,
-                'cover' => $project->cover?->publicPath(),
-                'description' => ['de' => $project->description_de, 'en' => $project->description_en],
-                'images' => $project->mediaItems->map(fn ($item): array => [
-                    'src' => $item->mediaAsset->publicPath(),
-                    'altDe' => $item->mediaAsset->alt_de ?: $project->title_de.' – Fotografie von Madlen Medvedovskyy',
-                    'altEn' => $item->mediaAsset->alt_en ?: $project->title_en.' — photography by Madlen Medvedovskyy',
-                    'order' => $item->position,
-                    'side' => $item->side,
-                ])->values()->all(),
+        $projectRows = $query->get()->map(fn (Project $project): array => [
+            'projectId' => (string) $project->getKey(),
+            'position' => (int) $project->position,
+            'manifestProject' => $this->manifestProject($project),
+        ]);
+
+        if ($projectSnapshot) {
+            $snapshotRow = [
+                'projectId' => $projectSnapshot->projectId,
+                'position' => $projectSnapshot->position,
+                'manifestProject' => $projectSnapshot->manifestProject,
             ];
-        })->values()->all();
+            $existingKey = $projectRows->search(
+                fn (array $row): bool => $row['projectId'] === $projectSnapshot->projectId,
+            );
+            if ($existingKey === false) {
+                $projectRows->push($snapshotRow);
+            } else {
+                $projectRows->put($existingKey, $snapshotRow);
+            }
+        }
+
+        $projects = $projectRows
+            ->sortBy('position')
+            ->pluck('manifestProject')
+            ->values()
+            ->all();
 
         $services = Service::query()->orderBy('position')->get()->map(fn (Service $service): array => [
             'key' => $service->key,
@@ -89,8 +101,8 @@ class ContentManifestService
                 'mediaSlots' => SiteMediaSlot::query()->with('mediaAsset')->get()
                     ->filter(fn (SiteMediaSlot $slot): bool => filled($slot->mediaAsset?->publicPath()))
                     ->mapWithKeys(
-                    fn (SiteMediaSlot $slot): array => [$slot->key => $slot->mediaAsset?->publicPath()],
-                )->all(),
+                        fn (SiteMediaSlot $slot): array => [$slot->key => $slot->mediaAsset?->publicPath()],
+                    )->all(),
             ],
         ];
     }
@@ -108,5 +120,23 @@ class ContentManifestService
             ->mapWithKeys(fn (MediaAsset $asset): array => [
                 ltrim($asset->publicPath(), '/') => $asset->derivative_path ?: $asset->path,
             ])->all();
+    }
+
+    private function manifestProject(Project $project): array
+    {
+        return [
+            'slug' => $project->slug,
+            'title' => ['de' => $project->title_de, 'en' => $project->title_en],
+            'category' => $project->category->key,
+            'cover' => $project->cover?->publicPath(),
+            'description' => ['de' => $project->description_de, 'en' => $project->description_en],
+            'images' => $project->mediaItems->map(fn ($item): array => [
+                'src' => $item->mediaAsset->publicPath(),
+                'altDe' => $item->mediaAsset->alt_de ?: $project->title_de.' – Fotografie von Madlen Medvedovskyy',
+                'altEn' => $item->mediaAsset->alt_en ?: $project->title_en.' — photography by Madlen Medvedovskyy',
+                'order' => $item->position,
+                'side' => $item->side,
+            ])->values()->all(),
+        ];
     }
 }

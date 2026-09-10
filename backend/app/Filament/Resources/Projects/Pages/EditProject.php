@@ -4,16 +4,68 @@ namespace App\Filament\Resources\Projects\Pages;
 
 use App\Filament\Resources\Projects\ProjectResource;
 use App\Services\PreviewBuilder;
+use App\Services\ProjectPreviewSnapshotFactory;
 use App\Services\ReleasePublisher;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
 
 class EditProject extends EditRecord
 {
     protected static string $resource = ProjectResource::class;
+
+    private const PREPARE_PREVIEW_TAB_JS = <<<'JS'
+if (window.__madlenProjectPreviewPending) {
+    $event.preventDefault();
+    $event.stopImmediatePropagation();
+    return;
+}
+window.__madlenProjectPreviewPending = true;
+const previewTab = window.open('', `madlen-project-preview-${Date.now()}`);
+window.__madlenProjectPreviewTab = previewTab;
+if (previewTab) {
+    previewTab.opener = null;
+    const previewDocument = previewTab.document;
+    previewDocument.documentElement.lang = 'de';
+    previewDocument.title = 'Vorschau wird vorbereitet · Madlen';
+    previewDocument.body.style.cssText = 'margin:0;min-height:100vh;display:grid;place-items:center;background:#fffaf5;color:#111;font:16px/1.55 Arial,sans-serif';
+    previewDocument.body.replaceChildren();
+    const placeholder = previewDocument.createElement('main');
+    placeholder.style.cssText = 'width:min(34rem,calc(100% - 2rem));box-sizing:border-box;padding:2rem;border:1px solid #eadde0;background:#fff';
+    const heading = previewDocument.createElement('h1');
+    heading.style.cssText = 'margin:0 0 1rem;color:#0338da';
+    heading.textContent = 'Vorschau wird vorbereitet';
+    const message = previewDocument.createElement('p');
+    message.textContent = 'Der aktuelle Formularstand wird unveränderlich übernommen.';
+    placeholder.append(heading, message);
+    previewDocument.body.append(placeholder);
+}
+JS;
+
+    private const OPEN_PREVIEW_TAB_JS = <<<'JS'
+(url) => {
+    const previewTab = window.__madlenProjectPreviewTab;
+    if (previewTab && ! previewTab.closed) {
+        previewTab.location.assign(url);
+        previewTab.focus();
+    }
+    window.__madlenProjectPreviewTab = null;
+    window.__madlenProjectPreviewPending = false;
+}
+JS;
+
+    private const CLOSE_PREVIEW_TAB_JS = <<<'JS'
+() => {
+    const previewTab = window.__madlenProjectPreviewTab;
+    if (previewTab && ! previewTab.closed) previewTab.close();
+    window.__madlenProjectPreviewTab = null;
+    window.__madlenProjectPreviewPending = false;
+}
+JS;
 
     protected function getHeaderActions(): array
     {
@@ -21,12 +73,71 @@ class EditProject extends EditRecord
             Action::make('preview')
                 ->label('Vorschau')
                 ->icon('heroicon-o-eye')
-                ->action(function () {
+                ->extraAttributes(['x-on:click.capture' => self::PREPARE_PREVIEW_TAB_JS])
+                ->action(function (): void {
                     try {
-                        $preview = app(PreviewBuilder::class)->build();
-
-                        return redirect()->to(route('admin.preview', ['token' => $preview->token]));
+                        // Unlike Schema::getState(), validate() does not persist relationship repeaters.
+                        $this->form->validate();
+                        $snapshot = app(ProjectPreviewSnapshotFactory::class)->make(
+                            $this->getRecord(),
+                            $this->data ?? [],
+                        );
+                    } catch (ValidationException $error) {
+                        $this->closePendingPreviewTab();
+                        Notification::make()
+                            ->title('Vorschau kann noch nicht erstellt werden')
+                            ->body('Bitte korrigieren Sie die markierten Felder. Ihre Eingaben bleiben im Editor erhalten.')
+                            ->warning()
+                            ->persistent()
+                            ->send();
+                        throw $error;
                     } catch (\Throwable $error) {
+                        $this->closePendingPreviewTab();
+                        report($error);
+                        Notification::make()
+                            ->title('Vorschau konnte nicht vorbereitet werden')
+                            ->body('Ihre Eingaben bleiben im Editor erhalten. Bitte versuchen Sie es erneut.')
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
+                    $lock = Cache::lock($this->previewLockKey(), 180);
+                    if (! $lock->get()) {
+                        $this->closePendingPreviewTab();
+                        Notification::make()
+                            ->title('Vorschau wird bereits vorbereitet')
+                            ->body('Bitte warten Sie, bis der bereits gestartete Vorgang abgeschlossen ist. Ihre Eingaben bleiben erhalten.')
+                            ->warning()
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
+                    try {
+                        $preview = app(PreviewBuilder::class)->build($snapshot);
+                        $previewUrl = route('admin.preview', [
+                            'token' => $preview->token,
+                            'path' => $snapshot->targetPath(),
+                        ], absolute: false);
+                        $this->js(self::OPEN_PREVIEW_TAB_JS, $previewUrl);
+
+                        Notification::make()
+                            ->title('Projektvorschau wurde gestartet')
+                            ->body('Die Vorschau öffnet sich in einem neuen Tab. Falls Ihr Browser den Tab blockiert hat, verwenden Sie den folgenden Link.')
+                            ->success()
+                            ->actions([
+                                Action::make('openProjectPreview')
+                                    ->label('Vorschau öffnen')
+                                    ->url($previewUrl, shouldOpenInNewTab: true),
+                            ])
+                            ->persistent()
+                            ->send();
+                    } catch (\Throwable $error) {
+                        $this->closePendingPreviewTab();
                         $notConfigured = $error->getMessage() === PreviewBuilder::NOT_CONFIGURED_MESSAGE;
                         if (! $notConfigured) {
                             report($error);
@@ -39,8 +150,8 @@ class EditProject extends EditRecord
                             ->color($notConfigured ? 'warning' : 'danger')
                             ->persistent()
                             ->send();
-
-                        return null;
+                    } finally {
+                        $lock->release();
                     }
                 }),
             Action::make('publish')
@@ -76,5 +187,15 @@ class EditProject extends EditRecord
             DeleteAction::make(),
             RestoreAction::make(),
         ];
+    }
+
+    private function previewLockKey(): string
+    {
+        return 'madlen-project-preview:'.auth()->id().':'.$this->getRecord()->getKey();
+    }
+
+    private function closePendingPreviewTab(): void
+    {
+        $this->js(self::CLOSE_PREVIEW_TAB_JS);
     }
 }

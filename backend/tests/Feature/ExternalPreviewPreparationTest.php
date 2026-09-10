@@ -12,6 +12,7 @@ use App\Services\ExternalPreviewStatus;
 use App\Services\ExternalPreviewStorage;
 use App\Services\ExternalPreviewWorkflowDispatcher;
 use App\Services\PreviewBuilder;
+use App\Services\ProjectPreviewSnapshotFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\File;
@@ -141,9 +142,25 @@ class ExternalPreviewPreparationTest extends TestCase
 
         $this->connectExternalPreview();
         Http::fake(['https://api.github.com/*' => Http::response(null, 204)]);
-        $preview = app(PreviewBuilder::class)->build();
+        $snapshot = app(ProjectPreviewSnapshotFactory::class)->make($project, [
+            'slug' => $project->slug,
+            'category_id' => $project->category_id,
+            'cover_media_id' => $project->cover_media_id,
+            'position' => $project->position,
+            'title_de' => 'Ungespeicherter externer Vorschautitel',
+            'title_en' => 'Unsaved external preview title',
+            'description_de' => 'Dieser Text wurde nicht in Project gespeichert.',
+            'description_en' => 'This text was not saved to Project.',
+            'mediaItems' => [
+                ['media_asset_id' => $media->id, 'side' => 'right'],
+            ],
+        ]);
+        $preview = app(PreviewBuilder::class)->build($snapshot);
         $this->assertSame('queued', $preview->status);
         $this->assertSame('external', $preview->execution_mode);
+        $this->assertSame('portfolio/external-preview-draft', $preview->target_path);
+        $this->assertSame('Unveränderlicher Entwurf Deutsch', $project->fresh()->title_de);
+        $this->assertSame('left', $project->mediaItems()->firstOrFail()->side);
         $this->assertStringStartsWith('madlen-preview-storage-v1://', $preview->package_path);
         $this->assertStringStartsWith('madlen-preview-storage-v1://', $preview->manifest_path);
         $this->assertStringStartsWith('madlen-preview-storage-v1://', $preview->build_path);
@@ -151,6 +168,10 @@ class ExternalPreviewPreparationTest extends TestCase
         $this->assertFileExists($packagePath);
         $this->assertSame($preview->package_checksum, hash_file('sha256', $packagePath));
         $this->get('/admin/preview/'.$preview->token.'/')->assertStatus(202)->assertSee('Vorschau wartet');
+        $this->get('/admin/preview/'.$preview->token.'/'.$preview->target_path)
+            ->assertStatus(202)
+            ->assertSee('Vorschau wartet');
+        $this->get('/admin/preview/'.$preview->token.'/portfolio/anderes-projekt')->assertNotFound();
 
         Http::assertSent(fn (Request $request): bool => $request->url() === 'https://api.github.com/repos/example/madlen/actions/workflows/madlen-external-preview.yml/dispatches'
             && $request['inputs']['preview_id'] === $preview->id
@@ -179,8 +200,9 @@ class ExternalPreviewPreparationTest extends TestCase
         $packagePath = $this->packagePath($preview);
         $this->extract($packagePath, $extracted);
         $manifest = file_get_contents($extracted.'/content-manifest.json');
-        $this->assertStringContainsString('Unveränderlicher Entwurf Deutsch', $manifest);
-        $this->assertStringContainsString('Immutable English draft', $manifest);
+        $this->assertStringContainsString('Ungespeicherter externer Vorschautitel', $manifest);
+        $this->assertStringContainsString('Unsaved external preview title', $manifest);
+        $this->assertStringContainsString('This text was not saved to Project.', $manifest);
         $this->assertStringNotContainsString('Spätere Änderung Deutsch', $manifest);
         $this->assertFileExists($extracted.'/media/'.$media->id.'/draft-preview.webp');
         $this->assertFileDoesNotExist($extracted.'/media/'.$media->id.'/draft-secret.jpg');
@@ -267,13 +289,15 @@ class ExternalPreviewPreparationTest extends TestCase
             file_get_contents($buildPath.'/media/'.$media->id.'/draft-preview.webp'),
         );
         $this->assertStringContainsString(
-            'Unveränderlicher Entwurf Deutsch',
+            'Ungespeicherter externer Vorschautitel',
             file_get_contents($buildPath.'/portfolio/external-preview-draft/index.html'),
         );
         $this->assertStringContainsString(
-            'Immutable English draft',
+            'Unsaved external preview title',
             file_get_contents($buildPath.'/en/portfolio/external-preview-draft/index.html'),
         );
+        $this->assertSame('Spätere Änderung Deutsch', $project->fresh()->title_de);
+        $this->assertSame('left', $project->mediaItems()->firstOrFail()->side);
 
         $this->assertSame('active', $release->refresh()->status);
         $this->assertSame(8, $release->version);

@@ -143,17 +143,20 @@ The reviewed workflow is now prepared at [`.github/workflows/madlen-external-pre
 
 ### One-time backend installation/update versus routine publication
 
-Backend installation or update is a separate operator procedure. It may install Composer dependencies, configure `backend/.env`, run reviewed migrations, prepare persistent directories and cache Laravel configuration. It must not be performed by a content-publication workflow.
+Backend installation or update is a separate operator procedure. It may install Composer dependencies, configure `backend/.env`, run reviewed migrations, prepare persistent directories and clear Laravel configuration. It must not cache configuration on the installed Netcup layout: `HostingPathResolver` deliberately resolves different CLI and FastCGI path prefixes. It must not be performed by a content-publication workflow.
 
 Routine publication performs only: immutable content package → external static build → new versioned static directory → atomic pointer switch → status callback. It does **not** run Composer, deploy backend source, write `.env`, migrate/reseed/reset the database, replace private uploads, or touch another site.
 
-The installed Netcup CMS has all seven reviewed migrations applied, including the production-publication and external-preview tables. Do not rerun the initial import or reset/reseed that database. For a future migration-bearing update, and only after a fresh verified backup, the operator will first inspect `migrate:status` and then run the reviewed pending migrations:
+The installed Netcup CMS has all seven reviewed migrations applied, including the production-publication and external-preview tables. Do not rerun the initial import or reset/reseed that database. For a future migration-bearing update, and only after a fresh verified backup, the operator must inspect `migrate:status` and apply only the explicitly reviewed migration path. The preview-editor-flow delivery procedure and its exact ten-file production set are documented in [`docs/NETCUP_INSTALLATION_RU.md`](docs/NETCUP_INSTALLATION_RU.md#43-preview-editor-flow-overlay-с-новыми-классами-и-миграцией):
 
 ```sh
 cd <NETCUP_MADLEN_BACKEND_ROOT>
-<NETCUP_PHP_BIN> artisan migrate --force
-<NETCUP_PHP_BIN> artisan config:clear
+/usr/local/php84/bin/php artisan migrate:status
+/usr/local/php84/bin/php artisan migrate --force --path=<REVIEWED_MIGRATION_PATH>
+/usr/local/php84/bin/php artisan config:clear
 ```
+
+Do not use `artisan config:cache` on this installation. Composer is likewise invoked through `/usr/local/php84/bin/php <NETCUP_COMPOSER_PHAR> ...`, never through its shebang or the default PHP binary.
 
 Prepare two separate Madlen-only directories once. Their marker files are mandatory safety stops used by the activator:
 
