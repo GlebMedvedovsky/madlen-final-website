@@ -7,12 +7,15 @@ import {
   readFileSync,
   readdirSync,
   realpathSync,
-  rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  nonPublicArtifactPaths,
+  removeNonPublicArtifacts,
+} from "../lib/non-public-artifacts.mjs";
 
 const [packageArgument, outputArgument] = process.argv.slice(2);
 if (!packageArgument || !outputArgument) {
@@ -90,33 +93,11 @@ writeSitemap(outputRoot);
 validateRelease(outputRoot, manifest);
 console.log(`Produktiv-Kandidat ${metadata.sequence}-${metadata.publicationId} wurde lokal gebaut und vollständig geprüft.`);
 
-function removeNonPublicArtifacts(root) {
-  for (const path of [
-    "design-reference",
-    "start_seite.jpeg",
-    "images/Kukes1.jpg",
-    "images/Grafik Elemente/Blaues_Element_Wolke.png",
-    "images/Grafik Elemente/Linie_Blau_Klein.png",
-    "images/Grafik Elemente/Linine_Blau_Gross.png",
-    "images/Grafik Elemente/Rosa_Blau_Linie.png",
-  ]) {
-    rmSync(join(root, path), { recursive: true, force: true });
-  }
-}
-
 function validateRelease(root, content) {
   for (const required of ["index.html", "en/index.html", "sitemap.xml"]) {
     assertFile(join(root, required), `Release-Prüfung fehlgeschlagen: ${required} fehlt.`);
   }
-  for (const excluded of [
-    "design-reference",
-    "start_seite.jpeg",
-    "images/Kukes1.jpg",
-    "images/Grafik Elemente/Blaues_Element_Wolke.png",
-    "images/Grafik Elemente/Linie_Blau_Klein.png",
-    "images/Grafik Elemente/Linine_Blau_Gross.png",
-    "images/Grafik Elemente/Rosa_Blau_Linie.png",
-  ]) {
+  for (const excluded of nonPublicArtifactPaths) {
     if (existsSync(join(root, excluded))) fail(`Lokale Referenz wurde in den Release kopiert: ${excluded}`);
   }
   if (!Array.isArray(content.projects)) fail("Das Inhaltsmanifest enthält keine Projektliste.");

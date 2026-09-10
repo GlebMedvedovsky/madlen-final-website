@@ -110,6 +110,7 @@ class PublicationPipelineTest extends TestCase
         $this->assertFileExists($release->build_path.'/en/portfolio/'.$project->slug.'/index.html');
         $this->assertFileExists($release->build_path.'/media/'.$media->id.'/'.basename($media->derivative_path));
         $this->assertDirectoryDoesNotExist($release->build_path.'/design-reference');
+        $this->assertFileDoesNotExist($release->build_path.'/images/start_seite.jpeg');
         $this->assertFileDoesNotExist($release->build_path.'/images/Kukes1.jpg');
         $this->assertStringContainsString('CMS Buildprüfung Deutsch', file_get_contents($release->build_path.'/index.html'));
         $this->assertStringContainsString('CMS service build verification', file_get_contents($release->build_path.'/en/services/index.html'));

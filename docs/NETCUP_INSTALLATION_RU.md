@@ -122,7 +122,7 @@ Apply-скрипт сначала сверяет исходные checksums фа
 
 ### 4.2. Малый preview runtime overlay для уже работающего `/app`
 
-Этот шаг относится к следующему отдельному серверному обновлению. Он сохраняет уже применённый `netcup-env-helper-fix-20260910033355-ef2e3f4fe09c-no-awk`, его authoritative Composer classmap, действующий env, базу, пользователей и private media. Overlay содержит только существующие PHP-классы preview/admin; новых PHP-классов, миграций, `vendor` и frontend media в нём нет. Поэтому Composer autoload refresh для этого overlay **не требуется**. Полный установочный архив поверх `/app` не распаковывать.
+Этот шаг относится к следующему отдельному серверному обновлению. Он сохраняет уже применённый `netcup-env-helper-fix-20260910033355-ef2e3f4fe09c-no-awk`, его authoritative Composer classmap, действующий env, базу, пользователей и private media. Overlay содержит 15 существующих PHP-файлов: preview/admin runtime, `AppServiceProvider.php` с обязательными per-IP contact limits и `backend/config/madlen.php` с исправленным build-relative путём `images/start_seite.jpeg`. Новых PHP-классов, миграций, `vendor` и frontend media в нём нет. Поэтому Composer autoload refresh для этого overlay **не требуется**. Полный установочный архив поверх `/app` не распаковывать.
 
 Локальная сборка после итогового чистого commit:
 
@@ -138,7 +138,7 @@ docker compose --project-name madlen exec -T --workdir /workspace app bash scrip
   /workspace/installation-artifacts/<PREVIEW_OVERLAY>.tar.gz
 ```
 
-Verifier сначала воспроизводит состояние `original install + compatibility overlay`, затем проверяет отказ при чужом checksum и symlink, сохранение originals, первый/повторный apply, продолжение из `PREPARED`, неизменность исходного install manifest и PHP syntax.
+Verifier сначала воспроизводит состояние `original install + compatibility overlay`, затем проверяет все 15 ожидаемых originals, отказ при чужом checksum и symlink, сохранение originals, первый/повторный apply, продолжение из `PREPARED`, неизменность исходного install manifest и PHP syntax. Отдельный `npm run test:build-filters` создаёт синтетические nested/legacy references и подтверждает удаление `images/start_seite.jpeg` без затрагивания соседнего публичного изображения.
 
 После отдельного одобрения загрузить только `<PREVIEW_OVERLAY>.tar.gz` и `.sha256` в приватный install incoming. На Netcup:
 
@@ -330,11 +330,11 @@ cd /madebymadlen.de/app/backend && /usr/local/php84/bin/php artisan schedule:run
 
 ## 10. Contact и runner: отдельные последующие включения
 
-Contact endpoint: `https://admin.madebymadlen.de/api/contact`. Фронтенд посылает только form-поля, без cookies. CORS разрешён лишь для apex, `www` и admin preview origin. From/To задаёт сервер; проверенный visitor email становится Reply-To. При SMTP-ошибке посетитель видит локализованную ошибку и прямую email-ссылку, а не ложный успех.
+Contact endpoint: `https://admin.madebymadlen.de/api/contact`. Фронтенд посылает только form-поля, без cookies. CORS разрешён лишь для apex, `www` и admin preview origin. From/To задаёт сервер; проверенный visitor email становится Reply-To. При SMTP-ошибке посетитель видит локализованную ошибку и прямую email-ссылку, а не ложный успех. Minute/hour buckets вычисляются только по IP и хранятся в persistent Laravel cache (`CACHE_STORE=database` на Netcup), поэтому смена visitor email не сбрасывает ограничения. Значение `array` допустимо только в изолированных тестах.
 
 После готовности admin HTTPS и SMTP на непубличном rehearsal изменить только `MADLEN_CONTACT_ENABLED=true`, выполнить `config:clear`, отправить по одному DE/EN тесту и проверить реальное получение и Reply-To. До отдельной доказанной проверки CLI/FPM путей `config:cache` не выполнять. Принятие письма SMTP не гарантирует inbox delivery; проверить входящие и spam.
 
-Runner-подключения не включать одновременно с contact. Подготовленный preview workflow находится в `.github/workflows/madlen-external-preview.yml`, имеет только ручной `workflow_dispatch` и дополнительно закрыт переменной-gate. GitHub регистрирует ручной workflow только после появления файла в default branch `main`: сначала push feature-ветки, review/PR и merge, затем credentials и rehearsal. SHA текущего feature-коммита нельзя заранее подменять старым `ef2e3f4…`; после commit/merge взять полный совместимый 40-символьный SHA командой `git rev-parse <reviewed-commit>` и только затем записать его в Netcup env как `MADLEN_PREVIEW_SOURCE_REVISION`.
+Runner-подключения не включать одновременно с contact. Подготовленный preview workflow находится в `.github/workflows/madlen-external-preview.yml`, имеет только ручной `workflow_dispatch` и дополнительно закрыт переменной-gate. GitHub регистрирует ручной workflow только после появления файла в default branch `main`: сначала push feature-ветки, review/PR и merge, затем credentials и rehearsal. SHA текущего feature-коммита нельзя заранее подменять старым `ef2e3f4…`; после commit/merge взять полный совместимый 40-символьный SHA командой `git rev-parse <reviewed-commit>` и только затем записать его в Netcup env как `MADLEN_PREVIEW_SOURCE_REVISION`. Workflow не создаёт SSH private key/known_hosts до окончания `npm ci`, проверенного DE/EN build, создания результата и повторной проверки expiry. Поэтому gate-, npm- или build-failure завершаются до появления SSH-файлов; после SSH-этапов каталог ключа удаляет обязательный `if: always()` cleanup. Это сокращает время доступности ключа, но не является границей от полностью скомпрометированного runner — для такой изоляции нужен отдельный job.
 
 Точные GitHub repository **secrets** для preview:
 

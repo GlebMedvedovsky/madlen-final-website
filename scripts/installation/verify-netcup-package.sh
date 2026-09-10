@@ -31,6 +31,7 @@ for forbidden in \
     backend/node_modules \
     public/design-reference \
     public/images/start_seite.jpeg \
+    public/start_seite.jpeg \
     public/images/Kukes1.jpg \
     "public/images/Grafik Elemente/Blaues_Element_Wolke.png" \
     "public/images/Grafik Elemente/Linie_Blau_Klein.png" \

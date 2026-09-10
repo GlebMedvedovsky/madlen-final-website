@@ -51,8 +51,10 @@ files=(
     backend/app/Services/PreviewCleanupService.php
     backend/app/Http/Controllers/ExternalPreviewRunnerController.php
     backend/app/Http/Controllers/PreviewController.php
+    backend/app/Providers/AppServiceProvider.php
     backend/app/Filament/Resources/Projects/Pages/EditProject.php
     backend/app/Filament/Resources/Releases/Pages/ListReleases.php
+    backend/config/madlen.php
 )
 
 for relative in "${files[@]}"; do
@@ -109,7 +111,7 @@ compatibility_overlay_sha="${compatibility_overlay_sha%% *}"
 cat > "${package_root}/metadata.json" <<JSON
 {
   "schemaVersion": 1,
-  "purpose": "Runtime patch for the installed Madlen external preview",
+  "purpose": "Runtime patch for Madlen external preview, contact rate limits and build exclusions",
   "overlayId": "${overlay_id}",
   "baseRevision": "${expected_base_revision}",
   "sourceRevision": "${source_revision}",

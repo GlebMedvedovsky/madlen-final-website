@@ -26,6 +26,7 @@ return [
     ],
     'public_exclude_paths' => [
         'design-reference',
+        'images/start_seite.jpeg',
         'start_seite.jpeg',
         'images/Kukes1.jpg',
         'images/Grafik Elemente/Blaues_Element_Wolke.png',

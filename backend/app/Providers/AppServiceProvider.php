@@ -23,10 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('contact', function (Request $request): array {
-            $fingerprint = hash('sha256', implode('|', [
-                (string) $request->ip(),
-                strtolower((string) $request->input('email')),
-            ]));
+            $ipFingerprint = hash('sha256', (string) $request->ip());
             $response = static function (Request $request, array $headers) {
                 $language = $request->input('language') === 'en' ? 'en' : 'de';
 
@@ -40,10 +37,10 @@ class AppServiceProvider extends ServiceProvider
 
             return [
                 Limit::perMinute(max(1, (int) config('contact.rate_limit.per_minute', 3)))
-                    ->by("contact-minute:{$fingerprint}")
+                    ->by("contact-minute-ip:{$ipFingerprint}")
                     ->response($response),
                 Limit::perHour(max(1, (int) config('contact.rate_limit.per_hour', 10)))
-                    ->by("contact-hour:{$fingerprint}")
+                    ->by("contact-hour-ip:{$ipFingerprint}")
                     ->response($response),
             ];
         });

@@ -97,18 +97,68 @@ class ContactInquiryTest extends TestCase
         for ($attempt = 1; $attempt <= 3; $attempt++) {
             $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.10'])
                 ->withHeader('Origin', self::ORIGIN)
-                ->postJson('/api/contact', $this->validPayload())
+                ->postJson('/api/contact', array_replace($this->validPayload(), [
+                    'email' => "visitor-{$attempt}@example.com",
+                ]))
                 ->assertOk();
         }
+        Mail::assertSent(ContactInquiryMail::class, 3);
 
         $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.10'])
             ->withHeader('Origin', self::ORIGIN)
-            ->postJson('/api/contact', $this->validPayload())
+            ->postJson('/api/contact', array_replace($this->validPayload(), [
+                'email' => 'visitor-4@example.com',
+            ]))
             ->assertStatus(429)
             ->assertJson([
                 'ok' => false,
                 'message' => 'Zu viele Versuche. Bitte warten Sie, bevor Sie es erneut versuchen.',
             ]);
+        Mail::assertSent(ContactInquiryMail::class, 3);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.11'])
+            ->withHeader('Origin', self::ORIGIN)
+            ->postJson('/api/contact', array_replace($this->validPayload(), [
+                'email' => 'visitor-4@example.com',
+            ]))
+            ->assertOk();
+        Mail::assertSent(ContactInquiryMail::class, 4);
+    }
+
+    public function test_hourly_ip_limit_cannot_be_bypassed_with_new_emails_across_minute_windows(): void
+    {
+        Mail::fake();
+        config()->set([
+            'contact.rate_limit.per_minute' => 2,
+            'contact.rate_limit.per_hour' => 3,
+        ]);
+
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.20'])
+                ->withHeader('Origin', self::ORIGIN)
+                ->postJson('/api/contact', array_replace($this->validPayload(), [
+                    'email' => "hour-{$attempt}@example.com",
+                ]))
+                ->assertOk();
+        }
+
+        $this->travel(61)->seconds();
+        $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.20'])
+            ->withHeader('Origin', self::ORIGIN)
+            ->postJson('/api/contact', array_replace($this->validPayload(), [
+                'email' => 'hour-3@example.com',
+            ]))
+            ->assertOk();
+        Mail::assertSent(ContactInquiryMail::class, 3);
+
+        $this->travel(61)->seconds();
+        $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.20'])
+            ->withHeader('Origin', self::ORIGIN)
+            ->postJson('/api/contact', array_replace($this->validPayload(), [
+                'email' => 'hour-4@example.com',
+            ]))
+            ->assertStatus(429);
+        Mail::assertSent(ContactInquiryMail::class, 3);
     }
 
     public function test_mail_failure_returns_error_without_transport_details_or_false_success(): void

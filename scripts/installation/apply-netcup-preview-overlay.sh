@@ -75,8 +75,10 @@ is_allowed_path() {
         ./backend/app/Services/PreviewCleanupService.php|\
         ./backend/app/Http/Controllers/ExternalPreviewRunnerController.php|\
         ./backend/app/Http/Controllers/PreviewController.php|\
+        ./backend/app/Providers/AppServiceProvider.php|\
         ./backend/app/Filament/Resources/Projects/Pages/EditProject.php|\
-        ./backend/app/Filament/Resources/Releases/Pages/ListReleases.php) return 0 ;;
+        ./backend/app/Filament/Resources/Releases/Pages/ListReleases.php|\
+        ./backend/config/madlen.php) return 0 ;;
         *) return 1 ;;
     esac
 }

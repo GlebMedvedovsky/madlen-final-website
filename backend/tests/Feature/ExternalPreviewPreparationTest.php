@@ -201,6 +201,7 @@ class ExternalPreviewPreparationTest extends TestCase
         $this->assertTrue($process->isSuccessful(), $process->getErrorOutput().$process->getOutput());
         $this->assertFileExists($externalBuild.'/index.html');
         $this->assertFileExists($externalBuild.'/en/index.html');
+        $this->assertFileDoesNotExist($externalBuild.'/images/start_seite.jpeg');
         $this->assertStringContainsString('https://admin.madebymadlen.de/api/contact', file_get_contents($externalBuild.'/kontakt/index.html'));
         $this->assertStringContainsString('https://admin.madebymadlen.de/api/contact', file_get_contents($externalBuild.'/en/contact/index.html'));
         $this->assertFileExists($externalBuild.'/portfolio/external-preview-draft/index.html');

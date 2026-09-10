@@ -15,7 +15,7 @@ mkdir -p "${package_root}"
 
 is_excluded() {
     case "$1" in
-        installation-artifacts/*|public/design-reference/*|public/images/start_seite.jpeg|public/images/Kukes1.jpg|\
+        installation-artifacts/*|public/design-reference/*|public/images/start_seite.jpeg|public/start_seite.jpeg|public/images/Kukes1.jpg|\
         "public/images/Grafik Elemente/Blaues_Element_Wolke.png"|\
         "public/images/Grafik Elemente/Linie_Blau_Klein.png"|\
         "public/images/Grafik Elemente/Linine_Blau_Gross.png"|\
