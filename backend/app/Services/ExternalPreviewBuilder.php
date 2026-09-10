@@ -10,6 +10,7 @@ class ExternalPreviewBuilder
     public function __construct(
         private ExternalPreviewPackager $packager,
         private ExternalPreviewWorkflowDispatcher $dispatcher,
+        private ExternalPreviewStatus $statuses,
     ) {}
 
     public function build(): PreviewBuild
@@ -25,12 +26,15 @@ class ExternalPreviewBuilder
 
             return $preview->refresh();
         } catch (\Throwable $error) {
-            $preview->update([
-                'status' => 'failed',
-                'progress_message' => 'Die externe Vorschau konnte nicht gestartet werden.',
-                'error_message' => mb_substr($error->getMessage(), 0, 60000),
-                'completed_at' => now(),
-            ]);
+            $current = $preview->fresh();
+            if ($current && in_array($current->status, ['building', 'ready'], true)) {
+                return $current;
+            }
+            try {
+                $this->statuses->failed($preview, $error->getMessage());
+            } catch (\Throwable) {
+                // A concurrent callback may already have advanced the job.
+            }
             throw $error;
         }
     }

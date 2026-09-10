@@ -137,7 +137,9 @@ Local development still uses `MADLEN_PREVIEW_EXECUTION=local`; the existing `Pre
 4. The existing authenticated preview route serves the returned HTML, scripts, styles and draft media with `private, no-store` and `noindex`. The route returns 404 to an unauthenticated user or another administrator. Waiting/building pages refresh automatically; failed and expired states are explained in German.
 5. Duplicate callbacks with the same checksum are idempotent. A conflicting, wrong-job, failed or expired result cannot replace another preview or activate a public release. Hourly `madlen:previews:cleanup` removes only files whose token/job paths match their expired preview record.
 
-The disabled runner example is [`docs/external-preview.example.yml`](docs/external-preview.example.yml), not `.github/workflows/*`; it cannot run. The protected endpoints are closed unless all three values are deliberately selected: `MADLEN_PREVIEW_EXECUTION=external`, `MADLEN_EXTERNAL_PREVIEW_CONNECTED=true`, and `MADLEN_EXTERNAL_PREVIEW_DRIVER=github-actions`. Defaults remain local/unconfigured/false.
+External preview database paths are root-independent `madlen-preview-storage-v1://…` locators. Web callbacks and CLI cleanup resolve them against their own validated marker-protected roots and still bind every file to the expected preview UUID/token. Local previews retain their existing local absolute paths.
+
+The reviewed workflow is now prepared at [`.github/workflows/madlen-external-preview.yml`](.github/workflows/madlen-external-preview.yml), but it still cannot be dispatched until it is merged into the default branch, configured, and its explicit `MADLEN_EXTERNAL_PREVIEW_WORKFLOW_ENABLED` gate is set to `true`. The protected endpoints are closed unless all three host values are deliberately selected: `MADLEN_PREVIEW_EXECUTION=external`, `MADLEN_EXTERNAL_PREVIEW_CONNECTED=true`, and `MADLEN_EXTERNAL_PREVIEW_DRIVER=github-actions`. Defaults remain local/unconfigured/false. [`docs/external-preview.example.yml`](docs/external-preview.example.yml) remains historical reference material only.
 
 ### One-time backend installation/update versus routine publication
 
@@ -145,12 +147,12 @@ Backend installation or update is a separate operator procedure. It may install 
 
 Routine publication performs only: immutable content package → external static build → new versioned static directory → atomic pointer switch → status callback. It does **not** run Composer, deploy backend source, write `.env`, migrate/reseed/reset the database, replace private uploads, or touch another site.
 
-The new production-publication and external-preview migrations exist locally but have not been run against the working MySQL database. During the later authorized backend update, and only after a database backup, the operator will run:
+The installed Netcup CMS has all seven reviewed migrations applied, including the production-publication and external-preview tables. Do not rerun the initial import or reset/reseed that database. For a future migration-bearing update, and only after a fresh verified backup, the operator will first inspect `migrate:status` and then run the reviewed pending migrations:
 
 ```sh
 cd <NETCUP_MADLEN_BACKEND_ROOT>
 <NETCUP_PHP_BIN> artisan migrate --force
-<NETCUP_PHP_BIN> artisan config:cache
+<NETCUP_PHP_BIN> artisan config:clear
 ```
 
 Prepare two separate Madlen-only directories once. Their marker files are mandatory safety stops used by the activator:
@@ -208,14 +210,16 @@ Keep `MADLEN_PRODUCTION_CONNECTED=false` until the migration, protected API, ext
 
 Keep preview execution `local` and `MADLEN_EXTERNAL_PREVIEW_CONNECTED=false` until its migration, three private marked directories, protected API, runner workflow, expiry/cleanup schedule, wrong-job rejection and authenticated result serving have succeeded on the actual non-public host. Production publishing and external preview use different API/dispatch tokens and independent directories.
 
-GitHub repository secrets needed later (or environment secrets if the private-repository plan supports them):
+GitHub repository secrets needed later for the preview workflow:
 
-- `MADLEN_CMS_URL`, `MADLEN_PUBLISHER_API_TOKEN`, `MADLEN_PREVIEW_API_TOKEN`;
-- `NETCUP_SSH_HOST`, `NETCUP_SSH_USER`, `NETCUP_SSH_PRIVATE_KEY`, pinned `NETCUP_SSH_HOST_KEY`.
+- `MADLEN_PREVIEW_API_TOKEN`;
+- `NETCUP_PREVIEW_SSH_PRIVATE_KEY`;
+- provenance-checked `NETCUP_SSH_KNOWN_HOSTS`.
 
-GitHub repository variables needed later:
+GitHub repository variables needed later for the preview workflow:
 
-- `NETCUP_MADLEN_INCOMING_ROOT`, `NETCUP_MADLEN_PREVIEW_INCOMING_ROOT`, `NETCUP_MADLEN_BACKEND_ROOT`, `NETCUP_PHP_BIN` (the documented PHP 8.4 path is currently `/usr/local/php84/bin/php`, but verify it in the account).
+- `MADLEN_EXTERNAL_PREVIEW_WORKFLOW_ENABLED`, `MADLEN_CMS_URL`;
+- `NETCUP_SSH_HOST`, `NETCUP_SSH_USER`, `NETCUP_SSH_PORT`, `NETCUP_MADLEN_PREVIEW_INCOMING_ROOT`.
 
 Use a deploy key/account restricted to the Madlen directories wherever Netcup permits it. Do not use the hosting-control-panel login or an emailed verification code for routine publication. The CMS dispatch token needs only the single repository/workflow permission required for workflow dispatch; the workflow's repository permission remains `contents: read`. Verify whether the private repository's current GitHub plan supports protected environment secrets before choosing environments; do not purchase or silently assume a paid plan.
 
@@ -227,7 +231,7 @@ Use a deploy key/account restricted to the Madlen directories wherever Netcup pe
 4. Create the production and preview private package/incoming/result/destination directories and their marker files. Verify the PHP application user can write only the intended Madlen paths.
 5. In a throwaway Madlen-only destination, verify ZIP, file permissions, symlink creation and same-filesystem atomic `rename`; test failure and rollback before changing any public document root.
 6. Copy the reviewed example into `.github/workflows/madlen-production-publisher.yml`, configure protected secrets/variables and a pinned SSH host key, and test against the non-public target.
-7. Copy the reviewed preview example into `.github/workflows/madlen-external-preview.yml`, configure its separate token and private incoming path, and exercise package/build/return/auth/expiry against the non-public host. Keep the production switch off during this test.
+7. Merge the reviewed `.github/workflows/madlen-external-preview.yml` into the default branch so GitHub can register `workflow_dispatch`; only then configure its separate token/private incoming path, enable its gate for the rehearsal, and exercise package/build/return/auth/expiry against the non-public host. Keep the production switch off during this test.
 8. Configure the two document roots, HTTPS/security settings and the host scheduler for `artisan schedule:run`. Only after each flow passes independently should its own connection switch be enabled and configuration cached.
 
 The host-side activation and rollback commands, after connection, are:
@@ -289,21 +293,63 @@ git diff --check
 
 Tests force `DB_CONNECTION=sqlite` and `DB_DATABASE=:memory:` before Laravel boots, then verify the actual PDO driver. They abort rather than target the working MySQL database.
 
-## Netcup account facts still required
+## Netcup installation evidence and remaining rehearsal gates
 
-No production installation or connection has been performed. Official documentation establishes general product support, but the following must be read from the purchased **Webhosting 2000 NUE** account or confirmed by Netcup before target configuration:
+The purchased account is confirmed as **Netcup Webhosting 2000 NUE**. The public domain is `madebymadlen.de`; its current WCP folder is `madebymadlen.de/httpdocs`. SSH works at `hosting208697.ae882.netcup.net:22` in a chrooted Bash shell. Use `/usr/local/php84/bin/php` (verified PHP 8.4.24), not the default PHP 8.3 binary. The required Composer/PDO/GD WebP/ZIP/intl/mbstring/OpenSSL modules, `proc_open`, outbound HTTPS to GitHub, MySQL client tools, ZIP/tar and an isolated symlink rename were checked. MySQL 8.4.11 is available through the dedicated Madlen database/user. Composer, Node and npm were not found in the host PATH, so the installation candidate includes locked production `vendor` and Filament assets; static builds remain an external-runner responsibility.
 
-- exact product generation/location and current quotas: webspace, inode/file count, database count/size, cron count/frequency, process/runtime/memory limits, maximum file and HTTP response sizes;
-- actual PHP web/CLI versions and enabled PDO MySQL, intl, GD WebP/JPEG/PNG, EXIF, mbstring, OpenSSL, fileinfo, ZIP and bcmath extensions;
-- actual MySQL/MariaDB server/version and a new Madlen-only database/user; never reuse a database belonging to another project;
-- absolute admin document root, static-site document root, private storage, production package/incoming/destination paths and preview package/incoming/result paths, all separated from one another and other sites;
-- whether the account permits symlinks and atomic replacement of a symlink within the same filesystem; verify empirically in a throwaway directory;
-- SSH hostname/port, host-key fingerprint, public-key authentication, SFTP/SCP support and the executable PHP 8.4 path; do not assume `rsync`;
-- outbound HTTPS from PHP to `api.github.com`, and inbound HTTPS from GitHub Actions to the protected package/status endpoints, including any WAF/download-size/timeout restriction;
-- HTTPS certificate, trusted proxy/session-cookie settings and the exact public/admin URLs;
-- provider backup coverage and an independent backup destination. Netcup describes its ordinary restore backups as voluntary and not guaranteed, so they are not a substitute for the CMS backup procedure;
-- scheduled-task availability and frequency for Laravel housekeeping, external-preview expiry cleanup and status reconciliation. Do not assume Docker, Node, Redis, websockets or a permanent queue worker on Webhosting 2000;
-- GitHub Actions availability/minutes for the private repository, and whether protected environments are included in the current plan; repository secrets are the no-purchase fallback;
-- SMTP/provider details and legal approval before enabling password-reset email, contact delivery, analytics or optional cookies.
+The detailed proposed paths, safe transfer/import sequence, scheduler command and contact activation procedure are in [`docs/NETCUP_INSTALLATION_RU.md`](docs/NETCUP_INSTALLATION_RU.md). Still verify during the non-public installation rehearsal:
+
+- admin subdomain DNS, certificate and document root ending in `backend/public`;
+- PHP-FPM 8.4 modules, `open_basedir`, subprocess behavior and write access to the selected private paths;
+- web-server behavior at the final static `current` symlink and actual account upload/body/runtime/quota limits;
+- key-based SFTP/SCP, a provenance-checked complete `known_hosts` key line, authenticated runner callbacks and protected secrets;
+- an automatically recurring one-minute scheduler entry, real SMTP receipt/Reply-To, and recoverable database/media backups.
 
 Both the production publisher and protected external preview are prepared and locally tested, but neither is connected or production-verified. Until these account facts and both real runner/host paths are verified, the correct production status remains **Nicht konfiguriert** and preview execution remains **local**.
+
+## Deployment-preparation handoff
+
+This section is a review draft for the next deployment step. It records evidence gathered locally; it does not authorize or describe a completed production installation.
+
+### Confirmed facts
+
+- The intended and account-confirmed public-site URL in `astro.config.mjs` is `https://madebymadlen.de`. The admin hostname `admin.madebymadlen.de`, HTTPS, PHP 8.4 FPM paths and CMS login have been verified on Netcup.
+- The GitHub repository is public. The external-preview workflow is prepared in the feature branch but is gated off and is not initially registered by `workflow_dispatch` until the file reaches default branch `main`. The files under `docs/` remain inactive examples only.
+- Local Docker validation uses PHP 8.4 and MySQL 8.4. These are development facts, not proof of the purchased host's runtime.
+- Production publishing is disabled and unconfigured. External preview execution is local; its production connection is disabled and unconfigured.
+- The Netcup database was restored from its verified backup and all seven migrations are applied. It must not be reimported, reset, wiped or reseeded during the preview code update.
+- The Formspree placeholder has been replaced locally by a Laravel-backed contact endpoint with locked server-side addresses, origin checks, rate limiting and Netcup SMTP preparation. Contact remains disabled until a later authorized real SMTP rehearsal. Analytics retains the optional `G-XXXXXXXXXX` placeholder and remains disabled.
+
+### Deployment invariant
+
+Code is versioned in Git. Editorial state belongs to the dedicated CMS database. Uploaded originals and derivatives belong to persistent media storage outside every release directory and public document root.
+
+A code upgrade must never import or seed old baseline content over the CMS, replace the database with a stale local dump, delete or replace persistent media, publish unrelated drafts, or reset environment secrets. A static public-release rollback changes only the active release pointer; it must not silently roll back the editorial database or persistent media.
+
+The isolated automated tests provide current local evidence for this boundary: an authored CMS edit survives a repeated baseline import; unpublished drafts remain excluded from public output and included only in protected preview output; media associations and protected derivatives survive real Astro preview/publication builds; and a failed publication keeps the previous static release active. The actual hosting upgrade path still requires a non-public end-to-end rehearsal before launch.
+
+### Remaining target facts
+
+The provider, plan, public domain, CLI PHP/modules, database endpoint, SSH login, outbound HTTPS, scheduler UI and isolated CLI symlink operation are confirmed. The installation rehearsal must still establish the future admin PHP-FPM/open_basedir context, exact private paths as seen by web PHP, account limits, automatic scheduler execution, key-based runner transport, complete pinned host key, SMTP delivery and web-server following of the final static symlink.
+
+### Non-secret evidence to collect next
+
+Provide screenshots or copied account facts with customer numbers, usernames, hostnames containing personal identifiers and credentials redacted:
+
+1. The newly created `admin.madebymadlen.de` WCP document root, certificate and selected PHP version.
+2. A temporary, then deleted, admin-PHP diagnostic showing `__DIR__`, `open_basedir`, required modules and access to the intended private paths without printing secrets.
+3. Storage/quota, upload/body-size, process/runtime and backup-policy limits not yet captured.
+4. The saved recurring scheduler entry and several automatic executions.
+5. Key-based SFTP/SCP evidence and the complete established `known_hosts` line with its provenance.
+6. Non-public contact receipt/Reply-To and runner preview/publication rehearsal results.
+
+Do not send passwords, private keys, database credentials, API tokens, recovery codes or email verification codes. Later credentials belong in the protected host or runner secret store, never in Git, documentation or chat.
+
+### Remaining launch gates
+
+- Confirm all hosting facts above and design the exact path/domain map without sharing secrets.
+- Repair and verify real contact delivery; review the public contact address, all DE/EN content, legal pages and optional analytics/cookie choices.
+- Install the backend into a non-public target, create persistent paths with least privilege, take and restore-test a fresh backup, then apply reviewed migrations without seeding/importing.
+- Verify private admin and preview access, HTTPS/session settings, scheduler execution and backup retention on that target.
+- Activate neither example workflow until its runner code, immutable source pin, protected secrets, checksums and host-key pin are committed and reviewed.
+- Exercise preview, publication, failure retention, atomic switch and rollback end to end against a non-public Madlen-only destination before any public document-root change.

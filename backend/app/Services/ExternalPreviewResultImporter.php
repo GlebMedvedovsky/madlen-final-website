@@ -41,6 +41,14 @@ class ExternalPreviewResultImporter
             }
             if ($preview->status === 'ready') {
                 if (hash_equals((string) $preview->result_checksum, strtolower($checksum))) {
+                    $archive = $this->storage->resultArchive($preview->id);
+                    if (is_file($archive)) {
+                        $duplicateChecksum = hash_file('sha256', $archive);
+                        if ($duplicateChecksum !== false && hash_equals(strtolower($checksum), strtolower($duplicateChecksum))) {
+                            @unlink($archive);
+                        }
+                    }
+
                     return $preview;
                 }
                 throw new RuntimeException('Ein anderes Ergebnis wurde für diesen Vorschau-Auftrag bereits angenommen.');
@@ -66,8 +74,12 @@ class ExternalPreviewResultImporter
             $this->extractSafely($archive, $staging);
             $this->validate($preview, $staging);
 
-            $destination = $this->storage->buildPath($preview->token);
-            if ($destination !== $preview->build_path || file_exists($destination)) {
+            $destination = $this->storage->resolve(
+                (string) $preview->build_path,
+                'result_root',
+                'builds/'.$preview->token,
+            );
+            if (file_exists($destination)) {
                 throw new RuntimeException('Das eindeutige private Vorschau-Ziel ist ungültig oder existiert bereits.');
             }
             $this->files->ensureDirectory(dirname($destination));
@@ -150,7 +162,12 @@ class ExternalPreviewResultImporter
         }
 
         $metadata = json_decode(file_get_contents($root.'/.madlen-preview.json'), true, flags: JSON_THROW_ON_ERROR);
-        $manifestBytes = file_get_contents($preview->manifest_path);
+        $manifestPath = $this->storage->resolve(
+            (string) $preview->manifest_path,
+            'package_root',
+            'requests/'.$preview->id.'/payload/content-manifest.json',
+        );
+        $manifestBytes = file_get_contents($manifestPath);
         if ($manifestBytes === false) {
             throw new RuntimeException('Der unveränderliche Vorschau-Inhalt wurde nicht gefunden.');
         }

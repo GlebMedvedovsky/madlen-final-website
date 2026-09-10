@@ -4,11 +4,21 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
 class AstroBuildService
 {
     public function __construct(private RuntimeFilesystem $files) {}
+
+    public function isAvailable(): bool
+    {
+        $repository = rtrim((string) config('madlen.repository_root'), '/\\');
+
+        return (new ExecutableFinder)->find('npm') !== null
+            && is_file($repository.'/package.json')
+            && is_file($repository.'/package-lock.json');
+    }
 
     public function build(string $manifestPath, string $destination, array $mediaCopies = [], string $base = '/'): void
     {
@@ -61,6 +71,7 @@ class AstroBuildService
             $candidate = $root.'/'.ltrim((string) $relativePath, '/');
             if (is_file($candidate) || is_link($candidate)) {
                 unlink($candidate);
+
                 continue;
             }
             if (! is_dir($candidate)) {
@@ -126,10 +137,12 @@ class AstroBuildService
         $urls = [];
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($destination));
         foreach ($iterator as $file) {
-            if (! $file->isFile() || $file->getFilename() !== 'index.html') continue;
+            if (! $file->isFile() || $file->getFilename() !== 'index.html') {
+                continue;
+            }
             $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($destination)));
             $path = preg_replace('#/index\.html$#', '/', $relative) ?: '/';
-            $urls[] = '  <url><loc>'.htmlspecialchars(rtrim('https://foto-video-madlen.de', '/').$path, ENT_XML1).'</loc></url>';
+            $urls[] = '  <url><loc>'.htmlspecialchars(rtrim((string) config('madlen.public_site_url'), '/').$path, ENT_XML1).'</loc></url>';
         }
         sort($urls);
         $this->files->write($destination.'/sitemap.xml', "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n".implode("\n", $urls)."\n</urlset>\n");

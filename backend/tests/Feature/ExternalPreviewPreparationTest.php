@@ -3,9 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\MediaAsset;
+use App\Models\PreviewBuild;
 use App\Models\Project;
 use App\Models\Release;
 use App\Models\User;
+use App\Services\ExternalPreviewPackager;
+use App\Services\ExternalPreviewStatus;
+use App\Services\ExternalPreviewStorage;
+use App\Services\ExternalPreviewWorkflowDispatcher;
 use App\Services\PreviewBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -139,8 +144,12 @@ class ExternalPreviewPreparationTest extends TestCase
         $preview = app(PreviewBuilder::class)->build();
         $this->assertSame('queued', $preview->status);
         $this->assertSame('external', $preview->execution_mode);
-        $this->assertFileExists($preview->package_path);
-        $this->assertSame($preview->package_checksum, hash_file('sha256', $preview->package_path));
+        $this->assertStringStartsWith('madlen-preview-storage-v1://', $preview->package_path);
+        $this->assertStringStartsWith('madlen-preview-storage-v1://', $preview->manifest_path);
+        $this->assertStringStartsWith('madlen-preview-storage-v1://', $preview->build_path);
+        $packagePath = $this->packagePath($preview);
+        $this->assertFileExists($packagePath);
+        $this->assertSame($preview->package_checksum, hash_file('sha256', $packagePath));
         $this->get('/admin/preview/'.$preview->token.'/')->assertStatus(202)->assertSee('Vorschau wartet');
 
         Http::assertSent(fn (Request $request): bool => $request->url() === 'https://api.github.com/repos/example/madlen/actions/workflows/madlen-external-preview.yml/dispatches'
@@ -152,6 +161,8 @@ class ExternalPreviewPreparationTest extends TestCase
             'title_de' => 'Spätere Änderung Deutsch',
             'title_en' => 'Later English change',
         ]);
+
+        $this->switchToEquivalentWebPaths();
 
         $this->get('/api/preview-runner/v1/previews/'.$preview->id.'/package')->assertUnauthorized();
         $this->withToken('isolated-preview-runner-token')
@@ -165,14 +176,15 @@ class ExternalPreviewPreparationTest extends TestCase
 
         $extracted = $this->testRoot.'/extracted-'.$preview->id;
         File::ensureDirectoryExists($extracted);
-        $this->extract($preview->package_path, $extracted);
+        $packagePath = $this->packagePath($preview);
+        $this->extract($packagePath, $extracted);
         $manifest = file_get_contents($extracted.'/content-manifest.json');
         $this->assertStringContainsString('Unveränderlicher Entwurf Deutsch', $manifest);
         $this->assertStringContainsString('Immutable English draft', $manifest);
         $this->assertStringNotContainsString('Spätere Änderung Deutsch', $manifest);
         $this->assertFileExists($extracted.'/media/'.$media->id.'/draft-preview.webp');
         $this->assertFileDoesNotExist($extracted.'/media/'.$media->id.'/draft-secret.jpg');
-        $this->assertStringNotContainsString('PRIVATE-ORIGINAL-MUST-STAY-HOSTED', file_get_contents($preview->package_path));
+        $this->assertStringNotContainsString('PRIVATE-ORIGINAL-MUST-STAY-HOSTED', file_get_contents($packagePath));
 
         $externalBuild = $this->testRoot.'/runner-build-'.$preview->id;
         $process = new Process(
@@ -189,12 +201,16 @@ class ExternalPreviewPreparationTest extends TestCase
         $this->assertTrue($process->isSuccessful(), $process->getErrorOutput().$process->getOutput());
         $this->assertFileExists($externalBuild.'/index.html');
         $this->assertFileExists($externalBuild.'/en/index.html');
+        $this->assertStringContainsString('https://admin.madebymadlen.de/api/contact', file_get_contents($externalBuild.'/kontakt/index.html'));
+        $this->assertStringContainsString('https://admin.madebymadlen.de/api/contact', file_get_contents($externalBuild.'/en/contact/index.html'));
         $this->assertFileExists($externalBuild.'/portfolio/external-preview-draft/index.html');
         $this->assertFileExists($externalBuild.'/en/portfolio/external-preview-draft/index.html');
         $this->assertFileExists($externalBuild.'/media/'.$media->id.'/draft-preview.webp');
         $this->assertStringContainsString('/admin/preview/'.$preview->token.'/media/'.$media->id.'/', file_get_contents($externalBuild.'/portfolio/external-preview-draft/index.html'));
 
         [$archive, $resultChecksum] = $this->makeResultArchive($externalBuild, $preview->id);
+        $replayCopy = $archive.'.replay-copy';
+        $this->assertTrue(copy($archive, $replayCopy));
         $this->withToken('isolated-preview-runner-token')
             ->postJson('/api/preview-runner/v1/previews/'.$preview->id.'/status', [
                 'status' => 'ready',
@@ -205,9 +221,11 @@ class ExternalPreviewPreparationTest extends TestCase
             ->assertJsonPath('status', 'ready');
         $preview->refresh();
         $this->assertSame('ready', $preview->status);
-        $this->assertDirectoryExists($preview->build_path);
+        $buildPath = $this->buildPath($preview);
+        $this->assertDirectoryExists($buildPath);
         $this->assertFileDoesNotExist($archive);
 
+        $this->assertTrue(rename($replayCopy, $archive));
         $this->withToken('isolated-preview-runner-token')
             ->postJson('/api/preview-runner/v1/previews/'.$preview->id.'/status', [
                 'status' => 'ready',
@@ -216,6 +234,7 @@ class ExternalPreviewPreparationTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('status', 'ready');
+        $this->assertFileDoesNotExist($archive);
 
         auth()->logout();
         $base = '/admin/preview/'.$preview->token;
@@ -233,15 +252,15 @@ class ExternalPreviewPreparationTest extends TestCase
         $this->get($mediaPath)->assertOk()->assertHeader('Cache-Control', 'no-store, private');
         $this->assertSame(
             'DRAFT-DERIVATIVE',
-            file_get_contents($preview->build_path.'/media/'.$media->id.'/draft-preview.webp'),
+            file_get_contents($buildPath.'/media/'.$media->id.'/draft-preview.webp'),
         );
         $this->assertStringContainsString(
             'Unveränderlicher Entwurf Deutsch',
-            file_get_contents($preview->build_path.'/portfolio/external-preview-draft/index.html'),
+            file_get_contents($buildPath.'/portfolio/external-preview-draft/index.html'),
         );
         $this->assertStringContainsString(
             'Immutable English draft',
-            file_get_contents($preview->build_path.'/en/portfolio/external-preview-draft/index.html'),
+            file_get_contents($buildPath.'/en/portfolio/external-preview-draft/index.html'),
         );
 
         $this->assertSame('active', $release->refresh()->status);
@@ -285,8 +304,9 @@ class ExternalPreviewPreparationTest extends TestCase
             ->assertSee('öffentliche Website wurde nicht verändert');
 
         $expired = app(PreviewBuilder::class)->build();
-        $expiredPackage = $expired->package_path;
+        $expiredPackage = $this->packagePath($expired);
         $expiredRequest = $this->packageRoot.'/requests/'.$expired->id;
+        $this->switchToEquivalentWebPaths();
         $expired->update(['expires_at' => now()->subMinute()]);
         $this->get('/admin/preview/'.$expired->token.'/')
             ->assertStatus(410)
@@ -295,10 +315,55 @@ class ExternalPreviewPreparationTest extends TestCase
         $this->assertSame('expired', $expired->refresh()->status);
         $this->assertFileDoesNotExist($expiredPackage);
         $this->assertDirectoryDoesNotExist($expiredRequest);
-        $this->assertFileExists($failed->package_path);
+        $this->assertFileExists($this->packagePath($failed));
         $this->assertSame('failed', $failed->refresh()->status);
 
         $this->artisan('madlen:previews:cleanup')->assertSuccessful();
+    }
+
+    public function test_dispatch_callbacks_cannot_regress_building_or_ready_status(): void
+    {
+        $this->artisan('madlen:import')->assertSuccessful();
+        $this->actingAs(User::factory()->create());
+        $this->connectExternalPreview();
+
+        $preview = app(ExternalPreviewPackager::class)->prepare();
+        Http::fake(function () use ($preview) {
+            app(ExternalPreviewStatus::class)->building($preview);
+
+            return Http::response(null, 204);
+        });
+
+        app(ExternalPreviewWorkflowDispatcher::class)->dispatch($preview);
+        $this->assertSame('building', $preview->refresh()->status);
+
+        $preview->update([
+            'status' => 'ready',
+            'progress_message' => 'Die geschützte Vorschau ist bereit.',
+            'completed_at' => now(),
+        ]);
+        app(ExternalPreviewStatus::class)->queued($preview);
+        $this->assertSame('ready', $preview->refresh()->status);
+    }
+
+    public function test_local_preview_reports_known_not_configured_state_when_npm_is_missing(): void
+    {
+        $this->actingAs(User::factory()->create());
+        config(['madlen.preview_execution' => 'local']);
+        $originalPath = getenv('PATH');
+        putenv('PATH='.$this->testRoot.'/missing-bin');
+
+        try {
+            app(PreviewBuilder::class)->build();
+            $this->fail('Eine lokale Vorschau ohne npm hätte abbrechen müssen.');
+        } catch (\RuntimeException $error) {
+            $this->assertSame(PreviewBuilder::NOT_CONFIGURED_MESSAGE, $error->getMessage());
+        } finally {
+            putenv($originalPath === false ? 'PATH' : 'PATH='.$originalPath);
+        }
+
+        $this->assertDatabaseCount('preview_builds', 0);
+        $this->assertDirectoryDoesNotExist($this->testRoot.'/local-releases/previews');
     }
 
     private function connectExternalPreview(): void
@@ -308,6 +373,34 @@ class ExternalPreviewPreparationTest extends TestCase
             'madlen.external_preview_connected' => true,
             'madlen.preview_runner.driver' => 'github-actions',
         ]);
+    }
+
+    private function switchToEquivalentWebPaths(): void
+    {
+        File::ensureDirectoryExists($this->testRoot.'/web-view');
+        config([
+            'madlen.preview_runner.package_root' => $this->testRoot.'/web-view/../packages',
+            'madlen.preview_runner.incoming_root' => $this->testRoot.'/web-view/../incoming',
+            'madlen.preview_runner.result_root' => $this->testRoot.'/web-view/../results',
+        ]);
+    }
+
+    private function packagePath(PreviewBuild $preview): string
+    {
+        return app(ExternalPreviewStorage::class)->resolve(
+            (string) $preview->package_path,
+            'package_root',
+            'madlen-preview-'.$preview->id.'.zip',
+        );
+    }
+
+    private function buildPath(PreviewBuild $preview): string
+    {
+        return app(ExternalPreviewStorage::class)->resolve(
+            (string) $preview->build_path,
+            'result_root',
+            'builds/'.$preview->token,
+        );
     }
 
     private function extract(string $archive, string $destination): void

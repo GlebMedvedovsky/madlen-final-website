@@ -131,7 +131,7 @@ export const en = {
       "and consent to the processing of my information for the purpose of responding to my inquiry.",
     requiredNote: "* Required fields",
     formSubmit: "Send inquiry",
-    subject: "New inquiry via madlenmedvedovskyy.de",
+    subject: "New inquiry via madebymadlen.de",
     requestOptions: [
       "Portrait photography",
       "Couples & families",

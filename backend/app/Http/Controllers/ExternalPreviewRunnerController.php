@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PreviewBuild;
 use App\Services\ExternalPreviewResultImporter;
 use App\Services\ExternalPreviewStatus;
+use App\Services\ExternalPreviewStorage;
 use App\Services\PreviewCleanupService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,8 +14,12 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ExternalPreviewRunnerController extends Controller
 {
-    public function package(Request $request, PreviewBuild $preview, PreviewCleanupService $cleanup): BinaryFileResponse
-    {
+    public function package(
+        Request $request,
+        PreviewBuild $preview,
+        PreviewCleanupService $cleanup,
+        ExternalPreviewStorage $storage,
+    ): BinaryFileResponse {
         $this->authorizeRunner($request);
         abort_unless($preview->execution_mode === 'external', 404);
         if ($preview->expires_at->isPast() || $preview->status === 'expired') {
@@ -22,11 +27,20 @@ class ExternalPreviewRunnerController extends Controller
             abort(410, 'Die Vorschau ist abgelaufen.');
         }
         abort_unless(in_array($preview->status, ['prepared', 'queued', 'building'], true), 409);
-        abort_unless($preview->package_path && is_file($preview->package_path), 404);
+        try {
+            $package = $storage->resolve(
+                (string) $preview->package_path,
+                'package_root',
+                'madlen-preview-'.$preview->id.'.zip',
+            );
+        } catch (RuntimeException) {
+            abort(404);
+        }
+        abort_unless(is_file($package), 404);
 
         $response = response()->download(
-            $preview->package_path,
-            basename($preview->package_path),
+            $package,
+            basename($package),
             [
                 'X-Content-Type-Options' => 'nosniff',
             ],

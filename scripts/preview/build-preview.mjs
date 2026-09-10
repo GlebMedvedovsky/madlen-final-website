@@ -123,6 +123,17 @@ function validatePreview(root, content, preview) {
   for (const required of ["index.html", "en/index.html", ".madlen-preview.json"]) {
     assertFile(join(root, required), `Vorschau-Prüfung fehlgeschlagen: ${required} fehlt.`);
   }
+  for (const excluded of [
+    "design-reference",
+    "start_seite.jpeg",
+    "images/Kukes1.jpg",
+    "images/Grafik Elemente/Blaues_Element_Wolke.png",
+    "images/Grafik Elemente/Linie_Blau_Klein.png",
+    "images/Grafik Elemente/Linine_Blau_Gross.png",
+    "images/Grafik Elemente/Rosa_Blau_Linie.png",
+  ]) {
+    if (existsSync(join(root, excluded))) fail(`Lokale Referenz wurde in die Vorschau kopiert: ${excluded}`);
+  }
   if (!Array.isArray(content.projects)) fail("Das Vorschau-Manifest enthält keine Projektliste.");
   for (const project of content.projects) {
     if (!project?.slug || !/^[a-zA-Z0-9-]+$/.test(project.slug)) fail("Ungültiger Projekt-Slug im Vorschau-Manifest.");

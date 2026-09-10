@@ -47,6 +47,9 @@ services:
       MADLEN_REPOSITORY_ROOT: /workspace
       MADLEN_RELEASE_ROOT: /workspace/backend/storage/app/releases
       MADLEN_PUBLIC_URL: http://localhost:${MADLEN_SITE_PORT:-8089}
+      MADLEN_PUBLIC_SITE_URL: https://madebymadlen.de
+      MADLEN_CONTACT_ENABLED: "false"
+      MADLEN_CONTACT_ALLOWED_ORIGINS: http://localhost:4321,http://localhost:${MADLEN_SITE_PORT:-8089},http://localhost:${MADLEN_HTTP_PORT:-8088}
       MADLEN_RESTORE_DB_HOST: db_test
       MADLEN_RESTORE_DB_DATABASE: madlen_restore_test
       MADLEN_RESTORE_DB_USERNAME: madlen_restore

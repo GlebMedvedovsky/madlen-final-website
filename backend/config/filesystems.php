@@ -1,5 +1,9 @@
 <?php
 
+use App\Support\HostingPathResolver;
+
+$hostingPaths = HostingPathResolver::resolve(base_path(), env('MADLEN_INSTALL_LAYOUT'));
+
 return [
 
     /*
@@ -32,7 +36,7 @@ return [
 
         'local' => [
             'driver' => 'local',
-            'root' => storage_path('app/private'),
+            'root' => env('MADLEN_PRIVATE_STORAGE_ROOT') ?: ($hostingPaths['storage_root'] ?? storage_path('app/private')),
             'serve' => true,
             'throw' => false,
             'report' => false,
@@ -49,7 +53,7 @@ return [
 
         'cms_source' => [
             'driver' => 'local',
-            'root' => rtrim(env('MADLEN_REPOSITORY_ROOT', dirname(base_path())), '/').'/public',
+            'root' => rtrim(env('MADLEN_REPOSITORY_ROOT') ?: ($hostingPaths['repository_root'] ?? dirname(base_path())), '/').'/public',
             'serve' => false,
             'throw' => false,
             'report' => false,

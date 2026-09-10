@@ -41,21 +41,20 @@ class ExternalPreviewPackager
         try {
             $token = Str::random(48);
             $expiresAt = now()->addMinutes(max(5, (int) config('madlen.preview_ttl_minutes', 120)));
-            $packageRoot = $this->storage->root('package_root');
             $preview = PreviewBuild::query()->create([
                 'token' => $token,
                 'execution_mode' => 'external',
                 'status' => 'preparing',
                 'source_revision' => $sourceRevision,
-                'manifest_path' => $packageRoot.'/requests/pending/content-manifest.json',
-                'build_path' => $this->storage->buildPath($token),
+                'manifest_path' => $this->storage->manifestLocator('pending'),
+                'build_path' => $this->storage->buildLocator($token),
                 'user_id' => Auth::id(),
                 'expires_at' => $expiresAt,
                 'progress_message' => 'Der unveränderliche Entwurfsstand wird vorbereitet.',
             ]);
 
-            $payloadRoot = $packageRoot.'/requests/'.$preview->id.'/payload';
-            $manifestPath = $payloadRoot.'/content-manifest.json';
+            $manifestPath = $this->storage->manifestPath($preview->id);
+            $payloadRoot = dirname($manifestPath);
             $manifest = $this->manifests->make(includeDrafts: true);
             $json = json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n";
             $this->files->write($manifestPath, $json);
@@ -85,7 +84,7 @@ class ExternalPreviewPackager
                 json_encode($metadata, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n",
             );
 
-            $archive = $packageRoot.'/madlen-preview-'.$preview->id.'.zip';
+            $archive = $this->storage->packagePath($preview->id);
             $temporary = $archive.'.tmp';
             if (is_file($archive) || is_file($temporary)) {
                 throw new RuntimeException('Das eindeutige Vorschau-Paket existiert bereits.');
@@ -101,8 +100,8 @@ class ExternalPreviewPackager
 
             $preview->update([
                 'status' => 'prepared',
-                'manifest_path' => $manifestPath,
-                'package_path' => $archive,
+                'manifest_path' => $this->storage->manifestLocator($preview->id),
+                'package_path' => $this->storage->packageLocator($preview->id),
                 'package_checksum' => $checksum,
                 'progress_message' => 'Der unveränderliche Entwurfsstand wartet auf den externen Build.',
                 'error_message' => null,

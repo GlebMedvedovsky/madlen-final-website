@@ -1,0 +1,261 @@
+name: Madlen external preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_id:
+        description: Immutable CMS preview UUID
+        required: true
+        type: string
+      package_sha256:
+        description: SHA-256 of the immutable CMS package
+        required: true
+        type: string
+      source_revision:
+        description: Exact source commit to build
+        required: true
+        type: string
+      expires_at:
+        description: Exact ISO-8601 expiry from the CMS
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: madlen-external-preview-${{ inputs.preview_id }}
+  cancel-in-progress: false
+
+jobs:
+  build-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CMS_URL: ${{ vars.MADLEN_CMS_URL }}
+      SSH_HOST: ${{ vars.NETCUP_SSH_HOST }}
+      SSH_USER: ${{ vars.NETCUP_SSH_USER }}
+      SSH_PORT: ${{ vars.NETCUP_SSH_PORT }}
+      INCOMING_ROOT: ${{ vars.NETCUP_MADLEN_PREVIEW_INCOMING_ROOT }}
+      PREVIEW_ID: ${{ inputs.preview_id }}
+      PACKAGE_SHA256: ${{ inputs.package_sha256 }}
+      SOURCE_REVISION: ${{ inputs.source_revision }}
+      EXPIRES_AT: ${{ inputs.expires_at }}
+
+    steps:
+      - name: Require the explicit preview gate
+        id: gate
+        env:
+          PREVIEW_ENABLED: ${{ vars.MADLEN_EXTERNAL_PREVIEW_WORKFLOW_ENABLED }}
+        run: |
+          if [ "$PREVIEW_ENABLED" != "true" ]; then
+            echo "External preview is disabled. Set MADLEN_EXTERNAL_PREVIEW_WORKFLOW_ENABLED=true only for an approved rehearsal."
+            exit 1
+          fi
+
+      - name: Validate request and non-secret configuration
+        run: |
+          set -euo pipefail
+          [[ "$PREVIEW_ID" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]
+          [[ "$PACKAGE_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$CMS_URL" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
+          [[ "$SSH_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$SSH_USER" =~ ^[A-Za-z0-9._-]+$ ]]
+          [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]] && [ "$SSH_PORT" -ge 1 ] && [ "$SSH_PORT" -le 65535 ]
+          [[ "$INCOMING_ROOT" =~ ^/[A-Za-z0-9._/-]+$ ]]
+          case "/$INCOMING_ROOT/" in *"/../"*|*"/./"*) exit 1 ;; esac
+          python3 -c 'from datetime import datetime, timezone; import os; value=os.environ["EXPIRES_AT"]; parsed=datetime.fromisoformat(value.replace("Z", "+00:00")); assert parsed.tzinfo and parsed > datetime.now(timezone.utc)'
+
+      - name: Check out the immutable source revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ inputs.source_revision }}
+          persist-credentials: false
+
+      - name: Verify checked-out source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_REVISION"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Configure strict SSH verification
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.NETCUP_PREVIEW_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.NETCUP_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$SSH_KNOWN_HOSTS"
+          mkdir -p "$RUNNER_TEMP/madlen-ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$RUNNER_TEMP/madlen-ssh/id_ed25519"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$RUNNER_TEMP/madlen-ssh/known_hosts"
+          chmod 600 "$RUNNER_TEMP/madlen-ssh/id_ed25519"
+          chmod 644 "$RUNNER_TEMP/madlen-ssh/known_hosts"
+          ssh-keygen -y -f "$RUNNER_TEMP/madlen-ssh/id_ed25519" > /dev/null
+          known_host="$SSH_HOST"
+          if [ "$SSH_PORT" != "22" ]; then known_host="[$SSH_HOST]:$SSH_PORT"; fi
+          ssh-keygen -F "$known_host" -f "$RUNNER_TEMP/madlen-ssh/known_hosts" > /dev/null
+
+      - name: Mark preview as building
+        env:
+          PREVIEW_API_TOKEN: ${{ secrets.MADLEN_PREVIEW_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$PREVIEW_API_TOKEN"
+          payload=$(jq -cn '{status:"building"}')
+          curl --fail --silent --show-error \
+            --connect-timeout 10 --max-time 30 \
+            -H "Authorization: Bearer $PREVIEW_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data "$payload" \
+            "$CMS_URL/api/preview-runner/v1/previews/$PREVIEW_ID/status" > /dev/null
+
+      - name: Download and verify immutable preview package
+        env:
+          PREVIEW_API_TOKEN: ${{ secrets.MADLEN_PREVIEW_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/madlen-preview/payload"
+          curl --fail --silent --show-error \
+            --connect-timeout 10 --max-time 120 \
+            -H "Authorization: Bearer $PREVIEW_API_TOKEN" \
+            -o "$RUNNER_TEMP/madlen-preview/package.zip" \
+            "$CMS_URL/api/preview-runner/v1/previews/$PREVIEW_ID/package"
+          echo "$PACKAGE_SHA256  $RUNNER_TEMP/madlen-preview/package.zip" | sha256sum --check --status
+          python3 -c 'import os, pathlib, stat, zipfile; source=os.environ["RUNNER_TEMP"]+"/madlen-preview/package.zip"; target=pathlib.Path(os.environ["RUNNER_TEMP"]+"/madlen-preview/payload"); z=zipfile.ZipFile(source); names=set(); [(None if (n:=i.filename) and not n.startswith(("/", "\\")) and "\\" not in n and ".." not in pathlib.PurePosixPath(n).parts and n not in names and not stat.S_ISLNK(i.external_attr >> 16) else (_ for _ in ()).throw(ValueError("unsafe archive")), names.add(n)) for i in z.infolist()]; z.extractall(target)'
+
+      - name: Install locked frontend dependencies
+        run: |
+          if ! npm ci > "$RUNNER_TEMP/madlen-npm.log" 2>&1; then
+            echo "The locked frontend dependency installation failed. Details remain only in the private runner log."
+            exit 1
+          fi
+
+      - name: Build and validate DE and EN preview
+        run: |
+          set -euo pipefail
+          python3 -c 'from datetime import datetime, timezone; import os; parsed=datetime.fromisoformat(os.environ["EXPIRES_AT"].replace("Z", "+00:00")); assert parsed > datetime.now(timezone.utc)'
+          if ! MADLEN_EXPECTED_PREVIEW_ID="$PREVIEW_ID" \
+            MADLEN_EXPECTED_SOURCE_REVISION="$SOURCE_REVISION" \
+            MADLEN_EXPECTED_EXPIRES_AT="$EXPIRES_AT" \
+            npm run build:preview -- \
+              "$RUNNER_TEMP/madlen-preview/payload" \
+              "$RUNNER_TEMP/madlen-preview/build" \
+              > "$RUNNER_TEMP/madlen-build.log" 2>&1; then
+            echo "The private DE/EN preview build failed. Details remain only in the private runner log."
+            exit 1
+          fi
+          test -f "$RUNNER_TEMP/madlen-preview/build/index.html"
+          test -f "$RUNNER_TEMP/madlen-preview/build/en/index.html"
+
+      - name: Create immutable result archive
+        id: result
+        run: |
+          set -euo pipefail
+          result_name="madlen-preview-result-$PREVIEW_ID.zip"
+          (cd "$RUNNER_TEMP/madlen-preview/build" && zip -q -r "$RUNNER_TEMP/madlen-preview/$result_name" .)
+          result_sha=$(sha256sum "$RUNNER_TEMP/madlen-preview/$result_name")
+          result_sha=${result_sha%% *}
+          echo "name=$result_name" >> "$GITHUB_OUTPUT"
+          echo "sha256=$result_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Check expiry immediately before transfer
+        run: |
+          python3 -c 'from datetime import datetime, timezone; import os; parsed=datetime.fromisoformat(os.environ["EXPIRES_AT"].replace("Z", "+00:00")); assert parsed > datetime.now(timezone.utc)'
+
+      - name: Inspect private incoming destination
+        id: destination
+        env:
+          RESULT_NAME: ${{ steps.result.outputs.name }}
+          RESULT_SHA256: ${{ steps.result.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          remote="$SSH_USER@$SSH_HOST"
+          state=$(ssh -p "$SSH_PORT" \
+            -i "$RUNNER_TEMP/madlen-ssh/id_ed25519" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$RUNNER_TEMP/madlen-ssh/known_hosts" \
+            "$remote" \
+            "set -eu; test -d '$INCOMING_ROOT'; test -w '$INCOMING_ROOT'; test \"\$(cat '$INCOMING_ROOT/.madlen-preview-incoming')\" = 'madlen-preview-incoming-v1'; if test -f '$INCOMING_ROOT/$RESULT_NAME'; then set -- \$(sha256sum '$INCOMING_ROOT/$RESULT_NAME'); test \"\$1\" = '$RESULT_SHA256'; printf present; else printf missing; fi")
+          test "$state" = present || test "$state" = missing
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+
+      - name: Transfer result into private incoming directory
+        if: steps.destination.outputs.state == 'missing'
+        env:
+          RESULT_NAME: ${{ steps.result.outputs.name }}
+        run: |
+          set -euo pipefail
+          remote="$SSH_USER@$SSH_HOST"
+          temporary="$RESULT_NAME.part-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          scp -P "$SSH_PORT" \
+            -i "$RUNNER_TEMP/madlen-ssh/id_ed25519" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$RUNNER_TEMP/madlen-ssh/known_hosts" \
+            "$RUNNER_TEMP/madlen-preview/$RESULT_NAME" \
+            "$remote:$INCOMING_ROOT/$temporary"
+          python3 -c 'from datetime import datetime, timezone; import os; parsed=datetime.fromisoformat(os.environ["EXPIRES_AT"].replace("Z", "+00:00")); assert parsed > datetime.now(timezone.utc)'
+          ssh -p "$SSH_PORT" \
+            -i "$RUNNER_TEMP/madlen-ssh/id_ed25519" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$RUNNER_TEMP/madlen-ssh/known_hosts" \
+            "$remote" \
+            "set -eu; test \"\$(cat '$INCOMING_ROOT/.madlen-preview-incoming')\" = 'madlen-preview-incoming-v1'; test ! -e '$INCOMING_ROOT/$RESULT_NAME'; mv '$INCOMING_ROOT/$temporary' '$INCOMING_ROOT/$RESULT_NAME'"
+
+      - name: Accept the verified preview result
+        id: ready
+        env:
+          PREVIEW_API_TOKEN: ${{ secrets.MADLEN_PREVIEW_API_TOKEN }}
+          RESULT_NAME: ${{ steps.result.outputs.name }}
+          RESULT_SHA256: ${{ steps.result.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          payload=$(jq -cn \
+            --arg archive "$RESULT_NAME" \
+            --arg sha "$RESULT_SHA256" \
+            '{status:"ready",result_archive:$archive,result_sha256:$sha}')
+          curl --fail --silent --show-error \
+            --connect-timeout 10 --max-time 120 \
+            -H "Authorization: Bearer $PREVIEW_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data "$payload" \
+            "$CMS_URL/api/preview-runner/v1/previews/$PREVIEW_ID/status" > /dev/null
+
+      - name: Remove a remote partial transfer
+        if: ${{ always() && steps.destination.outcome == 'success' && steps.destination.outputs.state == 'missing' }}
+        continue-on-error: true
+        env:
+          RESULT_NAME: ${{ steps.result.outputs.name }}
+        run: |
+          remote="$SSH_USER@$SSH_HOST"
+          temporary="$RESULT_NAME.part-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          ssh -p "$SSH_PORT" \
+            -i "$RUNNER_TEMP/madlen-ssh/id_ed25519" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$RUNNER_TEMP/madlen-ssh/known_hosts" \
+            "$remote" \
+            "set -eu; test \"\$(cat '$INCOMING_ROOT/.madlen-preview-incoming')\" = 'madlen-preview-incoming-v1'; rm -f -- '$INCOMING_ROOT/$temporary'"
+
+      - name: Report a generic failure to the CMS
+        if: ${{ always() && steps.gate.outcome == 'success' && steps.ready.outcome != 'success' }}
+        continue-on-error: true
+        env:
+          PREVIEW_API_TOKEN: ${{ secrets.MADLEN_PREVIEW_API_TOKEN }}
+        run: |
+          payload=$(jq -cn '{status:"failed",error:"Der externe Vorschau-Workflow ist vor der Freigabe fehlgeschlagen. Die öffentliche Website wurde nicht verändert."}')
+          curl --fail --silent --show-error \
+            --connect-timeout 10 --max-time 30 \
+            -H "Authorization: Bearer $PREVIEW_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data "$payload" \
+            "$CMS_URL/api/preview-runner/v1/previews/$PREVIEW_ID/status" > /dev/null
+
+      - name: Remove private runner material
+        if: always()
+        run: |
+          rm -rf "$RUNNER_TEMP/madlen-ssh" "$RUNNER_TEMP/madlen-preview" "$RUNNER_TEMP/madlen-npm.log" "$RUNNER_TEMP/madlen-build.log"

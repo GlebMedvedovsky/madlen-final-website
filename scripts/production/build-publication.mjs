@@ -7,6 +7,7 @@ import {
   readFileSync,
   readdirSync,
   realpathSync,
+  rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -67,6 +68,7 @@ const build = spawnSync(npm, ["run", "build"], {
 });
 if (build.error || build.status !== 0) fail(`Astro-Build fehlgeschlagen${build.error ? `: ${build.error.message}` : "."}`);
 
+removeNonPublicArtifacts(outputRoot);
 const mediaSource = join(packageRoot, "media");
 if (existsSync(mediaSource)) {
   cpSync(mediaSource, join(outputRoot, "media"), { recursive: true, errorOnExist: true, force: false });
@@ -88,9 +90,34 @@ writeSitemap(outputRoot);
 validateRelease(outputRoot, manifest);
 console.log(`Produktiv-Kandidat ${metadata.sequence}-${metadata.publicationId} wurde lokal gebaut und vollständig geprüft.`);
 
+function removeNonPublicArtifacts(root) {
+  for (const path of [
+    "design-reference",
+    "start_seite.jpeg",
+    "images/Kukes1.jpg",
+    "images/Grafik Elemente/Blaues_Element_Wolke.png",
+    "images/Grafik Elemente/Linie_Blau_Klein.png",
+    "images/Grafik Elemente/Linine_Blau_Gross.png",
+    "images/Grafik Elemente/Rosa_Blau_Linie.png",
+  ]) {
+    rmSync(join(root, path), { recursive: true, force: true });
+  }
+}
+
 function validateRelease(root, content) {
   for (const required of ["index.html", "en/index.html", "sitemap.xml"]) {
     assertFile(join(root, required), `Release-Prüfung fehlgeschlagen: ${required} fehlt.`);
+  }
+  for (const excluded of [
+    "design-reference",
+    "start_seite.jpeg",
+    "images/Kukes1.jpg",
+    "images/Grafik Elemente/Blaues_Element_Wolke.png",
+    "images/Grafik Elemente/Linie_Blau_Klein.png",
+    "images/Grafik Elemente/Linine_Blau_Gross.png",
+    "images/Grafik Elemente/Rosa_Blau_Linie.png",
+  ]) {
+    if (existsSync(join(root, excluded))) fail(`Lokale Referenz wurde in den Release kopiert: ${excluded}`);
   }
   if (!Array.isArray(content.projects)) fail("Das Inhaltsmanifest enthält keine Projektliste.");
   for (const project of content.projects) {
@@ -126,7 +153,7 @@ function validateRelease(root, content) {
 }
 
 function writeSitemap(root) {
-  const origin = (process.env.MADLEN_PUBLIC_SITE_URL || "https://foto-video-madlen.de").replace(/\/$/, "");
+  const origin = (process.env.MADLEN_PUBLIC_SITE_URL || "https://madebymadlen.de").replace(/\/$/, "");
   const urls = [];
   walk(root, (path) => {
     if (!lstatSync(path).isFile() || !path.endsWith(`${sep}index.html`)) return;

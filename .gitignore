@@ -19,3 +19,25 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# Generated installation archives and private migration exports
+installation-artifacts/
+
+# Local design references (kept on this workstation, never committed or published)
+public/design-reference/
+public/images/start_seite.jpeg
+public/images/Kukes1.jpg
+public/images/Grafik Elemente/Blaues_Element_Wolke.png
+public/images/Grafik Elemente/Linie_Blau_Klein.png
+public/images/Grafik Elemente/Linine_Blau_Gross.png
+public/images/Grafik Elemente/Rosa_Blau_Linie.png
+
+# Private credentials, database exports, backups and runtime uploads
+*.key
+*.pem
+*.sql
+*.sqlite
+*.sqlite3
+_private-madlen-migration-backups/
+backend/storage/app/private/
+backend/storage/app/external-previews/
+backend/storage/app/production-publications/

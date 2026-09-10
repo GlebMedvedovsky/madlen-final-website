@@ -114,6 +114,8 @@ class PublicationPipelineTest extends TestCase
         $this->assertStringContainsString('CMS Buildprüfung Deutsch', file_get_contents($release->build_path.'/index.html'));
         $this->assertStringContainsString('CMS service build verification', file_get_contents($release->build_path.'/en/services/index.html'));
         $this->assertStringContainsString('CMS legal build verification', file_get_contents($release->build_path.'/en/privacy/index.html'));
+        $this->assertStringContainsString('https://admin.madebymadlen.de/api/contact', file_get_contents($release->build_path.'/kontakt/index.html'));
+        $this->assertStringContainsString('https://admin.madebymadlen.de/api/contact', file_get_contents($release->build_path.'/en/contact/index.html'));
         $this->assertStringContainsString('/portfolio/'.$project->slug.'/', file_get_contents($release->build_path.'/sitemap.xml'));
 
         $project->update(['status' => 'unpublished']);
