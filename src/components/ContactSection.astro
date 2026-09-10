@@ -2,6 +2,7 @@
 import {
   getLanguageFromUrl,
   useTranslations,
+  withBasePath,
 } from "../i18n/utils";
 
 const lang = getLanguageFromUrl(Astro.url);
@@ -220,7 +221,7 @@ const content = {
         <span>
           {content.privacyStart}
           <a
-            href={lang === "de" ? "/datenschutz" : "/en/privacy"}
+            href={withBasePath(lang === "de" ? "/datenschutz" : "/en/privacy")}
             target="_blank"
             rel="noopener"
           >

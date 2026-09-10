@@ -208,6 +208,18 @@ class ExternalPreviewPreparationTest extends TestCase
         $this->assertFileExists($externalBuild.'/en/portfolio/external-preview-draft/index.html');
         $this->assertFileExists($externalBuild.'/media/'.$media->id.'/draft-preview.webp');
         $this->assertStringContainsString('/admin/preview/'.$preview->token.'/media/'.$media->id.'/', file_get_contents($externalBuild.'/portfolio/external-preview-draft/index.html'));
+        $base = '/admin/preview/'.$preview->token;
+        $this->assertPreviewNavigation($externalBuild, $base);
+        $postprocessedChatProcess = new Process(
+            ['node', 'scripts/tests/postprocessed-chat-links.test.mjs', $externalBuild, $base],
+            config('madlen.repository_root'),
+        );
+        $postprocessedChatProcess->setTimeout(60);
+        $postprocessedChatProcess->run();
+        $this->assertTrue(
+            $postprocessedChatProcess->isSuccessful(),
+            $postprocessedChatProcess->getErrorOutput().$postprocessedChatProcess->getOutput(),
+        );
 
         [$archive, $resultChecksum] = $this->makeResultArchive($externalBuild, $preview->id);
         $replayCopy = $archive.'.replay-copy';
@@ -238,7 +250,6 @@ class ExternalPreviewPreparationTest extends TestCase
         $this->assertFileDoesNotExist($archive);
 
         auth()->logout();
-        $base = '/admin/preview/'.$preview->token;
         $mediaPath = $base.'/media/'.$media->id.'/draft-preview.webp';
         $this->get($base.'/')->assertNotFound();
         $this->get($mediaPath)->assertNotFound();
@@ -426,5 +437,139 @@ class ExternalPreviewPreparationTest extends TestCase
         $zip->close();
 
         return [$archive, hash_file('sha256', $archive)];
+    }
+
+    private function assertPreviewNavigation(string $buildRoot, string $base): void
+    {
+        $cases = [
+            ['index.html', 'de', 'Startseite', $base.'/', $base.'/en'],
+            ['en/index.html', 'en', 'Home', $base.'/', $base.'/en'],
+            ['leistungen/index.html', 'de', 'Leistungen', $base.'/leistungen', $base.'/en/services'],
+            ['en/services/index.html', 'en', 'Services', $base.'/leistungen', $base.'/en/services'],
+            ['ueber-mich/index.html', 'de', 'Über Mich', $base.'/ueber-mich', $base.'/en/about'],
+            ['en/about/index.html', 'en', 'About Me', $base.'/ueber-mich', $base.'/en/about'],
+            ['kontakt/index.html', 'de', 'Kontakt', $base.'/kontakt', $base.'/en/contact'],
+            ['en/contact/index.html', 'en', 'Contact', $base.'/kontakt', $base.'/en/contact'],
+            ['portfolio/renaissance/index.html', 'de', 'Portfolio', $base.'/portfolio/renaissance', $base.'/en/portfolio/renaissance'],
+            ['en/portfolio/renaissance/index.html', 'en', 'Portfolio', $base.'/portfolio/renaissance', $base.'/en/portfolio/renaissance'],
+        ];
+
+        foreach ($cases as [$relativePath, $language, $activeLabel, $germanHref, $englishHref]) {
+            $path = $buildRoot.'/'.$relativePath;
+            $this->assertFileExists($path);
+            $html = file_get_contents($path);
+            $this->assertMatchesRegularExpression('/<html[^>]*\blang="'.preg_quote($language, '/').'"/i', $html);
+            $this->assertHeaderLanguage($html, $language);
+            $this->assertHeaderActiveSection($html, $activeLabel);
+            $this->assertHeaderLanguageLink($html, 'DE', $germanHref, $language === 'de');
+            $this->assertHeaderLanguageLink($html, 'EN', $englishHref, $language === 'en');
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($buildRoot, \FilesystemIterator::SKIP_DOTS),
+        );
+
+        foreach ($iterator as $entry) {
+            if (! $entry->isFile() || strtolower($entry->getExtension()) !== 'html') {
+                continue;
+            }
+
+            $document = $this->loadHtmlDocument(file_get_contents($entry->getPathname()));
+            $links = (new \DOMXPath($document))->query('//a[@href]');
+            $this->assertNotFalse($links);
+
+            foreach ($links as $link) {
+                $href = $link->getAttribute('href');
+                $this->assertStringNotContainsString($base.$base, $href, 'Preview-Basispfad wurde verdoppelt: '.$entry->getPathname());
+
+                if (str_starts_with($href, '/')) {
+                    $this->assertTrue(
+                        $href === $base || str_starts_with($href, $base.'/'),
+                        'Interner Link verlässt die Vorschau: '.$href.' in '.$entry->getPathname(),
+                    );
+                }
+
+                $this->assertDoesNotMatchRegularExpression(
+                    '~^https?://(?:www\.)?madebymadlen\.de(?:/|$)~i',
+                    $href,
+                    'Navigationslink zeigt auf die öffentliche Website: '.$entry->getPathname(),
+                );
+            }
+        }
+    }
+
+    private function assertHeaderLanguage(string $html, string $language): void
+    {
+        $expectedLabels = $language === 'de'
+            ? ['Startseite', 'Portfolio', 'Leistungen', 'Über Mich', 'Kontakt']
+            : ['Home', 'Portfolio', 'Services', 'About Me', 'Contact'];
+
+        foreach (['nav-link', 'mobile-nav-link'] as $className) {
+            foreach ($expectedLabels as $label) {
+                $this->assertGreaterThan(
+                    0,
+                    $this->findHeaderLinks($html, $className, $label)->length,
+                    'Fehlender oder falsch lokalisierter Navigationspunkt: '.$label,
+                );
+            }
+        }
+    }
+
+    private function assertHeaderActiveSection(string $html, string $label): void
+    {
+        foreach (['nav-link' => 'nav-link--active', 'mobile-nav-link' => 'mobile-nav-link--active'] as $className => $activeClass) {
+            $links = $this->findHeaderLinks($html, $className, $label);
+            $this->assertGreaterThan(0, $links->length, 'Aktiver Navigationspunkt fehlt: '.$label);
+
+            foreach ($links as $link) {
+                $this->assertStringContainsString(' '.$activeClass.' ', ' '.$link->getAttribute('class').' ');
+                $this->assertSame('page', $link->getAttribute('aria-current'));
+            }
+        }
+    }
+
+    private function assertHeaderLanguageLink(string $html, string $label, string $href, bool $active): void
+    {
+        $links = $this->findHeaderLinks($html, 'language-link', $label);
+        $this->assertGreaterThanOrEqual(2, $links->length, 'Desktop- oder Mobile-Sprachumschalter fehlt: '.$label);
+
+        foreach ($links as $link) {
+            $this->assertSame($href, $link->getAttribute('href'));
+            $classes = ' '.$link->getAttribute('class').' ';
+
+            if ($active) {
+                $this->assertStringContainsString(' active ', $classes);
+                $this->assertSame('page', $link->getAttribute('aria-current'));
+            } else {
+                $this->assertStringNotContainsString(' active ', $classes);
+                $this->assertFalse($link->hasAttribute('aria-current'));
+            }
+        }
+    }
+
+    private function findHeaderLinks(string $html, string $className, string $label): \DOMNodeList
+    {
+        $document = $this->loadHtmlDocument($html);
+        $xpath = new \DOMXPath($document);
+        $query = sprintf(
+            '//header[contains(concat(" ", normalize-space(@class), " "), " site-header ")]//a[contains(concat(" ", normalize-space(@class), " "), " %s ") and normalize-space(.)="%s"]',
+            $className,
+            $label,
+        );
+        $links = $xpath->query($query);
+        $this->assertNotFalse($links);
+
+        return $links;
+    }
+
+    private function loadHtmlDocument(string $html): \DOMDocument
+    {
+        $previous = libxml_use_internal_errors(true);
+        $document = new \DOMDocument;
+        $document->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        return $document;
     }
 }

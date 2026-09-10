@@ -1,7 +1,7 @@
 ---
 import type { Project } from "../content/cms";
 import { getAdjacentProjects } from "../content/cms";
-import { useTranslations } from "../i18n/utils";
+import { useTranslations, withBasePath } from "../i18n/utils";
 
 interface Props {
   project: Project;
@@ -12,7 +12,8 @@ const { project, lang } = Astro.props;
 const adjacent = getAdjacentProjects(project.slug);
 const previous = adjacent.previous!;
 const next = adjacent.next!;
-const prefix = lang === "en" ? "/en/portfolio" : "/portfolio";
+const routePrefix = lang === "en" ? "/en/portfolio" : "/portfolio";
+const prefix = withBasePath(routePrefix);
 const backLabel = lang === "de" ? "Alle Projekte" : "All projects";
 const previousLabel = lang === "de" ? "Vorheriges Projekt" : "Previous project";
 const nextLabel = useTranslations(lang).portfolio.nextProject;

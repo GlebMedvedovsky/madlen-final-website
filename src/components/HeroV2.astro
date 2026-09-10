@@ -1,4 +1,6 @@
 ---
+import { getLanguageFromUrl, withBasePath } from "../i18n/utils";
+
 interface Props {
   eyebrow: string;
   name: string;
@@ -20,10 +22,10 @@ const {
   followsStory = false,
 } = Astro.props;
 
-const isEnglish = Astro.url.pathname.startsWith("/en");
-const aboutPath = isEnglish ? "/en/about" : "/ueber-mich";
-const portfolioPath = isEnglish ? "/en/portfolio" : "/portfolio";
-const contactPath = isEnglish ? "/en/contact" : "/kontakt";
+const isEnglish = getLanguageFromUrl(Astro.url) === "en";
+const aboutPath = withBasePath(isEnglish ? "/en/about" : "/ueber-mich");
+const portfolioPath = withBasePath(isEnglish ? "/en/portfolio" : "/portfolio");
+const contactPath = withBasePath(isEnglish ? "/en/contact" : "/kontakt");
 ---
 
 <section class:list={["hero-v2", { "hero-v2--after-story": followsStory }]}>

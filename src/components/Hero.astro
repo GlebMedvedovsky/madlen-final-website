@@ -1,4 +1,6 @@
 ---
+import { withBasePath } from "../i18n/utils";
+
 interface Props {
   backgroundImage: string;
   eyebrow?: string;
@@ -55,8 +57,8 @@ const {
 
       {showCta && (
         <div class="hero-actions">
-          <a href="/portfolio" class="btn hero-btn">Portfolio ansehen</a>
-          <a href="/kontakt#kontakt" class="btn hero-btn">Anfrage senden</a>
+          <a href={withBasePath("/portfolio")} class="btn hero-btn">Portfolio ansehen</a>
+          <a href={withBasePath("/kontakt#kontakt")} class="btn hero-btn">Anfrage senden</a>
         </div>
       )}
     </div>

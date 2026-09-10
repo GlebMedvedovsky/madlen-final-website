@@ -1,4 +1,6 @@
 ---
+import { withBasePath } from "../i18n/utils";
+
 export interface PortfolioImage {
   src: string;
   alt: string;
@@ -71,7 +73,7 @@ const categories = [
         Ausgewählte Videoprojekte werden hier ergänzt, sobald die passenden Arbeiten
         und Veröffentlichungsrechte bestätigt sind.
       </p>
-      <a href="/kontakt#kontakt" class="btn btn-primary">Videoanfrage senden</a>
+      <a href={withBasePath("/kontakt#kontakt")} class="btn btn-primary">Videoanfrage senden</a>
     </div>
   </div>
 

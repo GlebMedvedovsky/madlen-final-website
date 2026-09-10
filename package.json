@@ -9,6 +9,7 @@
     "build:publication": "node scripts/production/build-publication.mjs",
     "build:preview": "node scripts/preview/build-preview.mjs",
     "test:build-filters": "node scripts/tests/non-public-artifacts.test.mjs",
+    "test:preview-routing": "node --test scripts/tests/preview-base-routing.test.mjs",
     "test:workflow-policy": "node scripts/tests/external-preview-workflow-order.test.mjs",
     "preview": "astro preview",
     "astro": "astro"

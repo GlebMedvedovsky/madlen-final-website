@@ -1,5 +1,6 @@
 ---
 import type { Project } from "../content/cms";
+import { withBasePath } from "../i18n/utils";
 
 interface Props {
   project: Project;
@@ -8,10 +9,11 @@ interface Props {
 }
 
 const { project, lang, index } = Astro.props;
-const href =
+const href = withBasePath(
   lang === "en"
     ? `/en/portfolio/${project.slug}`
-    : `/portfolio/${project.slug}`;
+    : `/portfolio/${project.slug}`,
+);
 
 const categoryLabels = {
   de: {

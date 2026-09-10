@@ -2,6 +2,7 @@
 import {
   getLanguageFromUrl,
   useTranslations,
+  withBasePath,
 } from "../i18n/utils";
 
 const lang = getLanguageFromUrl(Astro.url);
@@ -9,19 +10,19 @@ const t = useTranslations(lang);
 
 const footerLinks = [
   {
-    href: lang === "de" ? "/impressum" : "/en/legal-notice",
+    href: withBasePath(lang === "de" ? "/impressum" : "/en/legal-notice"),
     label: t.footer.impressum,
   },
   {
-    href: lang === "de" ? "/datenschutz" : "/en/privacy",
+    href: withBasePath(lang === "de" ? "/datenschutz" : "/en/privacy"),
     label: t.footer.datenschutz,
   },
   {
-    href: lang === "de" ? "/agb" : "/en/terms",
+    href: withBasePath(lang === "de" ? "/agb" : "/en/terms"),
     label: t.footer.agb,
   },
   {
-    href: lang === "de" ? "/kontakt" : "/en/contact",
+    href: withBasePath(lang === "de" ? "/kontakt" : "/en/contact"),
     label: t.nav.contact,
   },
 ];
