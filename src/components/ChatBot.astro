@@ -1,13 +1,14 @@
 ---
-import { getLanguageFromUrl } from "../i18n/utils";
+import { getBasePath, getLanguageFromUrl } from "../i18n/utils";
 import { projects } from "../content/cms";
 import { copy as chatCopy } from "../lib/madlen-assist";
 const lang = getLanguageFromUrl(Astro.url);
 const copy = chatCopy[lang];
 const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title, category }));
+const basePath = getBasePath();
 ---
 
-<div class="madlen-chat" data-chatbot data-language={lang} data-projects={JSON.stringify(chatProjects)}>
+<div class="madlen-chat" data-chatbot data-language={lang} data-base-path={basePath} data-projects={JSON.stringify(chatProjects)}>
   <button
     class="chat-toggle"
     type="button"
@@ -52,9 +53,11 @@ const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title,
 
 <script>
   import { answer, type Language, type ChatProject, type Reply } from "../lib/madlen-assist";
+  import { addBasePath } from "../i18n/routing.js";
   const root = document.querySelector<HTMLElement>("[data-chatbot]");
   if (root) {
     const lang: Language = root.dataset.language === "en" ? "en" : "de";
+    const basePath = root.dataset.basePath || "/";
     const projects: ChatProject[] = JSON.parse(root.dataset.projects || "[]");
     const toggle = root.querySelector<HTMLButtonElement>("[data-chat-toggle]")!;
     const close = root.querySelector<HTMLButtonElement>("[data-chat-close]")!;
@@ -83,7 +86,7 @@ const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title,
           const item = document.createElement("li");
           const anchor = document.createElement("a");
           anchor.textContent = link.label;
-          anchor.href = link.href;
+          anchor.href = addBasePath(link.href, basePath);
           item.appendChild(anchor);
           list.appendChild(item);
         }

@@ -1,13 +1,15 @@
 ---
 import {
   getLanguageFromUrl,
+  getSitePathname,
   useTranslations,
+  withBasePath,
   type Language,
 } from "../i18n/utils";
 
 const lang = getLanguageFromUrl(Astro.url);
 const t = useTranslations(lang);
-const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
+const currentPath = getSitePathname(Astro.url).replace(/\/$/, "") || "/";
 
 const navLinks = [
   {
@@ -37,12 +39,16 @@ const navLinks = [
   },
 ];
 
-function pathFor(item: { de: string; en: string }, language: Language) {
+function routeFor(item: { de: string; en: string }, language: Language) {
   return language === "de" ? item.de : item.en;
 }
 
+function pathFor(item: { de: string; en: string }, language: Language) {
+  return withBasePath(routeFor(item, language));
+}
+
 function isActive(item: { de: string; en: string }) {
-  const href = pathFor(item, lang);
+  const href = routeFor(item, lang);
 
   return (
     currentPath === href ||
@@ -52,11 +58,11 @@ function isActive(item: { de: string; en: string }) {
   );
 }
 
-const contactPath = lang === "de" ? "/kontakt" : "/en/contact";
+const contactPath = withBasePath(lang === "de" ? "/kontakt" : "/en/contact");
 
 const currentRoute =
   navLinks.find((item) => {
-    const href = pathFor(item, lang);
+    const href = routeFor(item, lang);
 
     return (
       currentPath === href ||
@@ -67,18 +73,20 @@ const currentRoute =
   }) ?? navLinks[0];
 
 const projectMatch = currentPath.match(/^\/(?:en\/)?portfolio\/([^/]+)$/);
-const germanPath = projectMatch
+const germanRoute = projectMatch
   ? `/portfolio/${projectMatch[1]}`
   : currentRoute.de;
-const englishPath = projectMatch
+const englishRoute = projectMatch
   ? `/en/portfolio/${projectMatch[1]}`
   : currentRoute.en;
+const germanPath = withBasePath(germanRoute);
+const englishPath = withBasePath(englishRoute);
 ---
 
 <header class="site-header" id="site-header">
   <div class="header-inner">
     <a
-      href={lang === "de" ? "/" : "/en"}
+      href={withBasePath(lang === "de" ? "/" : "/en")}
       class="brand-logo"
       aria-label={lang === "de"
         ? "Foto & Video Madlen – Startseite"
@@ -176,6 +184,7 @@ const englishPath = projectMatch
                   "mobile-nav-link",
                   { "mobile-nav-link--active": isActive(item) },
                 ]}
+                aria-current={isActive(item) ? "page" : undefined}
               >
                 {item.label}
               </a>
@@ -189,6 +198,7 @@ const englishPath = projectMatch
           <a
             href={germanPath}
             class:list={["language-link", { active: lang === "de" }]}
+            aria-current={lang === "de" ? "page" : undefined}
           >
             DE
           </a>
@@ -198,6 +208,7 @@ const englishPath = projectMatch
           <a
             href={englishPath}
             class:list={["language-link", { active: lang === "en" }]}
+            aria-current={lang === "en" ? "page" : undefined}
           >
             EN
           </a>

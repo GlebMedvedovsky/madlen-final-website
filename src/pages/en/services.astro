@@ -2,7 +2,7 @@
 import Layout from "../../layouts/Layout.astro";
 import ServiceCard from "../../components/ServiceCard.astro";
 import { getServices } from "../../content/cms";
-import { useTranslations } from "../../i18n/utils";
+import { useTranslations, withBasePath } from "../../i18n/utils";
 
 const services = getServices("en");
 const t = useTranslations("en");
@@ -42,7 +42,7 @@ const t = useTranslations("en");
         ))}
       </div>
 
-      <a href="/en/contact" class="page-button">
+      <a href={withBasePath("/en/contact")} class="page-button">
         Send inquiry ›
       </a>
     </div>

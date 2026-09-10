@@ -1,9 +1,21 @@
 ---
-import { getLanguageFromUrl } from "../i18n/utils";
+import { getLanguageFromUrl, withBasePath } from "../i18n/utils";
 
-const openLabel = getLanguageFromUrl(Astro.url) === "de"
+const lang = getLanguageFromUrl(Astro.url);
+const openLabel = lang === "de"
   ? "Cookie-Einstellungen öffnen"
   : "Open cookie settings";
+const legalLinks = lang === "de"
+  ? [
+      { href: withBasePath("/impressum"), label: "Impressum" },
+      { href: withBasePath("/datenschutz"), label: "Datenschutz" },
+      { href: withBasePath("/agb"), label: "AGB / Hinweise" },
+    ]
+  : [
+      { href: withBasePath("/en/legal-notice"), label: "Legal notice" },
+      { href: withBasePath("/en/privacy"), label: "Privacy" },
+      { href: withBasePath("/en/terms"), label: "Terms / information" },
+    ];
 const gaMeasurementId = "G-XXXXXXXXXX";
 ---
 
@@ -34,9 +46,7 @@ const gaMeasurementId = "G-XXXXXXXXXX";
       </p>
 
       <div class="cookie-links">
-        <a href="/impressum">Impressum</a>
-        <a href="/datenschutz">Datenschutz</a>
-        <a href="/agb">AGB / Hinweise</a>
+        {legalLinks.map((link) => <a href={link.href}>{link.label}</a>)}
       </div>
     </div>
 
@@ -102,9 +112,7 @@ const gaMeasurementId = "G-XXXXXXXXXX";
     </div>
 
     <div class="cookie-links cookie-modal-links">
-      <a href="/impressum">Impressum</a>
-      <a href="/datenschutz">Datenschutz</a>
-      <a href="/agb">AGB / Hinweise</a>
+      {legalLinks.map((link) => <a href={link.href}>{link.label}</a>)}
     </div>
 
     <div class="cookie-modal-actions">

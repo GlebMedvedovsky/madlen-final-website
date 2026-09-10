@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { withBasePath } from '../i18n/utils';
 ---
 
 <Layout title="Seite nicht gefunden – Foto & Video Madlen">
@@ -10,8 +11,8 @@ import Layout from '../layouts/Layout.astro';
       <span class="divider" aria-hidden="true"></span>
       <p>Das gesuchte Bild wurde nicht gefunden – aber vielleicht gibt es noch etwas Schöneres zu entdecken.</p>
       <div class="not-found-actions">
-        <a href="/" class="btn btn-primary">Zur Startseite</a>
-        <a href="/portfolio" class="btn btn-outline">Portfolio ansehen</a>
+        <a href={withBasePath("/")} class="btn btn-primary">Zur Startseite</a>
+        <a href={withBasePath("/portfolio")} class="btn btn-outline">Portfolio ansehen</a>
       </div>
     </div>
   </section>

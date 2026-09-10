@@ -2,6 +2,7 @@
 import {
   getLanguageFromUrl,
   useTranslations,
+  withBasePath,
 } from "../i18n/utils";
 
 const lang = getLanguageFromUrl(Astro.url);
@@ -13,13 +14,13 @@ const titleMIndex = t.about.title.toLowerCase().lastIndexOf("m");
 const titlePrefix = titleMIndex >= 0 ? t.about.title.slice(0, titleMIndex).trimEnd() : t.about.title;
 const titleRest = titleMIndex >= 0 ? t.about.title.slice(titleMIndex + 1).trimStart() : "";
 
-const portfolioPath = isGerman
+const portfolioPath = withBasePath(isGerman
   ? "/portfolio"
-  : "/en/portfolio";
+  : "/en/portfolio");
 
-const contactPath = isGerman
+const contactPath = withBasePath(isGerman
   ? "/kontakt"
-  : "/en/contact";
+  : "/en/contact");
 
 const introTitle = t.about.introTitle;
 const clientsTitle = t.about.clientsTitle;
