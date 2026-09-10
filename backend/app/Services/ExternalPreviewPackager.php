@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Data\ProjectPreviewSnapshot;
 use App\Models\PreviewBuild;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -18,7 +19,7 @@ class ExternalPreviewPackager
         private ExternalPreviewStorage $storage,
     ) {}
 
-    public function prepare(): PreviewBuild
+    public function prepare(?ProjectPreviewSnapshot $projectSnapshot = null, ?string $requestId = null): PreviewBuild
     {
         $sourceRevision = strtolower(trim((string) config('madlen.preview_runner.source_revision')));
         if (! preg_match('/\A[0-9a-f]{40}\z/', $sourceRevision)) {
@@ -48,6 +49,8 @@ class ExternalPreviewPackager
                 'source_revision' => $sourceRevision,
                 'manifest_path' => $this->storage->manifestLocator('pending'),
                 'build_path' => $this->storage->buildLocator($token),
+                'target_path' => $projectSnapshot?->targetPath(),
+                'request_id' => $requestId,
                 'user_id' => Auth::id(),
                 'expires_at' => $expiresAt,
                 'progress_message' => 'Der unveränderliche Entwurfsstand wird vorbereitet.',
@@ -55,7 +58,7 @@ class ExternalPreviewPackager
 
             $manifestPath = $this->storage->manifestPath($preview->id);
             $payloadRoot = dirname($manifestPath);
-            $manifest = $this->manifests->make(includeDrafts: true);
+            $manifest = $this->manifests->make(includeDrafts: true, projectSnapshot: $projectSnapshot);
             $json = json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n";
             $this->files->write($manifestPath, $json);
 

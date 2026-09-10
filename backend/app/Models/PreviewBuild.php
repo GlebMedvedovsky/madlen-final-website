@@ -12,7 +12,7 @@ class PreviewBuild extends Model
 
     protected $fillable = [
         'token', 'execution_mode', 'status', 'source_revision', 'manifest_path', 'build_path',
-        'package_path', 'package_checksum', 'result_checksum', 'progress_message',
+        'target_path', 'request_id', 'package_path', 'package_checksum', 'result_checksum', 'progress_message',
         'error_message', 'user_id', 'expires_at', 'completed_at',
     ];
 
