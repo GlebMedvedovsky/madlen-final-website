@@ -1,14 +1,24 @@
 ---
-import { getBasePath, getLanguageFromUrl } from "../i18n/utils";
+import { getLanguageFromUrl, withBasePath } from "../i18n/utils";
 import { projects } from "../content/cms";
-import { copy as chatCopy } from "../lib/madlen-assist";
+import { copy as chatCopy, routes as chatRouteDefinitions } from "../lib/madlen-assist";
 const lang = getLanguageFromUrl(Astro.url);
 const copy = chatCopy[lang];
-const chatProjects = projects.map(({ slug, title, category }) => ({ slug, title, category }));
-const basePath = getBasePath();
+const chatRoutes = Object.fromEntries(
+  Object.entries(chatRouteDefinitions[lang]).map(([key, path]) => [key, withBasePath(path)]),
+);
+const chatProjects = projects.map(({ slug, title, category }) => ({
+  slug,
+  title,
+  category,
+  href: {
+    de: withBasePath(`/portfolio/${slug}`),
+    en: withBasePath(`/en/portfolio/${slug}`),
+  },
+}));
 ---
 
-<div class="madlen-chat" data-chatbot data-language={lang} data-base-path={basePath} data-projects={JSON.stringify(chatProjects)}>
+<div class="madlen-chat" data-chatbot data-language={lang} data-routes={JSON.stringify(chatRoutes)} data-projects={JSON.stringify(chatProjects)}>
   <button
     class="chat-toggle"
     type="button"
@@ -52,12 +62,11 @@ const basePath = getBasePath();
 </div>
 
 <script>
-  import { answer, type Language, type ChatProject, type Reply } from "../lib/madlen-assist";
-  import { addBasePath } from "../i18n/routing.js";
+  import { answer, type Language, type ChatProject, type ChatRoutes, type Reply } from "../lib/madlen-assist";
   const root = document.querySelector<HTMLElement>("[data-chatbot]");
   if (root) {
     const lang: Language = root.dataset.language === "en" ? "en" : "de";
-    const basePath = root.dataset.basePath || "/";
+    const routes: ChatRoutes = JSON.parse(root.dataset.routes || "{}");
     const projects: ChatProject[] = JSON.parse(root.dataset.projects || "[]");
     const toggle = root.querySelector<HTMLButtonElement>("[data-chat-toggle]")!;
     const close = root.querySelector<HTMLButtonElement>("[data-chat-close]")!;
@@ -86,7 +95,7 @@ const basePath = getBasePath();
           const item = document.createElement("li");
           const anchor = document.createElement("a");
           anchor.textContent = link.label;
-          anchor.href = addBasePath(link.href, basePath);
+          anchor.href = link.href;
           item.appendChild(anchor);
           list.appendChild(item);
         }
@@ -97,7 +106,7 @@ const basePath = getBasePath();
     function submit(text: string) {
       const value = text.trim();
       if (!value) return;
-      const result = answer(value, lang, projects);
+      const result = answer(value, lang, projects, routes);
       addMessage(value, "user");
       addMessage(result.text, "bot", result.links);
       body.scrollTop = body.scrollHeight;

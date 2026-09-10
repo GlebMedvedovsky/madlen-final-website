@@ -4,6 +4,14 @@ import { existsSync } from 'node:fs';
 import { answer, copy, normalize, routes } from '../src/lib/madlen-assist.ts';
 import { projects } from '../src/data/projects.ts';
 
+const chatProjects = projects.map(project => ({
+ ...project,
+ href: {
+  de: `${routes.de.portfolio}/${project.slug}`,
+  en: `${routes.en.portfolio}/${project.slug}`,
+ },
+}));
+
 const cases = [
  ['ich kann nicht finden Hochzeit Galerie', 'weddings'],
  ['wo ich finde Datenschutz?', 'privacy'],
@@ -43,7 +51,7 @@ const cases = [
 for (const lang of ['de', 'en']) {
  test(`${lang}: bilingual intent cases, priority and trusted links`, () => {
   for (const [input, topic, slug] of cases) {
-   const result = answer(input, lang, projects);
+   const result = answer(input, lang, chatProjects, routes[lang]);
    assert.equal(result.topic, topic, input);
    if (topic !== 'greeting') assert.equal(result.text, copy[lang].replies[topic]);
    if (slug) assert.equal(result.links[0].href, `${routes[lang].portfolio}/${slug}`);
@@ -58,16 +66,16 @@ for (const lang of ['de', 'en']) {
   assert.equal(projects.length,16);
   for (const project of projects) {
    for (const title of [project.slug, project.title.de, project.title.en, project.title.de.replace('&','und'), project.title.en.replace('&','and')]) {
-    const result=answer(`Show me ${title}`,lang,projects);
+    const result=answer(`Show me ${title}`,lang,chatProjects,routes[lang]);
     assert.equal(result.links[0].href,`${routes[lang].portfolio}/${project.slug}`,title);
     assert.ok(existsSync(`dist${result.links[0].href}/index.html`));
    }
   }
  });
  test(`${lang}: categories, routes and quick actions`, () => {
-  for (const category of ['weddings','events','editorial','landscape']) assert.equal(answer(category,lang,projects).links[0].href,`${routes[lang].portfolio}?category=${category}`);
+  for (const category of ['weddings','events','editorial','landscape']) assert.equal(answer(category,lang,chatProjects,routes[lang]).links[0].href,`${routes[lang].portfolio}?category=${category}`);
   for (const route of Object.values(routes[lang])) assert.ok(existsSync(`dist${route==='/'?'':route}/index.html`),route);
-  for (const label of copy[lang].quick) assert.ok(answer(label,lang,projects).links.length);
+  for (const label of copy[lang].quick) assert.ok(answer(label,lang,chatProjects,routes[lang]).links.length);
  });
 }
 test('normalization preserves word boundaries and names',()=>{

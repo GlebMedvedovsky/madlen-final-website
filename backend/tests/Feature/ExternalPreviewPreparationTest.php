@@ -210,6 +210,16 @@ class ExternalPreviewPreparationTest extends TestCase
         $this->assertStringContainsString('/admin/preview/'.$preview->token.'/media/'.$media->id.'/', file_get_contents($externalBuild.'/portfolio/external-preview-draft/index.html'));
         $base = '/admin/preview/'.$preview->token;
         $this->assertPreviewNavigation($externalBuild, $base);
+        $postprocessedChatProcess = new Process(
+            ['node', 'scripts/tests/postprocessed-chat-links.test.mjs', $externalBuild, $base],
+            config('madlen.repository_root'),
+        );
+        $postprocessedChatProcess->setTimeout(60);
+        $postprocessedChatProcess->run();
+        $this->assertTrue(
+            $postprocessedChatProcess->isSuccessful(),
+            $postprocessedChatProcess->getErrorOutput().$postprocessedChatProcess->getOutput(),
+        );
 
         [$archive, $resultChecksum] = $this->makeResultArchive($externalBuild, $preview->id);
         $replayCopy = $archive.'.replay-copy';

@@ -1,8 +1,15 @@
 export type Language = 'de' | 'en';
-export type ChatProject = { slug: string; title: Record<Language, string>; category: string };
+export type ChatRouteKey = 'home' | 'portfolio' | 'services' | 'about' | 'contact' | 'privacy' | 'legal' | 'terms';
+export type ChatRoutes = Record<ChatRouteKey, string>;
+export type ChatProject = {
+  slug: string;
+  title: Record<Language, string>;
+  category: string;
+  href: Record<Language, string>;
+};
 export type Reply = { topic: string; text: string; links: { label: string; href: string }[] };
 
-export const routes = {
+export const routes: Record<Language, ChatRoutes> = {
   de: { home: '/', portfolio: '/portfolio', services: '/leistungen', about: '/ueber-mich', contact: '/kontakt', privacy: '/datenschutz', legal: '/impressum', terms: '/agb' },
   en: { home: '/en', portfolio: '/en/portfolio', services: '/en/services', about: '/en/about', contact: '/en/contact', privacy: '/en/privacy', legal: '/en/legal-notice', terms: '/en/terms' },
 };
@@ -87,10 +94,10 @@ export function normalize(value: string): string {
 const contains = (text: string, phrase: string) => (` ${text} `).includes(` ${normalize(phrase)} `);
 
 // Ordered intent rules: specific topics first, generic navigation last.
-export function answer(input: string, lang: Language, projects: ChatProject[]): Reply {
+export function answer(input: string, lang: Language, projects: ChatProject[], routeSet: ChatRoutes): Reply {
   const text = normalize(input);
   const ui = copy[lang];
-  const link = (key: keyof typeof routes.de) => ({ label: ui.labels[key], href: routes[lang][key] });
+  const link = (key: ChatRouteKey) => ({ label: ui.labels[key], href: routeSet[key] });
   const reply = (topic: keyof typeof ui.replies, links: Reply['links'] = []): Reply => ({ topic, text: ui.replies[topic], links });
   const contactLinks = () => [link('contact'), { label: ui.emailLink, href: `mailto:${email}` }];
   const has = (pattern: RegExp) => pattern.test(text);
@@ -104,7 +111,7 @@ export function answer(input: string, lang: Language, projects: ChatProject[]): 
   if (has(/\b(verfugbar|verfuegbar|verfugbarkeit|verfuegbarkeit|frei|freie|freien|termin(e)?|buchen|buchung|available|availability|dates?|book|booking|appointments?|zeit fur|zeit fuer|time for)\b/)) return reply('availability', contactLinks());
   const project = projects.find(p => [p.title.de, p.title.en, p.slug].some(name => contains(text, name)))
     ?? projects.find(p => p.category === 'landscape' && [p.title.de, p.title.en].some(name => normalize(name).split(' ').some(word => word.length > 3 && contains(text, word))));
-  if (project) return reply('project', [{ label: project.title[lang], href: `${routes[lang].portfolio}/${project.slug}` }]);
+  if (project) return reply('project', [{ label: project.title[lang], href: project.href[lang] }]);
   if (has(/\b(e mail|email|mail|emailadresse|mailadresse)\b/)) return reply('email', [{ label: email, href: `mailto:${email}` }, link('contact')]);
   if (has(/\b(kontakt|kontaktieren|contact|inquiry|anfrage|anschreiben|erreichen|reach)\b/)) return reply('contact', contactLinks());
   if (has(/\b(videoschnitt|video schnitt|videomontage|video editing|editing|schnitt|montage|rohmaterial|footage)\b/)) return reply('editing', [link('services')]);
@@ -119,11 +126,11 @@ export function answer(input: string, lang: Language, projects: ChatProject[]): 
   if (category) {
     const serviceIntent = has(/\b(bietet|bieten|offer|offers|services?|leistungen?)\b/) && !has(/\b(bilder|fotos|photos|pictures|portfolio|galerie|gallery)\b/);
     if (serviceIntent && category !== 'landscape') return reply(category === 'weddings' ? 'weddingService' : category === 'events' ? 'eventService' : 'commercial', [link('services')]);
-    return reply(category, [{ label: ui.categories[category], href: `${routes[lang].portfolio}?category=${category}` }]);
+    return reply(category, [{ label: ui.categories[category], href: `${routeSet.portfolio}?category=${category}` }]);
   }
   if (has(/\b(uber mich|ueber mich|uber madlen|ueber madlen|about madlen|about you|biografie|biography|wer ist madlen|who is madlen)\b/)) return reply('about', [link('about')]);
   if (has(/\b(leistungen?|services?|shooting|fotoshooting|photography|fotografie)\b/)) return reply('services', [link('services')]);
-  if (has(/\b(portfolio|arbeiten|work|galerien|galleries)\b/) || /^(galerie|gallery|bilder|fotos|photos|pictures)$/.test(text)) return reply('portfolio', Object.entries(ui.categories).map(([category, label]) => ({label, href: `${routes[lang].portfolio}?category=${category}`})));
+  if (has(/\b(portfolio|arbeiten|work|galerien|galleries)\b/) || /^(galerie|gallery|bilder|fotos|photos|pictures)$/.test(text)) return reply('portfolio', Object.entries(ui.categories).map(([category, label]) => ({label, href: `${routeSet.portfolio}?category=${category}`})));
   if (has(/\b(projekt|project|galerie|gallery|bilder|fotos|photos|pictures)\b/)) return reply('missing', [link('portfolio')]);
   if (has(/\b(startseite|homepage|home page)\b/)) return reply('home', [link('home')]);
   if (/^(hallo|hi|hello|hey|guten tag|good morning)( madlen)?$/.test(text)) return {topic:'greeting',text:ui.greeting,links:[]};
