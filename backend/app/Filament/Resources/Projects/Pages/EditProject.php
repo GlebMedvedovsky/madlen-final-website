@@ -4,9 +4,10 @@ namespace App\Filament\Resources\Projects\Pages;
 
 use App\Filament\Resources\Projects\ProjectResource;
 use App\Models\PreviewBuild;
+use App\Models\ProductionPublication;
 use App\Services\PreviewBuilder;
 use App\Services\ProjectPreviewSnapshotFactory;
-use App\Services\ReleasePublisher;
+use App\Services\ProductionPublisher;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
@@ -23,6 +24,49 @@ class EditProject extends EditRecord
     public string $previewRequestId = '';
 
     public int $previewRequestAttempt = 0;
+
+    public array $productionRequestIds = [];
+
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+        $this->resetProductionRequests();
+    }
+
+    protected function afterSave(): void
+    {
+        $this->resetProductionRequests();
+    }
+
+    private function resetProductionRequests(): void
+    {
+        foreach (['publish', 'unpublish', 'delete'] as $operation) {
+            $this->productionRequestIds[$operation] = (string) Str::uuid();
+        }
+    }
+
+    private function requestProduction(string $operation): void
+    {
+        $requestId = $this->productionRequestIds[$operation] ?? '';
+        $record = $this->getRecord();
+        try {
+            // Lost Livewire replies reuse the identity from the original editor snapshot.
+            if (! ProductionPublication::where('request_id', $requestId)->exists() && $operation === 'publish') {
+                $this->form->validate();
+                $this->save(false, false);
+                $this->productionRequestIds[$operation] = $requestId;
+            }
+            $publication = app(ProductionPublisher::class)->publish($requestId, $record->refresh(), $operation);
+            Notification::make()->title("Produktiv-Auftrag {$publication->sequence}")
+                ->body($publication->progress_message)->persistent()
+                ->color($publication->status === 'failed' ? 'danger' : 'info')->send();
+        } catch (ValidationException $error) {
+            throw $error;
+        } catch (\Throwable $error) {
+            Notification::make()->title('Veröffentlichung nicht gestartet')
+                ->body($error->getMessage())->danger()->persistent()->send();
+        }
+    }
 
     private const PREPARE_PREVIEW_TAB_JS = <<<'JS'
 if (window.__madlenProjectPreviewPending) {
@@ -365,33 +409,32 @@ JS;
                 ->icon('heroicon-o-cloud-arrow-up')
                 ->color('primary')
                 ->requiresConfirmation()
-                ->modalDescription('Die komplette Website wird aus einem unveränderlichen Inhaltsstand neu gebaut. Der bisherige Stand bleibt bei einem Fehler aktiv.')
+                ->visible(fn (): bool => ! $this->getRecord()->trashed())
+                ->modalDescription('Die aktuellen Eingaben werden gespeichert und veröffentlicht. Der öffentliche Stand wird erst nach erfolgreicher Prüfung ersetzt.')
                 ->action(function (): void {
-                    $record = $this->getRecord();
-                    if (! $record->isTranslationReady()) {
-                        Notification::make()->title('Veröffentlichung nicht möglich')->body('Titel, Beschreibung und Titelbild müssen auf Deutsch und Englisch vollständig sein.')->danger()->send();
-
-                        return;
-                    }
-                    $previousStatus = $record->status;
-                    $record->update(['status' => 'published']);
-                    try {
-                        $release = app(ReleasePublisher::class)->publish();
-                        $record->update(['published_at' => now()]);
-                        Notification::make()->title("Release {$release->version} veröffentlicht")->success()->send();
-                    } catch (\Throwable $error) {
-                        $record->update(['status' => $previousStatus]);
-                        Notification::make()->title('Build fehlgeschlagen')->body(mb_substr($error->getMessage(), 0, 500))->danger()->persistent()->send();
-                    }
+                    $this->requestProduction('publish');
                 }),
             Action::make('unpublish')
                 ->label('Nicht mehr veröffentlichen')
                 ->color('gray')
                 ->requiresConfirmation()
                 ->visible(fn (): bool => $this->getRecord()->status === 'published')
-                ->action(fn () => $this->getRecord()->update(['status' => 'unpublished'])),
-            DeleteAction::make(),
-            RestoreAction::make(),
+                ->modalDescription('Das Projekt wird nach erfolgreichem Website-Build aus der öffentlichen Website entfernt.')
+                ->action(fn () => $this->requestProduction('unpublish')),
+            Action::make('delete')->label('Löschen')->color('danger')->requiresConfirmation()
+                ->visible(fn (): bool => ! $this->getRecord()->trashed())
+                ->modalDescription('Ein öffentliches Projekt wird zuerst aus der Website entfernt. Medien bleiben erhalten.')
+                ->action(function (): void {
+                    if ($this->getRecord()->status === 'published') {
+                        $this->requestProduction('delete');
+                    } else {
+                        $this->getRecord()->delete();
+                        $this->redirect(ProjectResource::getUrl());
+                    }
+                }),
+            RestoreAction::make()->after(function (): void {
+                $this->getRecord()->update(['status' => 'draft', 'published_at' => null]);
+            }),
         ];
     }
 

@@ -12,6 +12,7 @@ Route::middleware(EnsureContactOrigin::class)->group(function (): void {
 });
 
 Route::middleware('throttle:30,1')->prefix('publisher/v1')->group(function (): void {
+    Route::post('/publications/{publication}/claim', [PublisherPublicationController::class, 'claim']);
     Route::get('/publications/{publication}/package', [PublisherPublicationController::class, 'package']);
     Route::post('/publications/{publication}/status', [PublisherPublicationController::class, 'status']);
 });

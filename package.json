@@ -12,6 +12,7 @@
     "test:preview-routing": "node --test scripts/tests/preview-base-routing.test.mjs",
     "test:preview-editor-client": "node --test scripts/tests/project-preview-client-recovery.test.mjs",
     "test:workflow-policy": "node scripts/tests/external-preview-workflow-order.test.mjs",
+    "test:production-workflow-policy": "node scripts/tests/production-publisher-workflow-order.test.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },

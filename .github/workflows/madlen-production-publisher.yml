@@ -1,0 +1,298 @@
+name: Madlen production publisher
+
+on:
+  workflow_dispatch:
+    inputs:
+      publication_id:
+        description: Immutable CMS publication UUID
+        required: true
+        type: string
+      sequence:
+        description: Strictly increasing CMS publication sequence
+        required: true
+        type: string
+      package_sha256:
+        description: SHA-256 of the immutable CMS package
+        required: true
+        type: string
+      source_revision:
+        description: Exact source commit used for the static build
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: madlen-production
+  cancel-in-progress: false
+
+jobs:
+  build-verify-transfer-activate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CMS_URL: ${{ vars.MADLEN_CMS_URL }}
+      SSH_HOST: ${{ vars.NETCUP_SSH_HOST }}
+      SSH_USER: ${{ vars.NETCUP_SSH_USER }}
+      SSH_PORT: ${{ vars.NETCUP_SSH_PORT }}
+      INCOMING_ROOT: ${{ vars.NETCUP_MADLEN_PRODUCTION_INCOMING_ROOT }}
+      BACKEND_ROOT: ${{ vars.NETCUP_MADLEN_BACKEND_ROOT }}
+      PHP_BIN: ${{ vars.NETCUP_PHP_BIN }}
+      PUBLICATION_ID: ${{ inputs.publication_id }}
+      PUBLICATION_SEQUENCE: ${{ inputs.sequence }}
+      PACKAGE_SHA256: ${{ inputs.package_sha256 }}
+      SOURCE_REVISION: ${{ inputs.source_revision }}
+      RUNNER_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Require the explicit production gate
+        id: gate
+        env:
+          PUBLISHER_ENABLED: ${{ vars.MADLEN_PRODUCTION_WORKFLOW_ENABLED }}
+        run: |
+          if [ "$PUBLISHER_ENABLED" != "true" ]; then
+            echo "Production publication is disabled. Set MADLEN_PRODUCTION_WORKFLOW_ENABLED=true only for an approved release window."
+            exit 1
+          fi
+
+      - name: Validate request and non-secret configuration
+        run: |
+          set -euo pipefail
+          [[ "$PUBLICATION_ID" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]
+          [[ "$PUBLICATION_SEQUENCE" =~ ^[1-9][0-9]*$ ]]
+          [[ "$PACKAGE_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$CMS_URL" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
+          [[ "$SSH_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$SSH_USER" =~ ^[A-Za-z0-9._-]+$ ]]
+          [[ "$SSH_PORT" =~ ^[0-9]{1,5}$ ]] && [ "$SSH_PORT" -ge 1 ] && [ "$SSH_PORT" -le 65535 ]
+          for remote_path in "$INCOMING_ROOT" "$BACKEND_ROOT" "$PHP_BIN"; do
+            [[ "$remote_path" =~ ^/[A-Za-z0-9._/-]+$ ]]
+            case "/$remote_path/" in *"/../"*|*"/./"*) exit 1 ;; esac
+          done
+
+      - name: Check out the immutable source revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.source_revision }}
+          persist-credentials: false
+
+      - name: Verify checked-out source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_REVISION"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@1e60f620b9541d7c323c8ed6b31b9b0252e57a28 # v4.0.4
+        with:
+          node-version: 22
+
+      - name: Claim this immutable publication
+        id: claim
+        env:
+          CMS_TOKEN: ${{ secrets.MADLEN_PUBLISHER_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$CMS_TOKEN"
+          payload=$(jq -cn --arg runner "$RUNNER_ID" '{runner_id:$runner}')
+          response=$(curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \
+            --request POST --header "Authorization: Bearer $CMS_TOKEN" \
+            --header 'Content-Type: application/json' --data "$payload" \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/claim")
+          echo "claimed=$(jq -er '.claimed | tostring' <<< "$response")" >> "$GITHUB_OUTPUT"
+
+      - name: Download and verify immutable publication package
+        if: steps.claim.outputs.claimed == 'true'
+        env:
+          CMS_TOKEN: ${{ secrets.MADLEN_PUBLISHER_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$CMS_TOKEN"
+          mkdir -p "$RUNNER_TEMP/madlen-production/payload"
+          curl --fail --silent --show-error \
+            --connect-timeout 10 --max-time 120 \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --output "$RUNNER_TEMP/madlen-production/publication.zip" \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/package"
+          printf '%s  %s\n' "$PACKAGE_SHA256" "$RUNNER_TEMP/madlen-production/publication.zip" | sha256sum --check --status
+          python3 scripts/production/extract-package.py "$RUNNER_TEMP/madlen-production/publication.zip" "$RUNNER_TEMP/madlen-production/payload"
+
+      - name: Install locked frontend dependencies
+        if: steps.claim.outputs.claimed == 'true'
+        run: |
+          if ! npm ci > "$RUNNER_TEMP/madlen-production-npm.log" 2>&1; then
+            echo "The locked frontend dependency installation failed. Details remain only in the private runner log."
+            exit 1
+          fi
+
+      - name: Build and validate the DE and EN static release
+        if: steps.claim.outputs.claimed == 'true'
+        run: |
+          set -euo pipefail
+          if ! MADLEN_EXPECTED_PUBLICATION_ID="$PUBLICATION_ID" \
+            MADLEN_EXPECTED_SEQUENCE="$PUBLICATION_SEQUENCE" \
+            MADLEN_EXPECTED_SOURCE_REVISION="$SOURCE_REVISION" \
+            npm run build:publication -- \
+              "$RUNNER_TEMP/madlen-production/payload" \
+              "$RUNNER_TEMP/madlen-production/site" \
+              > "$RUNNER_TEMP/madlen-production-build.log" 2>&1; then
+            echo "The DE/EN production build failed. Details remain only in the private runner log."
+            exit 1
+          fi
+          test -f "$RUNNER_TEMP/madlen-production/site/index.html"
+          test -f "$RUNNER_TEMP/madlen-production/site/en/index.html"
+
+      - name: Create immutable static release archive
+        if: steps.claim.outputs.claimed == 'true'
+        id: result
+        run: |
+          set -euo pipefail
+          archive_name="madlen-static-$PUBLICATION_SEQUENCE-$PUBLICATION_ID-$RUNNER_ID.zip"
+          (cd "$RUNNER_TEMP/madlen-production/site" && zip -q -r "$RUNNER_TEMP/madlen-production/$archive_name" .)
+          archive_sha=$(sha256sum "$RUNNER_TEMP/madlen-production/$archive_name")
+          archive_sha=${archive_sha%% *}
+          echo "name=$archive_name" >> "$GITHUB_OUTPUT"
+          echo "sha256=$archive_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Mark publication as uploading
+        if: steps.claim.outputs.claimed == 'true'
+        env:
+          CMS_TOKEN: ${{ secrets.MADLEN_PUBLISHER_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$CMS_TOKEN"
+          curl --fail --silent --show-error \
+            --connect-timeout 10 --max-time 30 \
+            --request POST \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --header 'Content-Type: application/json' \
+            --data "$(jq -cn --arg runner "$RUNNER_ID" '{status:"uploading",runner_id:$runner}')" \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/status" > /dev/null
+
+      - name: Configure strict SSH verification
+        if: steps.claim.outputs.claimed == 'true'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.NETCUP_PRODUCTION_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.NETCUP_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$SSH_KNOWN_HOSTS"
+          mkdir -p "$RUNNER_TEMP/madlen-production-ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$RUNNER_TEMP/madlen-production-ssh/id_ed25519"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$RUNNER_TEMP/madlen-production-ssh/known_hosts"
+          chmod 600 "$RUNNER_TEMP/madlen-production-ssh/id_ed25519"
+          chmod 644 "$RUNNER_TEMP/madlen-production-ssh/known_hosts"
+          ssh-keygen -y -f "$RUNNER_TEMP/madlen-production-ssh/id_ed25519" > /dev/null
+          known_host="$SSH_HOST"
+          if [ "$SSH_PORT" != "22" ]; then known_host="[$SSH_HOST]:$SSH_PORT"; fi
+          ssh-keygen -F "$known_host" -f "$RUNNER_TEMP/madlen-production-ssh/known_hosts" > /dev/null
+
+      - name: Inspect private incoming destination
+        if: steps.claim.outputs.claimed == 'true'
+        id: destination
+        env:
+          RESULT_NAME: ${{ steps.result.outputs.name }}
+          RESULT_SHA256: ${{ steps.result.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          remote="$SSH_USER@$SSH_HOST"
+          state=$(ssh -p "$SSH_PORT" \
+            -i "$RUNNER_TEMP/madlen-production-ssh/id_ed25519" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$RUNNER_TEMP/madlen-production-ssh/known_hosts" \
+            "$remote" \
+            "set -eu; test -d '$INCOMING_ROOT'; test -w '$INCOMING_ROOT'; test \"\$(cat '$INCOMING_ROOT/.madlen-publisher-incoming')\" = 'madlen-production-incoming-v1'; if test -f '$INCOMING_ROOT/$RESULT_NAME'; then set -- \$(sha256sum '$INCOMING_ROOT/$RESULT_NAME'); test \"\$1\" = '$RESULT_SHA256'; printf present; else printf missing; fi")
+          test "$state" = present || test "$state" = missing
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+
+      - name: Transfer release into private incoming directory
+        if: steps.destination.outputs.state == 'missing'
+        env:
+          RESULT_NAME: ${{ steps.result.outputs.name }}
+          RESULT_SHA256: ${{ steps.result.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          remote="$SSH_USER@$SSH_HOST"
+          temporary="$RESULT_NAME.part-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          scp -P "$SSH_PORT" \
+            -i "$RUNNER_TEMP/madlen-production-ssh/id_ed25519" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$RUNNER_TEMP/madlen-production-ssh/known_hosts" \
+            "$RUNNER_TEMP/madlen-production/$RESULT_NAME" \
+            "$remote:$INCOMING_ROOT/$temporary"
+          ssh -p "$SSH_PORT" \
+            -i "$RUNNER_TEMP/madlen-production-ssh/id_ed25519" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$RUNNER_TEMP/madlen-production-ssh/known_hosts" \
+            "$remote" \
+            "set -eu; test \"\$(cat '$INCOMING_ROOT/.madlen-publisher-incoming')\" = 'madlen-production-incoming-v1'; set -- \$(sha256sum '$INCOMING_ROOT/$temporary'); test \"\$1\" = '$RESULT_SHA256'; test ! -e '$INCOMING_ROOT/$RESULT_NAME'; mv '$INCOMING_ROOT/$temporary' '$INCOMING_ROOT/$RESULT_NAME'"
+
+      - name: Verify and atomically activate on Netcup
+        if: steps.claim.outputs.claimed == 'true'
+        id: activate
+        env:
+          RESULT_NAME: ${{ steps.result.outputs.name }}
+          RESULT_SHA256: ${{ steps.result.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          remote="$SSH_USER@$SSH_HOST"
+          ssh -p "$SSH_PORT" \
+            -i "$RUNNER_TEMP/madlen-production-ssh/id_ed25519" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$RUNNER_TEMP/madlen-production-ssh/known_hosts" \
+            "$remote" \
+            "set -eu; cd '$BACKEND_ROOT'; '$PHP_BIN' artisan madlen:production:activate '$PUBLICATION_ID' '$PUBLICATION_SEQUENCE' '$RESULT_NAME' '$RESULT_SHA256' --runner='$RUNNER_ID'"
+
+      - name: Confirm the active release to the CMS
+        if: steps.claim.outputs.claimed == 'true'
+        id: confirmed
+        env:
+          CMS_TOKEN: ${{ secrets.MADLEN_PUBLISHER_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$CMS_TOKEN"
+          payload=$(jq -cn --arg target "$PUBLICATION_SEQUENCE-$PUBLICATION_ID" --arg runner "$RUNNER_ID" '{status:"active",target_release:$target,runner_id:$runner}')
+          curl --fail --silent --show-error \
+            --connect-timeout 10 --max-time 120 --retry 3 --retry-all-errors \
+            --request POST \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --header 'Content-Type: application/json' \
+            --data "$payload" \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/status" > /dev/null
+
+      - name: Remove a remote partial transfer
+        if: ${{ always() && steps.destination.outcome == 'success' && steps.destination.outputs.state == 'missing' }}
+        continue-on-error: true
+        env:
+          RESULT_NAME: ${{ steps.result.outputs.name }}
+        run: |
+          remote="$SSH_USER@$SSH_HOST"
+          temporary="$RESULT_NAME.part-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          ssh -p "$SSH_PORT" \
+            -i "$RUNNER_TEMP/madlen-production-ssh/id_ed25519" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$RUNNER_TEMP/madlen-production-ssh/known_hosts" \
+            "$remote" \
+            "set -eu; test \"\$(cat '$INCOMING_ROOT/.madlen-publisher-incoming')\" = 'madlen-production-incoming-v1'; rm -f -- '$INCOMING_ROOT/$temporary'"
+
+      - name: Report an external failure before activation
+        if: ${{ always() && steps.claim.outputs.claimed == 'true' && steps.activate.outcome != 'success' }}
+        continue-on-error: true
+        env:
+          CMS_TOKEN: ${{ secrets.MADLEN_PUBLISHER_API_TOKEN }}
+        run: |
+          payload=$(jq -cn --arg runner "$RUNNER_ID" '{status:"failed",runner_id:$runner,error:"Der externe Build oder die Übertragung wurde nicht bestätigt. Prüfen Sie den Auftrag vor einem erneuten Versuch."}')
+          curl --fail --silent --show-error \
+            --connect-timeout 10 --max-time 30 \
+            --request POST \
+            --header "Authorization: Bearer $CMS_TOKEN" \
+            --header 'Content-Type: application/json' \
+            --data "$payload" \
+            "$CMS_URL/api/publisher/v1/publications/$PUBLICATION_ID/status" > /dev/null
+
+      - name: Remove private runner material
+        if: always()
+        run: |
+          rm -rf "$RUNNER_TEMP/madlen-production-ssh" "$RUNNER_TEMP/madlen-production" "$RUNNER_TEMP/madlen-production-npm.log" "$RUNNER_TEMP/madlen-production-build.log"

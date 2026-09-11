@@ -27,7 +27,7 @@ class MediaAsset extends Model
     protected static function booted(): void
     {
         static::deleting(function (MediaAsset $asset): void {
-            if (! $asset->isForceDeleting() && ($asset->projects()->exists() || $asset->coveredProjects()->exists() || $asset->siteSlots()->exists())) {
+            if ($asset->isUsed()) {
                 throw ValidationException::withMessages([
                     'media' => 'Dieses Medium wird noch verwendet. Bitte zuerst aus Titelbild, Galerien und Website-Medien lösen.',
                 ]);
@@ -38,6 +38,11 @@ class MediaAsset extends Model
     public function projectItems(): HasMany
     {
         return $this->hasMany(ProjectMedia::class);
+    }
+
+    public function isUsed(): bool
+    {
+        return $this->projectItems()->exists() || $this->coveredProjects()->withTrashed()->exists() || $this->siteSlots()->exists();
     }
 
     public function projects(): BelongsToMany

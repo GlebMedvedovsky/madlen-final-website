@@ -5,8 +5,9 @@ namespace Tests\Feature;
 use App\Models\MediaAsset;
 use App\Models\ProductionPublication;
 use App\Models\Project;
-use App\Services\ProductionPublicationPackager;
 use App\Services\ProductionPublisher;
+use App\Services\ProductionPublicationStatus;
+use App\Services\ProductionReleaseManager;
 use App\Services\StaticReleaseActivator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -70,7 +71,7 @@ class ProductionPublisherPreparationTest extends TestCase
         $this->assertDatabaseCount('production_publications', 0);
     }
 
-    public function test_private_immutable_package_builds_bilingual_static_site_and_dispatches_only_when_connected(): void
+    public function test_selected_published_content_is_dispatched_once_built_in_de_and_en_and_excludes_drafts(): void
     {
         $this->artisan('madlen:import')->assertSuccessful();
         Storage::disk('local')->put('media/originals/private-original.jpg', 'PRIVATE-ORIGINAL-MUST-NOT-LEAVE');
@@ -114,8 +115,20 @@ class ProductionPublisherPreparationTest extends TestCase
             'position' => 90002,
         ]);
 
-        $publication = app(ProductionPublicationPackager::class)->prepare();
-        $this->assertSame('prepared', $publication->status);
+        config([
+            'madlen.production_connected' => true,
+            'madlen.production_publisher' => 'github-actions',
+            'madlen.publisher.github_repository' => 'example/madlen',
+            'madlen.publisher.github_workflow' => 'madlen-production-publisher.yml',
+            'madlen.publisher.github_ref' => 'main',
+            'madlen.publisher.github_token' => 'test-token-never-logged',
+        ]);
+        Http::fake(['https://api.github.com/*' => Http::response(null, 204)]);
+        $publication = app(ProductionPublisher::class)->publish();
+        $this->assertSame('queued', $publication->status);
+        $this->assertSame(1, $publication->sequence);
+        $this->assertSame($publication->id, app(ProductionPublisher::class)->publish($publication->request_id)->id);
+        $this->assertDatabaseCount('production_publications', 1);
         $this->assertFileExists($publication->package_path);
         $this->assertSame($publication->package_checksum, hash_file('sha256', $publication->package_path));
 
@@ -153,23 +166,12 @@ class ProductionPublisherPreparationTest extends TestCase
         $this->assertFileExists($buildPath.'/en/portfolio/production-package-check/index.html');
         $this->assertFileExists($buildPath.'/media/'.$media->id.'/published.webp');
 
-        config([
-            'madlen.production_connected' => true,
-            'madlen.production_publisher' => 'github-actions',
-            'madlen.publisher.github_repository' => 'example/madlen',
-            'madlen.publisher.github_workflow' => 'madlen-production-publisher.yml',
-            'madlen.publisher.github_ref' => 'main',
-            'madlen.publisher.github_token' => 'test-token-never-logged',
-        ]);
-        Http::fake(['https://api.github.com/*' => Http::response(null, 204)]);
-        $queued = app(ProductionPublisher::class)->publish();
-        $this->assertSame('queued', $queued->status);
-        $this->assertSame(2, $queued->sequence);
         Http::assertSent(fn (Request $request): bool => $request->url() === 'https://api.github.com/repos/example/madlen/actions/workflows/madlen-production-publisher.yml/dispatches'
-            && $request['inputs']['publication_id'] === $queued->id
-            && $request['inputs']['package_sha256'] === $queued->package_checksum
+            && $request['inputs']['publication_id'] === $publication->id
+            && $request['inputs']['package_sha256'] === $publication->package_checksum
             && $request['inputs']['source_revision'] === str_repeat('a', 40)
         );
+        Http::assertSentCount(1);
     }
 
     public function test_runner_api_is_closed_by_default_and_reports_german_progress_when_connected(): void
@@ -178,10 +180,11 @@ class ProductionPublisherPreparationTest extends TestCase
             'sequence' => 1,
             'status' => 'queued',
             'source_revision' => str_repeat('b', 40),
-            'package_path' => $this->incomingRoot.'/private.zip',
             'package_checksum' => str_repeat('c', 64),
             'progress_message' => 'Wartet.',
         ]);
+        $publication->update(['package_path'=>'madlen-production-storage-v1://packages/madlen-publication-1-'.$publication->id.'.zip']);
+        File::ensureDirectoryExists(dirname($publication->package_path));
         file_put_contents($publication->package_path, 'private-package');
 
         $this->get('/api/publisher/v1/publications/'.$publication->id.'/package')->assertNotFound();
@@ -197,19 +200,108 @@ class ProductionPublisherPreparationTest extends TestCase
             ->assertOk()
             ->assertHeader('X-Content-Type-Options', 'nosniff');
         $this->withToken('isolated-runner-token')
-            ->postJson('/api/publisher/v1/publications/'.$publication->id.'/status', ['status' => 'building'])
+            ->postJson('/api/publisher/v1/publications/'.$publication->id.'/claim', ['runner_id' => '100-1'])
             ->assertOk();
         $this->assertStringContainsString('zweisprachige Website', $publication->refresh()->progress_message);
         $this->withToken('isolated-runner-token')
-            ->postJson('/api/publisher/v1/publications/'.$publication->id.'/status', ['status' => 'uploading'])
+            ->postJson('/api/publisher/v1/publications/'.$publication->id.'/status', ['status' => 'uploading', 'runner_id' => '100-1'])
             ->assertOk();
         $this->withToken('isolated-runner-token')
             ->postJson('/api/publisher/v1/publications/'.$publication->id.'/status', [
                 'status' => 'active',
                 'target_release' => '1-'.$publication->id,
+                'runner_id' => '100-1',
             ])
-            ->assertOk();
+            ->assertStatus(409);
+        $this->assertSame('uploading', $publication->refresh()->status);
+    }
+
+    public function test_full_external_production_flow_builds_selected_content_activates_current_and_rolls_back(): void
+    {
+        $this->artisan('madlen:import')->assertSuccessful();
+        $baseline = ProductionPublication::query()->create([
+            'sequence' => 1,
+            'status' => 'active',
+            'source_revision' => str_repeat('a', 40),
+            'progress_message' => 'Vorheriger stabiler Stand.',
+        ]);
+        [$baselineArchive, $baselineChecksum] = $this->makeStaticArchive('baseline.zip', 'Vorheriger stabiler Stand', $baseline->id, 1);
+        $activator = app(StaticReleaseActivator::class);
+        $baselineRelease = $activator->activate($baseline->id, 1, basename($baselineArchive), $baselineChecksum);
+        $baseline->update(['target_release' => $baselineRelease]);
+
+        $categoryId = Project::query()->firstOrFail()->category_id;
+        $selected = Project::query()->create([
+            'slug' => 'selected-production-project',
+            'title_de' => 'Ausgewähltes Produktionsprojekt',
+            'title_en' => 'Selected production project',
+            'description_de' => 'Dieser gespeicherte Inhalt muss im Produktivpaket erscheinen.',
+            'description_en' => 'This saved content must appear in the production package.',
+            'category_id' => $categoryId,
+            'status' => 'published',
+            'position' => 99001,
+        ]);
+        Project::query()->create([
+            'slug' => 'unrelated-draft-must-stay-private',
+            'title_de' => 'Anderer Entwurf',
+            'title_en' => 'Unrelated draft',
+            'description_de' => 'Darf nicht veröffentlicht werden.',
+            'description_en' => 'Must not be published.',
+            'category_id' => $categoryId,
+            'status' => 'draft',
+            'position' => 99002,
+        ]);
+
+        config([
+            'madlen.production_connected' => true,
+            'madlen.production_publisher' => 'github-actions',
+            'madlen.publisher.github_repository' => 'example/madlen',
+            'madlen.publisher.github_workflow' => 'madlen-production-publisher.yml',
+            'madlen.publisher.github_ref' => 'main',
+            'madlen.publisher.github_token' => 'test-token-never-logged',
+        ]);
+        Http::fake(['https://api.github.com/*' => Http::response(null, 204)]);
+        $publication = app(ProductionPublisher::class)->publish();
+        $this->assertSame(2, $publication->sequence);
+        $this->assertSame('queued', $publication->status);
+        $this->assertSame($publication->id, app(ProductionPublisher::class)->publish($publication->request_id)->id);
+        $this->assertDatabaseCount('production_publications', 2);
+
+        $packageRoot = $this->extractPackage($publication);
+        $manifest = File::get($packageRoot.'/content-manifest.json');
+        $this->assertStringContainsString($selected->slug, $manifest);
+        $this->assertStringNotContainsString('unrelated-draft-must-stay-private', $manifest);
+        $buildRoot = $this->buildPublication($publication, $packageRoot);
+        $this->assertFileExists($buildRoot.'/portfolio/'.$selected->slug.'/index.html');
+        $this->assertFileExists($buildRoot.'/en/portfolio/'.$selected->slug.'/index.html');
+
+        [$archive, $checksum] = $this->archiveBuild($buildRoot, 'selected-production.zip');
+        $statuses = app(ProductionPublicationStatus::class);
+        $statuses->update($publication, 'building');
+        $statuses->update($publication, 'uploading');
+        $release = app(ProductionReleaseManager::class)->activate($publication->id, $publication->sequence, basename($archive), $checksum);
+
+        $this->assertSame('releases/'.$release, readlink($this->destinationRoot.'/current'));
+        $this->assertFileExists($this->destinationRoot.'/current/index.html');
+        $this->assertFileExists($this->destinationRoot.'/current/en/index.html');
+        $this->assertFileExists($this->destinationRoot.'/current/portfolio/'.$selected->slug.'/index.html');
+        $this->assertFileExists($this->destinationRoot.'/current/en/portfolio/'.$selected->slug.'/index.html');
         $this->assertSame('active', $publication->refresh()->status);
+
+        $this->assertSame($baselineRelease, $activator->rollback($baselineRelease));
+        $this->assertSame('releases/'.$baselineRelease, readlink($this->destinationRoot.'/current'));
+        $this->assertFileDoesNotExist($this->destinationRoot.'/current/portfolio/'.$selected->slug.'/index.html');
+
+        $invalidPackage = $this->testRoot.'/invalid-external-package';
+        File::ensureDirectoryExists($invalidPackage);
+        $failedBuild = new Process(
+            ['npm', 'run', 'build:publication', '--', $invalidPackage, $this->testRoot.'/must-not-exist'],
+            config('madlen.repository_root'),
+            ['ASTRO_TELEMETRY_DISABLED' => '1'],
+        );
+        $failedBuild->run();
+        $this->assertFalse($failedBuild->isSuccessful());
+        $this->assertSame('releases/'.$baselineRelease, readlink($this->destinationRoot.'/current'));
     }
 
     public function test_isolated_target_keeps_old_release_on_transfer_failure_blocks_older_jobs_and_rolls_back(): void
@@ -291,6 +383,54 @@ class ProductionPublisherPreparationTest extends TestCase
         }
         $zip->close();
         File::deleteDirectory($source);
+
+        return [$archive, hash_file('sha256', $archive)];
+    }
+
+    private function extractPackage(ProductionPublication $publication): string
+    {
+        $target = $this->testRoot.'/package-'.Str::random(8);
+        File::ensureDirectoryExists($target);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($publication->package_path) === true);
+        $this->assertTrue($zip->extractTo($target));
+        $zip->close();
+
+        return $target;
+    }
+
+    private function buildPublication(ProductionPublication $publication, string $packageRoot): string
+    {
+        $buildRoot = $this->testRoot.'/build-'.Str::random(8);
+        $process = new Process(
+            ['npm', 'run', 'build:publication', '--', $packageRoot, $buildRoot],
+            config('madlen.repository_root'),
+            [
+                'ASTRO_TELEMETRY_DISABLED' => '1',
+                'MADLEN_EXPECTED_PUBLICATION_ID' => $publication->id,
+                'MADLEN_EXPECTED_SEQUENCE' => (string) $publication->sequence,
+                'MADLEN_EXPECTED_SOURCE_REVISION' => $publication->source_revision,
+            ],
+        );
+        $process->setTimeout(300);
+        $process->run();
+        $this->assertTrue($process->isSuccessful(), $process->getErrorOutput().$process->getOutput());
+
+        return $buildRoot;
+    }
+
+    private function archiveBuild(string $buildRoot, string $archiveName): array
+    {
+        $archive = $this->incomingRoot.'/'.$archiveName;
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($archive, ZipArchive::CREATE | ZipArchive::EXCL) === true);
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($buildRoot, \FilesystemIterator::SKIP_DOTS));
+        foreach ($iterator as $entry) {
+            if ($entry->isFile()) {
+                $zip->addFile($entry->getPathname(), str_replace('\\', '/', substr($entry->getPathname(), strlen($buildRoot) + 1)));
+            }
+        }
+        $zip->close();
 
         return [$archive, hash_file('sha256', $archive)];
     }

@@ -208,12 +208,29 @@ const nextLabel = useTranslations(lang).portfolio.nextProject;
   }
 
   @media (max-width: 700px) {
+    .project-detail__header h1,
+    .project-detail__header p,
+    .project-detail__nav a {
+      overflow-wrap: anywhere;
+    }
+
+    .project-detail__nav a {
+      min-width: 0;
+      flex: 1;
+    }
+
     .project-detail__gallery {
       display: block;
     }
 
     .project-detail__image {
       margin-bottom: 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .project-detail__header h1 {
+      font-size: clamp(2.75rem, 14vw, 4rem);
     }
   }
 

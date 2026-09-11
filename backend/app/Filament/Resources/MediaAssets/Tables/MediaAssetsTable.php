@@ -42,7 +42,14 @@ class MediaAssetsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->before(function (DeleteBulkAction $action, $records): void {
+                        if ($records->contains(fn (MediaAsset $asset): bool => $asset->isUsed())) {
+                            \Filament\Notifications\Notification::make()->title('Auswahl wurde nicht gelöscht')
+                                ->body('Mindestens ein Medium wird noch verwendet, auch in wiederherstellbaren Projekten. Zuerst die Zuordnung lösen.')
+                                ->warning()->persistent()->send();
+                            $action->halt();
+                        }
+                    })->databaseTransaction(),
                     RestoreBulkAction::make(),
                 ]),
             ]);
