@@ -12,7 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Includes the Livewire endpoint, preview/media and CSRF-recovery routes.
+        $middleware->web(append: [\App\Http\Middleware\AuthenticateAdminSession::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

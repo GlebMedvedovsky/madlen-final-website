@@ -8,6 +8,16 @@ use PDO;
 
 abstract class TestCase extends BaseTestCase
 {
+    public function actingAs(\Illuminate\Contracts\Auth\Authenticatable $user, $guard = null)
+    {
+        parent::actingAs($user, $guard);
+        // actingAs bypasses Laravel login. Reproduce its session stamp, without
+        // disabling the production middleware; actual credential login is browser-tested.
+        event(new \Illuminate\Auth\Events\Login($guard ?? 'web', $user, false));
+
+        return $this;
+    }
+
     protected function setUp(): void
     {
         foreach ([

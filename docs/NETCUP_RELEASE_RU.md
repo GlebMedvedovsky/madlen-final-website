@@ -6,8 +6,8 @@
 
 Пакет `madlen-release-kit-<UTC>.tar.gz` содержит:
 
-- `payload/backend`: 26 production PHP-файлов по `manifest.json` (полный список также в `scripts/release/backend-files.json`).
-- Два новых класса: `App\Services\ProductionReleaseManager`, `App\Console\Commands\RetryProductionPublication`.
+- `payload/backend`: **36 production-файлов** (35 PHP и один JSON) по `manifest.json`; полный список — `scripts/release/backend-files.json`.
+- Шесть новых классов относительно установленного preview flow: `App\Services\ProductionReleaseManager`, `App\Console\Commands\RetryProductionPublication`, `App\Filament\Auth\RequestPasswordReset`, `App\Filament\Auth\ResetPassword`, `App\Http\Middleware\AuthenticateAdminSession`, `App\Notifications\AdminResetPassword`.
 - Одну новую аддитивную миграцию `2026_09_12_000006_add_production_operation_identity`: `request_id` с unique index, `project_id`, `operation`, `runner_id`, `previous_project_state` в `production_publications`.
 - `overlay.php`: проверка исходников, применение, code rollback; `.env`, vendor, БД, uploads и public не заменяет.
 - `preflight.php`, `backup-installed.php`, `SHA256SUMS`, эта инструкция; workflow и безопасный распаковщик runner в `source/` для сверки с Git, НЕ для копирования в document root.
@@ -18,7 +18,24 @@
 
 После будущего commit/review/merge исходников нужно заново собрать kit (`node scripts/release/build-kit.mjs`) и привязать обе source revision к проверенному merge SHA. Не указывать `88e1af1`, HEAD старой ветки или SHA несуществующего commit вместо нового кода. Сам kit не изменяет Git.
 
-Сохранённый кандидат `madlen-release-kit-20260911T010215Z.tar.gz` — неизменённый контрольный архив **до исправлений review PR #4**, не финальный установочный пакет. Исправления повторной публикации/восстановления и новый preflight должны попасть в заново собранный пакет после итогового merge; состав остаётся 26 production-файлов, дополнительных миграций или runtime-классов это review не добавляет.
+PR #4 объединён в `88a45f3ef04d4beb41a6a682d9cc09e5b94073b0`. Архив `madlen-release-kit-88a45f3ef04d-20260911T084707Z.tar.gz` и более ранний кандидат `madlen-release-kit-20260911T010215Z.tar.gz` сохраняются без изменений, но **не включают восстановление пароля**. До установки нужен новый review/merge и единый финальный архив строго из нового merge SHA в чистом checkout. Не выдавать текущую незакоммиченную подготовку за будущую ревизию.
+
+К 26 production-файлам PR #4 добавляются ровно десять:
+
+1. `app/Filament/Auth/RequestPasswordReset.php`
+2. `app/Filament/Auth/ResetPassword.php`
+3. `app/Http/Middleware/AuthenticateAdminSession.php`
+4. `app/Notifications/AdminResetPassword.php`
+5. `app/Providers/AppServiceProvider.php`
+6. `app/Providers/Filament/AdminPanelProvider.php`
+7. `bootstrap/app.php`
+8. `lang/de/passwords.php`
+9. `lang/de/validation.php`
+10. `lang/de.json`
+
+Для восстановления используется существующая таблица `password_reset_tokens` из штатной миграции users. **Новой миграции для сброса пароля нет**; единственная новая миграция комплекта остаётся production operation identity из PR #4. Если таблицы reset нет, остановиться и исследовать исходную установку, не запускать повторно create_users.
+
+Для локальной проверки без финального архива: `node scripts/release/build-kit.mjs --unpacked`, затем `php scripts/release/test-kit.php <каталог>` в изолированной среде. После merge финальная сборка должна дополнительно сверять каждый payload с Git blob указанной ревизии; metadata должна явно содержать фактический source SHA, а не только старый reference SHA.
 
 ## 2. Как устроен выпуск
 
@@ -80,9 +97,11 @@ Preflight прекращает работу при отсутствии PHP 8.4/
 
 До установки нужно подтвердить: source checksums совпали; target_path/request_id и запись preview migration есть; production migration `2026_09_09_000003` есть; config cache отсутствует; production jobs не выполняются; PHP ZIP/GD/intl/mbstring/PDO доступны; нужные пути CLI и FastCGI соответствуют одному private-каталогу. Если preflight выявил отличия — остановить установку, передать только обезличенный вывод и code hashes. Секреты в чат не отправлять.
 
+До apply сверить `framework_versions` из read-only preflight: проверены Laravel 12.69.2, Filament 5.8.1, Livewire 4.4.4 из текущего composer.lock. Если установлены другие версии — сначала исследовать расхождение; этот overlay не обновляет vendor и не разрешает произвольный composer update.
+
 ## 4. Резервная копия и backend update
 
-Оставить `MADLEN_PRODUCTION_CONNECTED=false`, GitHub gate выключенным. Закрыть редактирование на короткое окно (не закрывая существующий публичный статический сайт). Сохранить текущий document root и private env отдельно с правами 600. Не выводить env через `cat`, `env`, `phpinfo`, `config:show`.
+Оставить `MADLEN_PRODUCTION_CONNECTED=false`, GitHub gate выключенным. Закрыть редактирование на короткое окно (не закрывая существующий публичный статический сайт). Предупредить администратора: старые сессии без хэша пароля потребуют нового входа; после сброса все прежние сессии будут отозваны. Сохранить текущий document root и private env отдельно с правами 600. Не выводить env через `cat`, `env`, `phpinfo`, `config:show`.
 
 ```bash
 set -eu
@@ -108,6 +127,8 @@ cd "$BACKEND"
 "$PHP_BIN" artisan config:clear
 "$PHP_BIN" artisan route:clear
 "$PHP_BIN" artisan view:clear
+"$PHP_BIN" -r 'require "vendor/autoload.php"; foreach (["App\\Filament\\Auth\\RequestPasswordReset","App\\Filament\\Auth\\ResetPassword","App\\Http\\Middleware\\AuthenticateAdminSession","App\\Notifications\\AdminResetPassword"] as $c) { if (!class_exists($c)) {fwrite(STDERR,"Missing reset class: $c\n"); exit(1);} } echo "Password reset autoload OK\n";'
+"$PHP_BIN" artisan route:list --path=password-reset
 "$PHP_BIN" artisan migrate:status --no-ansi
 "$PHP_BIN" artisan migrate --path=database/migrations/2026_09_12_000006_add_production_operation_identity.php --pretend --force
 "$PHP_BIN" artisan migrate --path=database/migrations/2026_09_12_000006_add_production_operation_identity.php --force
@@ -117,7 +138,7 @@ cd "$BACKEND"
 
 Backup-helper берёт media root из установленного env/layout (обычно `/madebymadlen.de/private/storage/media`), сохраняет SQL, media и private env. Все три проверяются через `backup.sha256`; helper не использует старый BackupService. Если код принадлежит другому пользователю, исправить точечно по WCP; не использовать chmod 777 или рекурсивный chown всего хостинга. Composer всегда запускать указанным PHP84; `composer install/update` не требуется. `--no-scripts` не запускает посторонние hooks.
 
-`config:clear` обязателен, потому что CLI и FastCGI имеют разные физические префиксы. `route:clear` нужен для нового claim endpoint, `view:clear` — для изменённых Filament actions. **config:cache запрещён.** Не запускать общий `optimize:clear`/`cache:clear`: они могут удалить действующие locks. Если OPcache настроен без проверки времён файлов, перезапустить только PHP приложения средствами WCP в этом окне; CLI opcache_reset не очищает FastCGI.
+`config:clear` обязателен, потому что CLI и FastCGI имеют разные физические префиксы. `route:clear` нужен для claim endpoint и двух штатных password-reset маршрутов, `view:clear` — для изменённых Filament actions/форм. **config:cache запрещён.** Не запускать общий `optimize:clear`/`cache:clear`: они могут удалить действующие locks и ограничения частоты. Если OPcache настроен без проверки времён файлов, перезапустить только PHP приложения средствами WCP в этом окне; CLI opcache_reset не очищает FastCGI.
 
 Мигрировать только указанный файл. Не запускать весь набор «на всякий случай». Если ожидаемая старая migration отсутствует — остановиться и исследовать, а не выполнять import или переустановку. Проверить в admin вход, editor, media и preview до включения production.
 
@@ -178,6 +199,18 @@ Workflow должен находиться в default branch main; exact source 
 
 ## 6. Первый выпуск и document root
 
+### Приёмка восстановления пароля до production gate
+
+Сверить приватно `APP_URL=https://admin.madebymadlen.de`, `APP_LOCALE=de`, `SESSION_SECURE_COOKIE=true`, постоянный рабочий `CACHE_STORE` (не array/null) и сохранение сессий. URL в reset-письме принудительно использует именно этот HTTPS-домен независимо от Host запроса; относительный путь задаёт штатный маршрут Filament. Истечение подписи и broker-токена — 60 минут.
+
+Оба механизма используют **общий `mail.mailers.smtp` из `backend/config/mail.php`**, с единственным набором MAIL_HOST/PORT/SCHEME/USERNAME/PASSWORD. Контакт выбирает его через `MADLEN_CONTACT_MAILER=smtp` (`ContactInquiryController::store()`), reset — через default `MAIL_MAILER=smtp` (`RequestPasswordReset::request()` → `AdminResetPassword` → штатный mail channel Laravel). Отдельного SMTP-аккаунта и дублирования credentials нет. Проверить оба переключателя и существующие MAIL_FROM_ADDRESS/NAME приватно, не печатая значения. Рабочие SMTP-значения не заменять; TLS не отключать. Работа контакта сама по себе не подтверждает правильность default mailer для reset. Log transport для reset запрещён кодом: ссылка не должна попадать в журнал. Отправка синхронная, queue worker/Node на Netcup не нужны. Отдельный серверный тест SMTP, доставки/спама и SPF/DKIM/DMARC обязателен; локальные array/fake проверки его не заменяют.
+
+В согласованной проверке администратор сам вводит свой email и новые пароли; не передавать их или URL/токены в чат/отчёт. Открыть «Passwort vergessen?», получить немецкое письмо, убедиться в домене/HTTPS и 60 минутах, задать пароль (не менее 12 символов и не более 72 UTF-8-байт, верхний/нижний регистр, цифра, спецсимвол, подтверждение). Старый пароль, старый remember-cookie и сессии в других браузерах, включая открытые Livewire/preview/media, должны требовать входа. Новым паролем проверить CMS и preview. Повтор ссылки не меняет пароль. Неизвестный email показывает точно то же уведомление; 2 запроса/минуту на IP и 60 секунд между письмами аккаунта сохраняются. При ошибке SMTP пользователю остаётся то же сообщение с советом повторить через минуту, в server log — только обезличенное предупреждение. Существующий пароль при ошибке не меняется.
+
+У сброса нет автоматического входа или регистрации. Не добавлять /register, обход CSRF или новые публичные диагностические endpoints. Встроенные старые сессии отзываются по хэшу пароля при следующем запросе (вне зависимости от file/database session driver); legacy-сессии без отметки хэша требуют входа уже после установки. Не восстанавливать старые пароли/remember tokens из backup ради code rollback.
+
+### Первый статический выпуск
+
 1. Согласовать содержимое: проект `Test` остаётся Entwurf; проверить DE/EN, обложки, порядок фото. В admin «Veröffentlichungen» действие «Website produktiv veröffentlichen» выпускает только уже опубликованные проекты; это подходящий первый выпуск текущего сайта без Test. «Veröffentlichen» внутри редактора намеренно включает выбранный проект, даже если он был черновиком — не нажимать его на Test.
 2. В согласованное окно включить GitHub gate и `MADLEN_PRODUCTION_CONNECTED=true`; `config:clear`. Не запускать одновременно GitHub workflow вручную и CMS-кнопку.
 3. Нажать один раз соответствующую кнопку CMS. Записать UUID/sequence. Проверить «Produktiv-Aufträge»: queued → building → uploading → active. Повтор того же нажатия не должен создавать второй job.
@@ -231,7 +264,7 @@ cd /madebymadlen.de/app/backend
 /usr/local/php84/bin/php artisan view:clear
 ```
 
-Rollback проверяет неизменность обновлённых файлов и backups. Удаляет только два добавленных класса; сохраняет файл аддитивной migration и колонки/ledger. Старый код не использует новые колонки. Publisher после code rollback остаётся выключенным: старые actions с локальным npm нельзя снова включать на Netcup.
+Rollback проверяет неизменность обновлённых файлов и backups. Возвращает изменённые файлы, удаляет добавленные классы (шесть) и три добавленных файла переводов, но сохраняет файл аддитивной migration и колонки/ledger. Старый код не использует новые колонки. Publisher после code rollback остаётся выключенным: старые actions с локальным npm нельзя снова включать на Netcup. Не откатывать БД для отмены password-reset кода: новый пароль и отзыв старых credentials должны сохраниться; восстановления пароля в интерфейсе старого кода больше не будет.
 
 Ошибка migration не означает восстановление рабочей БД. Сначала проверить `SHOW COLUMNS`, unique index и запись конкретной migration в `migrations`: MySQL DDL не всегда транзакционен. Если колонки и index созданы полностью, но ledger отсутствует — восстановить только запись migration после подтверждения схемы; если выполнена часть — довести только ожидаемые nullable-поля/index либо удалить только новые пустые поля в отдельном согласованном исправлении. Preview `target_path/request_id` уже установлен: не трогать его. Полный SQL restore нужен только при доказанном повреждении данных и отдельном согласовании потери последующих изменений; сначала испытать backup в отдельной БД. Ни `migrate:fresh`, ни общий `migrate:rollback`, ни повторный import здесь не нужны.
 

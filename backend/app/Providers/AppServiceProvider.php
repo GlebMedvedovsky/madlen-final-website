@@ -6,6 +6,9 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +25,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(Login::class, function (Login $event): void {
+            if ($event->guard === 'web' && app()->bound('session')) {
+                session()->put('password_hash_web',
+                    Auth::guard('web')->hashPasswordForCookie($event->user->getAuthPassword()));
+            }
+        });
+
         RateLimiter::for('contact', function (Request $request): array {
             $ipFingerprint = hash('sha256', (string) $request->ip());
             $response = static function (Request $request, array $headers) {
