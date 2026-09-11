@@ -9,6 +9,12 @@ class StaticReleaseActivator
 {
     public function __construct(private RuntimeFilesystem $files) {}
 
+    public function currentRelease(): ?string
+    {
+        [$root] = $this->configuredRoots();
+        return $this->activeRelease($root);
+    }
+
     public function activate(string $publicationId, int $sequence, string $archiveName, string $expectedChecksum): string
     {
         if (! preg_match('/\A[a-zA-Z0-9-]{8,64}\z/', $publicationId) || $sequence < 1) {
@@ -38,9 +44,13 @@ class StaticReleaseActivator
             $activeRelease = $this->activeRelease($root);
             $highestSequence = max((int) ($state['highestSequence'] ?? 0), $this->sequenceFromRelease($activeRelease));
             if ($activeRelease === $releaseName) {
+                $stored = trim((string) @file_get_contents($root.'/releases/'.$releaseName.'/.madlen-package.sha256'));
+                if (! hash_equals(strtolower($expectedChecksum), strtolower($stored))) {
+                    throw new RuntimeException('Der wiederholte Auftrag enthält ein anderes Paket.');
+                }
                 return $releaseName;
             }
-            if ($sequence <= $highestSequence) {
+            if ($sequence < $highestSequence || ($sequence === $highestSequence && ($state['failedActivation'] ?? null) !== $releaseName)) {
                 throw new RuntimeException('Dieser Auftrag ist älter als der bereits aktivierte Stand und wurde abgelehnt.');
             }
 
@@ -49,13 +59,28 @@ class StaticReleaseActivator
             $this->files->ensureDirectory($root.'/releases');
             $this->files->ensureDirectory($root.'/.incoming');
 
+            $replaceFailed = false;
+            if (is_link($target) || (file_exists($target) && ! is_dir($target))) {
+                throw new RuntimeException('Das Release-Ziel ist kein sicheres Verzeichnis.');
+            }
             if (is_dir($target)) {
                 $storedChecksum = trim((string) @file_get_contents($target.'/.madlen-package.sha256'));
                 if (! hash_equals(strtolower($expectedChecksum), strtolower($storedChecksum))) {
-                    throw new RuntimeException('Das vorhandene Zielverzeichnis gehört nicht zu diesem geprüften Paket.');
+                    // A rebuild of the SAME immutable request has a different builtAt.
+                    // Only a recorded, compensated CMS failure may replace its inactive
+                    // directory. Active/older releases were rejected above, and the old
+                    // package identity must still match the compensation record.
+                    $replaceFailed = ($state['failedActivation'] ?? null) === $releaseName
+                        && $sequence === $highestSequence
+                        && preg_match('/\A[0-9a-f]{64}\z/', $storedChecksum)
+                        && hash_equals($storedChecksum, $state['failedPackageChecksum'] ?? '');
+                    if (! $replaceFailed) {
+                        throw new RuntimeException('Das vorhandene Zielverzeichnis gehört nicht zu diesem geprüften Paket.');
+                    }
                 }
                 $this->validateRelease($target, $publicationId, $sequence);
-            } else {
+            }
+            if (! is_dir($target) || $replaceFailed) {
                 if (file_exists($staging) || is_link($staging)) {
                     throw new RuntimeException('Ein unvollständiges Ziel für diesen Auftrag ist bereits vorhanden.');
                 }
@@ -65,6 +90,14 @@ class StaticReleaseActivator
                     $this->validateRelease($staging, $publicationId, $sequence);
                     if (config('madlen.publisher.simulate_transfer_failure')) {
                         throw new RuntimeException('Simulierter Übertragungsfehler; der bisherige Stand bleibt aktiv.');
+                    }
+                    if ($replaceFailed) {
+                        // Keep the failed build for inspection, outside releases/current.
+                        // Do not move it until the replacement has passed ALL checks.
+                        $quarantine = $root.'/.incoming/failed-'.$releaseName.'-'.bin2hex(random_bytes(8));
+                        if (! rename($target, $quarantine)) {
+                            throw new RuntimeException('Der fehlgeschlagene Stand konnte nicht sicher verwahrt werden.');
+                        }
                     }
                     $moved = @rename($staging, $target);
                     if (! $moved && ! (is_dir($target) && ! file_exists($staging))) {
@@ -80,11 +113,16 @@ class StaticReleaseActivator
             }
 
             $this->switchCurrent($root, $releaseName);
+            try {
             $this->writeState($root, [
                 'highestSequence' => $sequence,
                 'activeRelease' => $releaseName,
                 'activatedAt' => gmdate(DATE_ATOM),
             ]);
+            } catch (\Throwable $error) {
+                $this->restorePointer($root, $releaseName, $activeRelease);
+                throw $error;
+            }
 
             return $releaseName;
         } finally {
@@ -108,18 +146,51 @@ class StaticReleaseActivator
             }
             $this->validateRelease($target, substr($releaseName, strpos($releaseName, '-') + 1), $this->sequenceFromRelease($releaseName));
             $state = $this->readState($root);
+            $previous = $this->activeRelease($root);
             $this->switchCurrent($root, $releaseName);
+            try {
             $this->writeState($root, [
                 'highestSequence' => max((int) ($state['highestSequence'] ?? 0), $this->sequenceFromRelease($this->activeRelease($root))),
                 'activeRelease' => $releaseName,
                 'activatedAt' => gmdate(DATE_ATOM),
                 'rollback' => true,
             ]);
+            } catch (\Throwable $error) {
+                $this->restorePointer($root, $releaseName, $previous);
+                throw $error;
+            }
 
             return $releaseName;
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);
+        }
+    }
+
+    public function restoreAfterFailedActivation(string $failed, ?string $previous): void
+    {
+        [$root] = $this->configuredRoots();
+        $lock = $this->lock($root);
+        try {
+            $this->restorePointer($root, $failed, $previous);
+            $state = $this->readState($root);
+            $state['activeRelease'] = $previous;
+            $state['failedActivation'] = $failed;
+            $state['failedPackageChecksum'] = trim((string) file_get_contents($root.'/releases/'.$failed.'/.madlen-package.sha256'));
+            $this->writeState($root, $state);
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    private function restorePointer(string $root, string $failed, ?string $previous): void
+    {
+        if ($this->activeRelease($root) !== $failed) throw new RuntimeException('Der Produktiv-Zeiger hat sich während der Wiederherstellung geändert.');
+        if ($previous) {
+            $this->switchCurrent($root, $previous);
+        } elseif (! unlink($root.'/current')) {
+            throw new RuntimeException('Der erste Produktiv-Zeiger konnte nicht zurückgenommen werden.');
         }
     }
 
@@ -169,16 +240,23 @@ class StaticReleaseActivator
 
         try {
             $seen = [];
+            $total = 0;
             for ($index = 0; $index < $zip->numFiles; $index++) {
                 $name = (string) $zip->getNameIndex($index);
                 $normalized = str_replace('\\', '/', $name);
-                if ($normalized === '' || str_starts_with($normalized, '/') || preg_match('#(^|/)\.\.(/|$)#', $normalized) || str_contains($normalized, ':')) {
+                if ($name !== $normalized || $normalized === '' || str_starts_with($normalized, '/') || preg_match('#(^|/)\.\.?(/|$)#', $normalized) || str_contains($normalized, ':')) {
                     throw new RuntimeException('Das Release-Paket enthält einen unsicheren Dateipfad.');
                 }
                 if (isset($seen[$normalized])) {
                     throw new RuntimeException('Das Release-Paket enthält einen Dateipfad mehrfach.');
                 }
                 $seen[$normalized] = true;
+                $zip->getExternalAttributesIndex($index, $system, $attributes);
+                $type = ($attributes >> 16) & 0170000;
+                $total += (int) ($zip->statIndex($index)['size'] ?? 0);
+                if (($type && ! in_array($type, [0100000, 0040000], true)) || $total > 2 * 1024 * 1024 * 1024) {
+                    throw new RuntimeException('Unzulässiger Dateityp oder zu großes Release-Paket.');
+                }
             }
             $this->files->ensureDirectory($destination);
             if (! $zip->extractTo($destination)) {
@@ -209,6 +287,9 @@ class StaticReleaseActivator
                 throw new RuntimeException('Der statische Release darf keine Verknüpfungen enthalten.');
             }
             $relative = str_replace('\\', '/', substr($entry->getPathname(), strlen($directory) + 1));
+            if (preg_match('/\.(?:php[0-9]?|phtml|phar|cgi|pl|sh)$/i', $relative)) {
+                throw new RuntimeException('Der statische Release darf keinen ausführbaren Servercode enthalten.');
+            }
             if (preg_match('#(^|/)(\.env(?:\.|$)|backend|storage|vendor|node_modules|private)(/|$)#i', $relative)) {
                 throw new RuntimeException("Nicht öffentlicher Inhalt im Release gefunden: {$relative}");
             }

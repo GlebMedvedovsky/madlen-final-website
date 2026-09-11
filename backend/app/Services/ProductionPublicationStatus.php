@@ -11,6 +11,7 @@ class ProductionPublicationStatus
     private const TRANSITIONS = [
         'prepared' => ['queued', 'building', 'failed'],
         'queued' => ['building', 'failed'],
+        'dispatch_unknown' => ['building', 'failed'],
         'building' => ['uploading', 'failed'],
         'uploading' => ['active', 'failed'],
         'active' => [],
@@ -30,20 +31,8 @@ class ProductionPublicationStatus
             }
 
             if ($status === 'active') {
-                if (! filled($targetRelease)) {
-                    throw new RuntimeException('Der aktivierte Ziel-Release fehlt.');
-                }
-                $newerActive = ProductionPublication::query()
-                    ->where('status', 'active')
-                    ->where('sequence', '>', $publication->sequence)
-                    ->exists();
-                if ($newerActive) {
-                    throw new RuntimeException('Ein älterer Auftrag darf keinen neueren aktiven Stand überschreiben.');
-                }
-                ProductionPublication::query()
-                    ->where('status', 'active')
-                    ->whereKeyNot($publication->id)
-                    ->update(['status' => 'superseded']);
+                // Only the local activation command may make a publication active.
+                throw new RuntimeException('Die Aktivierung muss lokal bestätigt werden.');
             }
 
             $publication->update([

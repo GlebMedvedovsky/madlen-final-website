@@ -18,7 +18,14 @@ class EditMediaAsset extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()->before(function (DeleteAction $action): void {
+                if ($this->getRecord()->isUsed()) {
+                    \Filament\Notifications\Notification::make()->title('Medium wird noch verwendet')
+                        ->body('Zuerst aus Titelbild, Galerie und Website-Medien lösen. Wiederherstellbare Projekte behalten ihre Medien.')
+                        ->warning()->persistent()->send();
+                    $action->halt();
+                }
+            }),
             RestoreAction::make(),
         ];
     }

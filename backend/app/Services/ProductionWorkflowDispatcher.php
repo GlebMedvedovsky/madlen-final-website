@@ -25,6 +25,8 @@ class ProductionWorkflowDispatcher
             throw new RuntimeException('Die GitHub-Workflow-Verbindung ist unvollständig konfiguriert.');
         }
 
+        $publication->update(['status' => 'queued', 'progress_message' => 'Der externe Build wird angefordert.']);
+        try {
         $response = Http::acceptJson()
             ->withToken($token)
             ->withHeaders([
@@ -43,13 +45,15 @@ class ProductionWorkflowDispatcher
             ]);
 
         if (! $response->successful()) {
-            throw new RuntimeException("Der externe Build konnte nicht gestartet werden (HTTP {$response->status()}).");
+            throw new RuntimeException("GitHub antwortete mit HTTP {$response->status()}.");
         }
-
-        $publication->update([
-            'status' => 'queued',
-            'progress_message' => 'Der unveränderliche Stand wurde an den externen Build übergeben.',
-            'error_message' => null,
-        ]);
+        } catch (\Throwable $error) {
+            // Dispatch might have succeeded remotely. Do not dispatch a second time automatically.
+            ProductionPublication::whereKey($publication->id)->where('status', 'queued')->update([
+                'status' => 'dispatch_unknown',
+                'progress_message' => 'Die Übergabe ist unbestätigt. Derselbe Auftrag bleibt erhalten; bitte den Workflow-Status prüfen.',
+                'error_message' => 'Die Antwort des externen Build-Dienstes fehlt.',
+            ]);
+        }
     }
 }

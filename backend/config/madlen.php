@@ -12,6 +12,12 @@ return [
     'public_site_url' => env('MADLEN_PUBLIC_SITE_URL', 'https://madebymadlen.de'),
     'production_publisher' => env('MADLEN_PRODUCTION_PUBLISHER', 'unconfigured'),
     'production_connected' => filter_var(env('MADLEN_PRODUCTION_CONNECTED', false), FILTER_VALIDATE_BOOL),
+    'backup' => [
+        // Netcup provides the Oracle MySQL client binaries at these absolute paths.
+        // Keep them configurable for local/container installations without guessing PATH.
+        'dump_binary' => env('MADLEN_MYSQLDUMP_BIN', '/usr/bin/mysqldump'),
+        'client_binary' => env('MADLEN_MYSQL_BIN', '/usr/bin/mysql'),
+    ],
     'publisher' => [
         'package_root' => env('MADLEN_PRODUCTION_PACKAGE_ROOT') ?: ($hostingPaths['production_package_root'] ?? storage_path('app/production-publications')),
         'incoming_root' => env('MADLEN_PRODUCTION_INCOMING_ROOT') ?: ($hostingPaths['production_incoming_root'] ?? null),

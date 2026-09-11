@@ -1,0 +1,46 @@
+import { readFileSync,writeFileSync,mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+const {chromium}=await import(pathToFileURL(process.env.MADLEN_QA_PLAYWRIGHT).href);
+const out=resolve('installation-artifacts/release-qa');mkdirSync(out,{recursive:true});
+const docker=(...args)=>execFileSync('docker',['exec','madlen-release-qa',...args],{encoding:'utf8',maxBuffer:5*1024*1024});
+const state=()=>JSON.parse(docker('php','/workspace/scripts/release/qa-console.php','state'));
+const browser=await chromium.launch({headless:true,executablePath:process.env.MADLEN_QA_CHROMIUM});
+const context=await browser.newContext({viewport:{width:1440,height:1000}});
+const p=await context.newPage();
+const login=async(page)=>{await page.getByLabel('E-Mail-Adresse').fill('qa@example.test');await page.locator('input[type=password]').fill('Local-QA-only-928!');await page.getByRole('button',{name:'Anmelden',exact:true}).click();await page.waitForURL('**/admin');};
+try {
+  const project=state().projects.filter(x=>x.status==='draft').at(-1);
+  await p.goto('http://127.0.0.1:8097/admin/login');await login(p);
+  const editorUrl='http://127.0.0.1:8097/admin/projects/'+project.id+'/edit';await p.goto(editorUrl);
+  await p.locator('[id="form.title_de"]').fill('Nicht gespeichert – nach neuer Anmeldung');
+  const csrf=await p.locator('[data-csrf]').first().getAttribute('data-csrf');
+  const logout=await context.request.post('http://127.0.0.1:8097/admin/logout',{form:{_token:csrf}});
+  assert.equal(logout.status(),200);
+  const before=state().previews.length;
+  const popup=context.waitForEvent('page');const rejected=p.waitForResponse(r=>r.status()===419);
+  await p.getByRole('button',{name:'Vorschau',exact:true}).click();const preview=await popup;await rejected;
+  await p.locator('#madlen-project-preview-recovery').waitFor();
+  const requestId=await p.evaluate(()=>window.__madlenProjectPreviewOperation.requestId);
+  assert.equal(state().previews.length,before);
+  assert.equal(p.url(),editorUrl);
+  await p.screenshot({path:out+'/session-419-editor-preserved.png',fullPage:true});
+  const loginPopup=context.waitForEvent('page');await p.getByRole('link',{name:'Anmeldung öffnen'}).click();
+  const loginTab=await loginPopup;await login(loginTab);
+  await p.getByRole('button',{name:'Erneut versuchen',exact:true}).click();
+  await preview.waitForURL(/\/admin\/preview\//);
+  const job=state().previews.at(-1);
+  assert.equal(job.request_id,requestId);assert.equal(state().previews.length,before+1);
+  assert.equal(state().projects.find(x=>x.id===project.id).title_de,project.title_de);
+  assert.equal(await p.locator('[id="form.title_de"]').inputValue(),'Nicht gespeichert – nach neuer Anmeldung');
+  assert.equal(p.url(),editorUrl);
+  await preview.close();
+  const saved=p.waitForResponse(r=>r.request().method()==='POST');await p.getByRole('button',{name:'Speichern',exact:true}).click();await saved;
+  assert.equal(state().projects.find(x=>x.id===project.id).title_de,'Nicht gespeichert – nach neuer Anmeldung');
+  await p.screenshot({path:out+'/session-recovered-saved.png',fullPage:true});
+  writeFileSync(out+'/session-recovery.json',JSON.stringify({result:'PASS',realHTTP419:true,reauthentication:'new browser tab',sameRequestId:requestId,previewRowsAdded:1,editorReloaded:false,explicitSave:true},null,2));
+  console.log('PASS real Chromium: unsaved form → actual logout/session invalidation → HTTP 419 → login in another tab → fresh CSRF → same request_id → one preview → explicit save, no editor reload');
+}catch(error){await p.screenshot({path:out+'/session-error.png',fullPage:true});console.log(await p.locator('body').innerText());throw error;}
+finally{await browser.close();}

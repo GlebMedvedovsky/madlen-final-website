@@ -28,6 +28,22 @@ class Project extends Model
         return $this->belongsTo(Category::class);
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Project $project): void {
+            if ($project->status === 'published' || ProductionPublication::where('project_id', $project->id)
+                ->whereIn('status', ['preparing', 'prepared', 'queued', 'dispatch_unknown', 'building', 'uploading'])->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'project' => 'Dieses Projekt ist öffentlich oder wird gerade verarbeitet. Entfernen Sie es über den Editor nach erfolgreicher Veröffentlichung.',
+                ]);
+            }
+        });
+        static::restoring(function (Project $project): void {
+            $project->status = 'draft';
+            $project->published_at = null;
+        });
+    }
+
     public function cover(): BelongsTo
     {
         return $this->belongsTo(MediaAsset::class, 'cover_media_id')->withTrashed();

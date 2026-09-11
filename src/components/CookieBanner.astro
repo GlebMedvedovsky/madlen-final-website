@@ -17,6 +17,23 @@ const legalLinks = lang === "de"
       { href: withBasePath("/en/terms"), label: "Terms / information" },
     ];
 const gaMeasurementId = "G-XXXXXXXXXX";
+const ui = lang === 'de' ? {
+  settings: 'Cookie-Einstellungen', privacy: 'Privatsphäre', title: 'Wir respektieren Ihre Privatsphäre',
+  intro: 'Diese Website verwendet notwendige Technologien für den Betrieb der Seite. Optionale Statistik-Cookies, zum Beispiel Google Analytics, werden nur nach Ihrer Zustimmung aktiviert.',
+  reject: 'Ablehnen', accept: 'Alle akzeptieren', options: 'Einstellungen', close: 'Cookie-Einstellungen schließen',
+  details: 'Hier können Sie festlegen, welche Cookies und Dienste verwendet werden dürfen. Ihre Auswahl können Sie jederzeit über die runde Schaltfläche unten links ändern.',
+  necessary: 'Notwendige Cookies', necessaryText: 'Diese sind für den technischen Betrieb der Website erforderlich und können nicht deaktiviert werden.',
+  statistics: 'Statistik / Google Analytics', statisticsText: 'Hilft zu verstehen, wie Besucher die Website nutzen. Google Analytics wird nur nach Ihrer Zustimmung geladen.',
+  rejectAll: 'Alle ablehnen', save: 'Auswahl speichern',
+} : {
+  settings: 'Cookie settings', privacy: 'Privacy', title: 'We respect your privacy',
+  intro: 'This website uses necessary technologies to operate. Optional statistics cookies, such as Google Analytics, are activated only with your consent.',
+  reject: 'Reject', accept: 'Accept all', options: 'Settings', close: 'Close cookie settings',
+  details: 'Choose which cookies and services may be used. You can change your selection at any time using the round button at the bottom left.',
+  necessary: 'Necessary cookies', necessaryText: 'These are required for the website to function and cannot be disabled.',
+  statistics: 'Statistics / Google Analytics', statisticsText: 'Helps us understand how visitors use the website. Google Analytics is loaded only with your consent.',
+  rejectAll: 'Reject all', save: 'Save selection',
+};
 ---
 
 <button
@@ -37,13 +54,9 @@ const gaMeasurementId = "G-XXXXXXXXXX";
 <div class="cookie-banner" id="cookie-banner" aria-hidden="true">
   <div class="cookie-banner-content">
     <div>
-      <p class="cookie-label">Cookie-Einstellungen</p>
-      <h2>Wir respektieren Ihre Privatsphäre</h2>
-      <p>
-        Diese Website verwendet notwendige Technologien für den Betrieb der Seite.
-        Optionale Statistik-Cookies, zum Beispiel Google Analytics, werden nur
-        nach Ihrer Zustimmung aktiviert.
-      </p>
+      <p class="cookie-label">{ui.settings}</p>
+      <h2>{ui.title}</h2>
+      <p>{ui.intro}</p>
 
       <div class="cookie-links">
         {legalLinks.map((link) => <a href={link.href}>{link.label}</a>)}
@@ -52,13 +65,13 @@ const gaMeasurementId = "G-XXXXXXXXXX";
 
     <div class="cookie-actions">
       <button type="button" class="cookie-btn cookie-btn-secondary" id="cookie-reject-all">
-        Ablehnen
+        {ui.reject}
       </button>
       <button type="button" class="cookie-btn cookie-btn-secondary" id="cookie-open-settings">
-        Einstellungen
+        {ui.options}
       </button>
       <button type="button" class="cookie-btn cookie-btn-primary" id="cookie-accept-all">
-        Alle akzeptieren
+        {ui.accept}
       </button>
     </div>
   </div>
@@ -70,43 +83,40 @@ const gaMeasurementId = "G-XXXXXXXXXX";
   <div class="cookie-modal-card">
     <div class="cookie-modal-header">
       <div>
-        <p class="cookie-label">Privatsphäre</p>
-        <h2 id="cookie-modal-title">Cookie-Einstellungen</h2>
+        <p class="cookie-label">{ui.privacy}</p>
+        <h2 id="cookie-modal-title">{ui.settings}</h2>
       </div>
-      <button type="button" class="cookie-close" id="cookie-close" aria-label="Cookie-Einstellungen schließen">
+      <button type="button" class="cookie-close" id="cookie-close" aria-label={ui.close}>
         ×
       </button>
     </div>
 
     <p class="cookie-modal-intro">
-      Hier können Sie festlegen, welche Cookies und Dienste verwendet werden dürfen.
-      Ihre Auswahl können Sie jederzeit über die runde Schaltfläche unten links ändern.
+      {ui.details}
     </p>
 
     <div class="cookie-option">
       <div>
-        <h3>Notwendige Cookies</h3>
+        <h3>{ui.necessary}</h3>
         <p>
-          Diese sind für den technischen Betrieb der Website erforderlich und können
-          nicht deaktiviert werden.
+          {ui.necessaryText}
         </p>
       </div>
       <label class="cookie-switch">
-        <input type="checkbox" checked disabled />
+        <input type="checkbox" checked disabled aria-label={ui.necessary} />
         <span></span>
       </label>
     </div>
 
     <div class="cookie-option">
       <div>
-        <h3>Statistik / Google Analytics</h3>
+        <h3>{ui.statistics}</h3>
         <p>
-          Hilft zu verstehen, wie Besucher die Website nutzen. Google Analytics wird
-          nur nach Ihrer Zustimmung geladen.
+          {ui.statisticsText}
         </p>
       </div>
       <label class="cookie-switch">
-        <input type="checkbox" id="cookie-statistics" />
+        <input type="checkbox" id="cookie-statistics" aria-label={ui.statistics} />
         <span></span>
       </label>
     </div>
@@ -117,10 +127,10 @@ const gaMeasurementId = "G-XXXXXXXXXX";
 
     <div class="cookie-modal-actions">
       <button type="button" class="cookie-btn cookie-btn-secondary" id="cookie-modal-reject">
-        Alle ablehnen
+        {ui.rejectAll}
       </button>
       <button type="button" class="cookie-btn cookie-btn-primary" id="cookie-save-settings">
-        Auswahl speichern
+        {ui.save}
       </button>
     </div>
   </div>

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ProductionPublication;
+use App\Models\Project;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class ProductionPublicationPackager
         private RuntimeFilesystem $files,
     ) {}
 
-    public function prepare(): ProductionPublication
+    public function prepare(?string $requestId = null, ?Project $project = null, string $operation = 'site'): ProductionPublication
     {
         $sourceRevision = strtolower(trim((string) config('madlen.publisher.source_revision')));
         if (! preg_match('/\A[0-9a-f]{40}\z/', $sourceRevision)) {
@@ -34,7 +35,7 @@ class ProductionPublicationPackager
 
         $publication = null;
         try {
-            $publication = DB::transaction(function () use ($sourceRevision): ProductionPublication {
+            $publication = DB::transaction(function () use ($sourceRevision, $requestId, $project, $operation): ProductionPublication {
                 $sequence = ((int) ProductionPublication::query()->lockForUpdate()->max('sequence')) + 1;
 
                 return ProductionPublication::query()->create([
@@ -43,6 +44,10 @@ class ProductionPublicationPackager
                     'source_revision' => $sourceRevision,
                     'progress_message' => 'Der unveränderliche Inhaltsstand wird vorbereitet.',
                     'requested_by' => Auth::id(),
+                    'request_id' => $requestId,
+                    'project_id' => $project?->id,
+                    'operation' => $operation,
+                    'previous_project_state' => $project ? $project->only(['status', 'published_at', 'deleted_at']) : null,
                 ]);
             });
 
@@ -53,7 +58,19 @@ class ProductionPublicationPackager
 
             $payloadRoot = $root.'/requests/'.$publication->id.'/payload';
             $manifestPath = $payloadRoot.'/content-manifest.json';
-            $manifest = $this->manifests->make();
+            $snapshot = null;
+            if ($project && $operation === 'publish') {
+                $snapshot = app(ProjectPreviewSnapshotFactory::class)->make($project, [
+                    ...$project->toArray(),
+                    'mediaItems' => $project->mediaItems()->get()->toArray(),
+                ]);
+            }
+            $manifest = $this->manifests->make(projectSnapshot: $snapshot);
+            if ($project && in_array($operation, ['unpublish', 'delete'], true)) {
+                $manifest['projects'] = array_values(array_filter(
+                    $manifest['projects'], fn (array $row): bool => $row['slug'] !== $project->slug,
+                ));
+            }
             $json = json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n";
             $this->files->write($manifestPath, $json);
 
@@ -99,8 +116,8 @@ class ProductionPublicationPackager
 
             $publication->update([
                 'status' => 'prepared',
-                'manifest_path' => $manifestPath,
-                'package_path' => $archive,
+                'manifest_path' => 'madlen-production-storage-v1://requests/'.$publication->id.'/payload/content-manifest.json',
+                'package_path' => 'madlen-production-storage-v1://packages/'.basename($archive),
                 'package_checksum' => $checksum,
                 'progress_message' => 'Das unveränderliche Paket ist bereit und wurde noch nicht übertragen.',
                 'error_message' => null,

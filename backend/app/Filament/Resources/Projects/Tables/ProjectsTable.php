@@ -66,7 +66,16 @@ class ProjectsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->before(function (DeleteBulkAction $action, $records): void {
+                        if ($records->contains(fn (Project $project): bool => $project->status === 'published'
+                            || \App\Models\ProductionPublication::where('project_id', $project->id)
+                                ->whereIn('status', ['preparing', 'prepared', 'queued', 'dispatch_unknown', 'building', 'uploading'])->exists())) {
+                            Notification::make()->title('Auswahl wurde nicht gelöscht')
+                                ->body('Öffentliche oder gerade verarbeitete Projekte bitte einzeln im Editor entfernen. Alle ausgewählten Projekte bleiben erhalten.')
+                                ->warning()->persistent()->send();
+                            $action->halt();
+                        }
+                    })->databaseTransaction(),
                     RestoreBulkAction::make(),
                 ]),
             ]);

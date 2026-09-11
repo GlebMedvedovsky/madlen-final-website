@@ -28,7 +28,12 @@ class RevisionRestorer
         if (method_exists($model, 'trashed') && $model->trashed()) {
             $model->restore();
         }
-        $model->forceFill(array_intersect_key($revision->payload, array_flip($model->getFillable())))->save();
+        $payload = array_intersect_key($revision->payload, array_flip($model->getFillable()));
+        if ($model instanceof Project) {
+            // Restoring text must not silently publish, unpublish or change a stable route.
+            $payload = array_diff_key($payload, array_flip(['status','published_at','slug','source_key','source_imported_at']));
+        }
+        $model->forceFill($payload)->save();
 
         return $model->refresh();
     }

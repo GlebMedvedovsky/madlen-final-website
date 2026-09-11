@@ -21,7 +21,7 @@ class BackupService
 
         try {
             $dump = new Process([
-                'mariadb-dump', '--single-transaction', '--skip-comments',
+                $this->databaseBinary('dump_binary', 'mysqldump'), '--single-transaction', '--skip-comments', '--no-tablespaces',
                 '-h', config('database.connections.mysql.host'),
                 '-P', (string) config('database.connections.mysql.port'),
                 '-u', config('database.connections.mysql.username'),
@@ -29,7 +29,7 @@ class BackupService
             ], env: ['MYSQL_PWD' => config('database.connections.mysql.password')]);
             $dump->setTimeout(180);
             $dump->run();
-            if (! $dump->isSuccessful()) throw new RuntimeException('Datenbanksicherung fehlgeschlagen: '.trim($dump->getErrorOutput()));
+            if (! $dump->isSuccessful()) throw new RuntimeException('Datenbanksicherung fehlgeschlagen. Prüfen Sie Client, Verbindung und Rechte (Zugangsdaten werden nicht protokolliert).');
             $this->files->write($root.'/database.sql', $dump->getOutput());
 
             $mediaRoot = rtrim(Storage::disk('local')->path(''), DIRECTORY_SEPARATOR);
@@ -77,13 +77,13 @@ class BackupService
         }
 
         $restore = new Process([
-            'mariadb', '-h', env('MADLEN_RESTORE_DB_HOST', 'db_test'), '-P', '3306',
+            $this->databaseBinary('client_binary', 'mysql'), '-h', env('MADLEN_RESTORE_DB_HOST', 'db_test'), '-P', '3306',
             '-u', env('MADLEN_RESTORE_DB_USERNAME', 'madlen_restore'), $database,
         ], env: ['MYSQL_PWD' => env('MADLEN_RESTORE_DB_PASSWORD')]);
         $restore->setInput(file_get_contents($target.'/database.sql'));
         $restore->setTimeout(180);
         $restore->run();
-        if (! $restore->isSuccessful()) throw new RuntimeException('Test-Wiederherstellung der Datenbank fehlgeschlagen: '.trim($restore->getErrorOutput()));
+        if (! $restore->isSuccessful()) throw new RuntimeException('Test-Wiederherstellung der Datenbank fehlgeschlagen. Prüfen Sie das isolierte Ziel und dessen Rechte.');
 
         $this->files->ensureDirectory($target.'/restored-media');
         $restoreMedia = new Process(['tar', '-xzf', $target.'/media.tar.gz', '-C', $target.'/restored-media']);
@@ -93,5 +93,15 @@ class BackupService
         }
 
         return $target;
+    }
+
+    private function databaseBinary(string $key, string $label): string
+    {
+        $binary = trim((string) config("madlen.backup.{$key}"));
+        if ($binary === '' || ! str_starts_with($binary, '/') || ! is_file($binary) || ! is_executable($binary)) {
+            throw new RuntimeException("Der konfigurierte {$label}-Pfad ist nicht ausführbar. Prüfen Sie MADLEN_".strtoupper($key === 'dump_binary' ? 'MYSQLDUMP_BIN' : 'MYSQL_BIN').'.');
+        }
+
+        return $binary;
     }
 }

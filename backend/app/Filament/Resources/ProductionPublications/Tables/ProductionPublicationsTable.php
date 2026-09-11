@@ -22,6 +22,8 @@ class ProductionPublicationsTable
                     'active' => 'Produktiv aktiv',
                     'superseded' => 'Früher aktiv',
                     'failed' => 'Fehlgeschlagen',
+                    'dispatch_unknown' => 'Übergabe unbestätigt',
+                    'rolled_back' => 'Zurückgesetzt',
                     default => $state,
                 }),
                 TextColumn::make('progress_message')->label('Fortschritt')->wrap(),
