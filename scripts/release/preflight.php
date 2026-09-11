@@ -8,7 +8,7 @@ $backend = realpath($args[0] ?? '/madebymadlen.de/app/backend');
 if (! $backend || basename($backend)!=='backend') { fwrite(STDERR,"Invalid backend\n"); exit(1); }
 // This gate runs BEFORE reading env or bootstrapping the installed application.
 // --tools is also used immediately before apply/rollback. No PATH Composer and
-// no executable `stat` dependency; the trusted PHAR checksum comes from the operator.
+// no executable cmp/stat dependency; the trusted PHAR checksum comes from the operator.
 try {
     if (PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500) throw new RuntimeException('PHP 8.4 is required');
     foreach (['proc_open', 'symlink', 'hash_file', 'fileperms'] as $function) {
@@ -17,17 +17,18 @@ try {
     foreach (['pdo_mysql', 'mbstring', 'openssl', 'fileinfo', 'zip', 'gd', 'intl', 'Phar'] as $extension) {
         if (! extension_loaded($extension)) throw new RuntimeException('Required PHP extension: '.$extension);
     }
-    $run = static function (array $command): string {
+    $run = static function (array $command, ?string $toolName = null): string {
+        $toolName ??= basename($command[0]);
         $process = proc_open($command, [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes);
-        if (! is_resource($process)) throw new RuntimeException('Cannot check required tool');
+        if (! is_resource($process)) throw new RuntimeException('Cannot check required tool: '.$toolName);
         fclose($pipes[0]); $output=stream_get_contents($pipes[1]); $errors=stream_get_contents($pipes[2]);
         fclose($pipes[1]); fclose($pipes[2]);
-        if (proc_close($process)!==0) throw new RuntimeException('Required tool failed: '.basename($command[0]));
+        if (proc_close($process)!==0) throw new RuntimeException('Required tool failed: '.$toolName);
         return trim($output);
     };
     $tools = [];
-    foreach (['tar','gzip','sha256sum','date','mkdir','chmod','cmp','id','ls'] as $name) {
-        $binary=$run(['/bin/sh','-c','command -v "$1"','madlen-preflight',$name]);
+    foreach (['tar','gzip','sha256sum','date','mkdir','chmod','id','ls'] as $name) {
+        $binary=$run(['/bin/sh','-c','command -v "$1"','madlen-preflight',$name], $name);
         if (! is_executable($binary)) throw new RuntimeException('Missing tool: '.$name);
         $tools[$name]=$binary;
     }
