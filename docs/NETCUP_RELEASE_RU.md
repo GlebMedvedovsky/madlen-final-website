@@ -67,7 +67,7 @@ test ! -e "${ARCHIVE%.tar.gz}"
 tar -xzf "$ARCHIVE"
 ```
 
-Ниже один диагностический блок, запускаемый после распаковки. Он не применяет обновление, не пишет в CMS, не запускает Artisan/Tinker, не выводит значения секретов; запросы к БД — только SELECT/SHOW. Вывод можно сохранить на локальном компьютере. По уже предоставленному preflight: `stat` отсутствует, Composer отсутствует в PATH; PHP — `/usr/local/php84/bin/php`, MySQL dump — `/usr/bin/mysqldump`. Не искать системный Composer и не устанавливать новые инструменты в процессе применения overlay.
+Ниже один диагностический блок, запускаемый после распаковки. Он не применяет обновление, не пишет в CMS, не запускает Artisan/Tinker, не выводит значения секретов; запросы к БД — только SELECT/SHOW. Вывод можно сохранить на локальном компьютере. По уже предоставленному preflight: `cmp` и `stat` отсутствуют, Composer отсутствует в PATH; PHP — `/usr/local/php84/bin/php`, MySQL dump — `/usr/bin/mysqldump`. Ни cmp, ни stat для установки не нужны. Не искать системный Composer и не устанавливать новые инструменты в процессе применения overlay.
 
 В `COMPOSER_PHAR` подставить **уже проверенный приватный** PHAR вне document root, в `COMPOSER_SHA256` — его ранее проверенную SHA-256 из доверенной записи. Точный путь и хэш здесь намеренно не выдуманы. Не считать только что вычисленный хэш неизвестного файла доказательством его доверенности. Проверка требует обычный файл внутри `/madebymadlen.de/private`, без symlink и записи для group/others; запускает его только через PHP84 с отключёнными plugins/scripts. Значения этих двух переменных использовать также в установке и откате.
 
@@ -91,7 +91,7 @@ done
 
 Дополнительно только посмотреть в WCP: текущий document root обоих публичных имён, HTTP→HTTPS, обработчик PHP/FastCGI для admin, пользователь файлов и возможность обслуживать symlink. CLI не доказывает эти свойства. Не создавать общедоступный phpinfo/diagnostic endpoint.
 
-Preflight прекращает работу при отсутствии PHP 8.4/нужных расширений, `proc_open`, symlink, `tar`, `gzip`, `sha256sum`, `date`, `mkdir`, `chmod`, `cmp`, `id`, `ls`, `/usr/bin/mysqldump`, `/usr/bin/mysql` или проверенного Composer 2. Права каталогов выводятся через PHP `fileperms`/UID/GID и `ls -ld`, не через `stat`. Перед apply и code rollback тот же gate `--tools` выполняется повторно, до изменения файлов. Это проверка наличия и запуска инструментов, не доказательство прав ALTER/dump, FastCGI или доверенности неизвестного PHAR.
+Preflight прекращает работу при отсутствии PHP 8.4/нужных расширений, `proc_open`, symlink, `tar`, `gzip`, `sha256sum`, `date`, `mkdir`, `chmod`, `id`, `ls`, `/usr/bin/mysqldump`, `/usr/bin/mysql` или проверенного Composer 2. Ошибка поиска называет конкретный обязательный инструмент, а не оболочку sh. Права каталогов выводятся через PHP `fileperms`/UID/GID и `ls -ld`, не через `stat`; маркеры сравниваются через PHP, без `cmp`. Перед apply и code rollback тот же gate `--tools` выполняется повторно, до изменения файлов. Это проверка наличия и запуска инструментов, не доказательство прав ALTER/dump, FastCGI или доверенности неизвестного PHAR.
 
 Также сверить лимиты загрузки/времени/памяти именно FastCGI в WCP: значения CLI из preflight могут отличаться. Свободного места должно хватать одновременно на исходные media, private package, incoming ZIP, новый и прежний static releases и backup. Проверить максимальную фотографию из реального рабочего набора после установки; синтетическая загрузка не доказывает квоты и права Netcup.
 
@@ -154,7 +154,13 @@ chmod 755 /madebymadlen.de/releases/static
 ensure_marker() {
   if [ -L "$1" ]; then printf 'STOP: symlink marker %s\n' "$1" >&2; return 1; fi
   if [ -e "$1" ]; then
-    printf '%s\n' "$2" | cmp -s - "$1" || { printf 'STOP: unexpected marker %s\n' "$1" >&2; return 1; }
+    /usr/local/php84/bin/php -r '
+      $path = $argv[1];
+      $expected = $argv[2]."\n";
+      if (is_link($path) || !is_file($path) || !is_readable($path)) exit(1);
+      $actual = @file_get_contents($path, false, null, 0, strlen($expected) + 1);
+      if ($actual === false || $actual !== $expected) exit(1);
+    ' "$1" "$2" || { printf 'STOP: unreadable, non-regular or unexpected marker %s\n' "$1" >&2; return 1; }
   else
     (set -C; printf '%s\n' "$2" > "$1")
   fi
@@ -163,7 +169,7 @@ ensure_marker /madebymadlen.de/private/incoming/production/.madlen-publisher-inc
 ensure_marker /madebymadlen.de/releases/static/.madlen-publisher-root madlen-production-root-v1
 ```
 
-Если маркеры уже существуют, сначала сравнить их; не переписывать неожиданные значения. SSH-пользователь и пользователь FastCGI должны иметь согласованные права. При разных UID использовать проверенную общую группу и минимальные групповые права вместо 700; доступ к private через HTTP запрещён. `current` создаст первый release; вручную его не создавать.
+Если маркеры уже существуют, сначала сравнить их; не переписывать неожиданные значения. PHP сравнивает байты строго: ожидается значение и ровно один завершающий LF. Отсутствующий LF, CRLF, лишние байты, symlink (в том числе оборванный), каталог, FIFO, иной необычный или нечитаемый файл приводят к отказу; содержимое маркера не выводится. Чтение ограничено ожидаемой длиной плюс одним байтом, чтобы обнаружить лишние данные без загрузки произвольного файла целиком. Для нового маркера сохранён noclobber: существующий файл не перезаписывается. SSH-пользователь и пользователь FastCGI должны иметь согласованные права. При разных UID использовать проверенную общую группу и минимальные групповые права вместо 700; доступ к private через HTTP запрещён. `current` создаст первый release; вручную его не создавать.
 
 В private env сохранить существующие секреты и preview-конфигурацию. Добавить/проверить только:
 
