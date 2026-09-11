@@ -84,7 +84,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SOURCE_REVISION"
 
       - name: Set up Node.js
-        uses: actions/setup-node@1e60f620b9541d7c323c8ed6b31b9b0252e57a28 # v4.0.4
+        uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
         with:
           node-version: 22
 
