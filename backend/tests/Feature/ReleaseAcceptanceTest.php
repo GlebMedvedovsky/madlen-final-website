@@ -121,6 +121,43 @@ class ReleaseAcceptanceTest extends TestCase
         $this->assertSame('building', $publication->refresh()->status);
     }
 
+    public function test_acknowledged_publish_then_new_text_in_the_same_editor_creates_a_new_request(): void
+    {
+        $project = Project::where('slug', 'renaissance')->firstOrFail();
+        $editor = Livewire::test(EditProject::class, ['record' => $project->id]);
+        $originalId = $editor->get('productionRequestIds.publish');
+        $editor->fillForm(['title_de' => 'Erste bestätigte Veröffentlichung'])
+            ->callAction('publish')->assertHasNoFormErrors()->assertNoRedirect();
+        $first = ProductionPublication::sole();
+        $firstManifest = File::get($first->manifest_path);
+        $this->assertNotSame($originalId, $editor->get('productionRequestIds.publish'));
+        $this->finish($first);
+
+        // No remount, reload or separate Save: the acknowledged response permits
+        // a new intent with the latest form, even though the previous job is active.
+        $nextId = $editor->get('productionRequestIds.publish');
+        $editor->fillForm(['title_de' => 'Zweite Veröffentlichung aus derselben Registerkarte'])
+            ->callAction('publish')->assertHasNoFormErrors()->assertNoRedirect();
+        $second = ProductionPublication::latest('sequence')->firstOrFail();
+        $this->assertSame($nextId, $second->request_id);
+        $this->assertNotSame($first->id, $second->id);
+        $this->assertSame($first->sequence + 1, $second->sequence);
+        $this->assertSame('Zweite Veröffentlichung aus derselben Registerkarte',
+            collect(json_decode(File::get($second->manifest_path), true)['projects'])->firstWhere('slug', $project->slug)['title']['de']);
+        $this->assertSame($firstManifest, File::get($first->manifest_path));
+
+        // Simulate the browser replaying the snapshot of an unacknowledged request.
+        // Neither a queued nor an already completed request can be recreated.
+        foreach ([$nextId, $originalId] as $lostRequest) {
+            $editor->set('productionRequestIds.publish', $lostRequest)
+                ->fillForm(['title_de' => 'Nicht durch einen Retry speichern'])
+                ->callAction('publish')->assertNoRedirect();
+        }
+        $this->assertDatabaseCount('production_publications', 2);
+        Http::assertSentCount(2);
+        $this->assertSame('Zweite Veröffentlichung aus derselben Registerkarte', $project->refresh()->title_de);
+    }
+
     public function test_validation_and_disabled_publication_leave_draft_unchanged(): void
     {
         $project = Project::firstOrFail();

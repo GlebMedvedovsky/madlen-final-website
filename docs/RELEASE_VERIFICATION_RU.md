@@ -1,5 +1,26 @@
 # Madlen — проверка кандидата выпуска
 
+## Исправления review PR #4
+
+Ветка `release/netcup-cms-candidate`, база этого исправления `5591c48135dae76dd9aaa70076238fba38716c3f`. Netcup, реальные CMS-данные, секреты и merge не затрагиваются.
+
+- `EditProject`: ответ принятой операции выдаёт новый UUID для следующего нажатия. Старый Livewire-снимок при потерянном ответе сохраняет исходный UUID: повтор не сохраняет форму повторно и не создаёт ещё один заказ. Проверены очередной и уже активный старые запросы, новый текст без remount/Save, неизменность первого manifest.
+- `StaticReleaseActivator`: при компенсации ошибки CMS сохраняется checksum неудачного релиза. Повтор с новым runner и новым ZIP разрешает заменить только этот последний неактивный каталог после полной проверки нового staging; старый каталог сохраняется в `.incoming/failed-…`. Checksum/source/content identity, active/старые/откатанные релизы, high-water sequence и runner-проверки не отключены.
+- Runbook/preflight: нет вызова `stat` или поиска Composer в PATH. Проверенный private `composer.phar` запускается PHP84, проверяется по ранее доверенной SHA-256 до выполнения. Gate инструментов повторяется до apply/rollback; `config:cache` по-прежнему запрещён.
+
+Реально повторено после изменений:
+
+- Полный `php artisan test`: **43 passed, 5818 assertions** (434.03 s), изолированная SQLite и временные файлы. В том числе CMS, preview/editor recovery, contact, backup и publication.
+- Целевые `ReleaseAcceptanceTest|ProductionPublisherPreparationTest`: **14 passed, 260 assertions**. Новая регрессия ошибки CMS исполняет **две настоящие локальные Astro-сборки** одного immutable package: разные `builtAt` и SHA ZIP, `production:retry`, новый claim/runner, отказ старому runner/ложной checksum/изменённому checksum старого каталога, восстановление, DE/EN и rollback.
+- **8 Node-тестов** routing/preview request recovery; проверки порядка production workflow и фильтра непубличных артефактов — PASS.
+- Настоящий Symfony YAML parser + `bash -n` **17 workflow-блоков**; Python ZIP traversal/private/symlink регрессии — PASS.
+- `php scripts/release/test-preflight.php`: успешный gate в PATH **без stat и composer**, шесть отказов (checksum, отсутствующий PHAR/инструменты, public PHAR, symlink, unsafe permissions), **7 bash-блоков runbook**. PHAR синтетический; это не проверка установленного Netcup Composer или его доверенности.
+- Настоящий Chromium (`qa-publish-review-browser.mjs`): в одной вкладке две публикации кнопкой, два разных UUID/заказа, две реальные локальные сборки/активации, новый текст в DE и переход на EN того же проекта. Третий серверный ответ после создания заказа принудительно оборван; из той же браузерной сессии повторён **точный исходный HTTP body** на фактический hashed Livewire endpoint: HTTP 200, прежний request_id, один заказ, **0 перезагрузок**, поля сохранены. Это replay через browser fetch, не заявление о добавлении автоматического UI-retry. Evidence: `installation-artifacts/release-qa/review-publish-browser.json`, `review-publish-same-tab.png`; внешняя сеть закрыта, dispatch fake.
+
+Состав остаётся **26 production-файлов**, новых runtime-классов или миграций сверх кандидата review не добавляет. Старый архив `madlen-release-kit-20260911T010215Z.tar.gz` сохранён побайтно (SHA-256 `a88f8e5d64d7f160361041f3d4f3d724dc38c7e27b766351fbde69a0f27b50ed`), но **не содержит этих исправлений**. После merge нужен новый kit из итоговой ревизии. Исходные server checksums, FastCGI/права, реальный dispatch/SSH/SMTP остаются серверной приёмкой; локальные fake HTTP и synthetic DB failure её не заменяют.
+
+## Исторический отчёт первоначального кандидата (до review)
+
 Проверка выполнена локально 11.09.2026. Код подготовлен к commit/review, но **не объявляется установленным или проверенным на Netcup**. Ветка `fix/preview-editor-flow`, исходный HEAD `f3133d6175189e13bc8ae34b60cf2f984519ad15`. Серверная база сравнения — `88e1af1b55e56cdf47085bbba11d3c130831a1bc`. Commit, push, merge, реальная публикация и изменения Netcup не выполнялись.
 
 ## Что исправлено

@@ -57,6 +57,10 @@ class EditProject extends EditRecord
                 $this->productionRequestIds[$operation] = $requestId;
             }
             $publication = app(ProductionPublisher::class)->publish($requestId, $record->refresh(), $operation);
+            // Only the acknowledged Livewire response advances the editor's identity.
+            // A lost response leaves the browser's original snapshot/request ID intact;
+            // replaying it returns the existing publication without saving again.
+            $this->productionRequestIds[$operation] = (string) Str::uuid();
             Notification::make()->title("Produktiv-Auftrag {$publication->sequence}")
                 ->body($publication->progress_message)->persistent()
                 ->color($publication->status === 'failed' ? 'danger' : 'info')->send();

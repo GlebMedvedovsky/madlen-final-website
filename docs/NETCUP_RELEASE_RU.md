@@ -18,11 +18,13 @@
 
 После будущего commit/review/merge исходников нужно заново собрать kit (`node scripts/release/build-kit.mjs`) и привязать обе source revision к проверенному merge SHA. Не указывать `88e1af1`, HEAD старой ветки или SHA несуществующего commit вместо нового кода. Сам kit не изменяет Git.
 
+Сохранённый кандидат `madlen-release-kit-20260911T010215Z.tar.gz` — неизменённый контрольный архив **до исправлений review PR #4**, не финальный установочный пакет. Исправления повторной публикации/восстановления и новый preflight должны попасть в заново собранный пакет после итогового merge; состав остаётся 26 production-файлов, дополнительных миграций или runtime-классов это review не добавляет.
+
 ## 2. Как устроен выпуск
 
 Сохранение оставляет черновик черновиком, а сохранение уже опубликованного проекта не меняет текущие статические файлы. Preview берёт валидированный несохранённый снимок и открывается отдельно. Явное «Veröffentlichen» сохраняет текущую форму, включает выбранный проект в production package и запускает внешний workflow. Остальные **черновики** не включаются. Остальные уже опубликованные проекты и общие разделы берутся из сохранённой CMS: их сохранённые правки также попадут в следующую сборку сайта. Не смешивайте неподтверждённые общие правки с окном выпуска.
 
-Запрос имеет постоянный UUID. Повтор того же запроса возвращает тот же package. Другой запрос при незавершённой публикации отклоняется, а не подменяется чужим результатом. Runner получает claim; статусы и SSH-активация проверяют идентичность runner. Потеря ответа dispatch означает «Übergabe unbestätigt», не автоматическую повторную публикацию.
+Каждая операция имеет постоянный UUID. Повтор потерянного запроса из исходного Livewire-снимка возвращает тот же package и не сохраняет форму повторно. Успешно полученный ответ передаёт редактору новый UUID для следующего намеренного нажатия: после публикации можно изменить текст в той же вкладке и выпустить новый снимок без перезагрузки. Другой запрос при незавершённой публикации отклоняется, а не подменяется чужим результатом. Runner получает claim; статусы и SSH-активация проверяют идентичность runner. Потеря ответа dispatch означает «Übergabe unbestätigt», не автоматическую повторную публикацию.
 
 Статусы publish/unpublish/delete меняются только после проверки и переключения `current`. Удаление публичного проекта выполняется через редактор и сначала собирает сайт без него. Групповое удаление публичных/обрабатываемых проектов отклоняется целиком. Восстановление возвращает проект в черновики; используемые, в том числе удалёнными восстанавливаемыми проектами, медиа защищены.
 
@@ -38,6 +40,7 @@ Production manifest/package записываются в БД как `madlen-prod
 
 ```bash
 set -eu
+for tool in sha256sum tar gzip; do command -v "$tool" >/dev/null || { printf 'STOP: missing %s\n' "$tool" >&2; exit 1; }; done
 cd /madebymadlen.de/private/updates
 ARCHIVE=madlen-release-kit-REPLACE_WITH_ACTUAL_NAME.tar.gz
 sha256sum -c "$ARCHIVE.sha256"
@@ -47,27 +50,31 @@ test ! -e "${ARCHIVE%.tar.gz}"
 tar -xzf "$ARCHIVE"
 ```
 
-Ниже один диагностический блок, запускаемый после распаковки. Он не применяет обновление, не пишет в CMS, не запускает Artisan/Tinker, не выводит значения секретов; запросы к БД — только SELECT/SHOW. Вывод можно сохранить на локальном компьютере.
+Ниже один диагностический блок, запускаемый после распаковки. Он не применяет обновление, не пишет в CMS, не запускает Artisan/Tinker, не выводит значения секретов; запросы к БД — только SELECT/SHOW. Вывод можно сохранить на локальном компьютере. По уже предоставленному preflight: `stat` отсутствует, Composer отсутствует в PATH; PHP — `/usr/local/php84/bin/php`, MySQL dump — `/usr/bin/mysqldump`. Не искать системный Composer и не устанавливать новые инструменты в процессе применения overlay.
+
+В `COMPOSER_PHAR` подставить **уже проверенный приватный** PHAR вне document root, в `COMPOSER_SHA256` — его ранее проверенную SHA-256 из доверенной записи. Точный путь и хэш здесь намеренно не выдуманы. Не считать только что вычисленный хэш неизвестного файла доказательством его доверенности. Проверка требует обычный файл внутри `/madebymadlen.de/private`, без symlink и записи для group/others; запускает его только через PHP84 с отключёнными plugins/scripts. Значения этих двух переменных использовать также в установке и откате.
 
 ```bash
 set -eu
 PHP_BIN=/usr/local/php84/bin/php
+COMPOSER_PHAR=/madebymadlen.de/private/REPLACE_WITH_VERIFIED_PATH/composer.phar
+COMPOSER_SHA256=REPLACE_WITH_PREVIOUSLY_VERIFIED_SHA256
 BACKEND=/madebymadlen.de/app/backend
 KIT=/madebymadlen.de/private/updates/madlen-release-kit-REPLACE_WITH_ACTUAL_NAME
 cd "$KIT"
+command -v sha256sum >/dev/null
 sha256sum -c SHA256SUMS
-"$PHP_BIN" preflight.php "$BACKEND"
+"$PHP_BIN" preflight.php "$BACKEND" "$COMPOSER_PHAR" "$COMPOSER_SHA256"
 "$PHP_BIN" overlay.php inspect "$BACKEND"
-COMPOSER_BIN=$(command -v composer || true)
-if [ -n "$COMPOSER_BIN" ]; then "$PHP_BIN" "$COMPOSER_BIN" --version --no-ansi; else printf 'Composer path required\n'; fi
-/usr/bin/mysqldump --version
 id
 for item in /madebymadlen.de/private /madebymadlen.de/private/packages/production /madebymadlen.de/private/incoming/production /madebymadlen.de/releases/static; do
-  if [ -e "$item" ]; then stat -c '%A %U:%G %n' "$item"; else printf 'MISSING: %s\n' "$item"; fi
+  if [ -e "$item" ]; then ls -ld "$item"; else printf 'MISSING: %s\n' "$item"; fi
 done
 ```
 
 Дополнительно только посмотреть в WCP: текущий document root обоих публичных имён, HTTP→HTTPS, обработчик PHP/FastCGI для admin, пользователь файлов и возможность обслуживать symlink. CLI не доказывает эти свойства. Не создавать общедоступный phpinfo/diagnostic endpoint.
+
+Preflight прекращает работу при отсутствии PHP 8.4/нужных расширений, `proc_open`, symlink, `tar`, `gzip`, `sha256sum`, `date`, `mkdir`, `chmod`, `cmp`, `id`, `ls`, `/usr/bin/mysqldump`, `/usr/bin/mysql` или проверенного Composer 2. Права каталогов выводятся через PHP `fileperms`/UID/GID и `ls -ld`, не через `stat`. Перед apply и code rollback тот же gate `--tools` выполняется повторно, до изменения файлов. Это проверка наличия и запуска инструментов, не доказательство прав ALTER/dump, FastCGI или доверенности неизвестного PHAR.
 
 Также сверить лимиты загрузки/времени/памяти именно FastCGI в WCP: значения CLI из preflight могут отличаться. Свободного места должно хватать одновременно на исходные media, private package, incoming ZIP, новый и прежний static releases и backup. Проверить максимальную фотографию из реального рабочего набора после установки; синтетическая загрузка не доказывает квоты и права Netcup.
 
@@ -82,6 +89,9 @@ set -eu
 PHP_BIN=/usr/local/php84/bin/php
 BACKEND=/madebymadlen.de/app/backend
 KIT=/madebymadlen.de/private/updates/madlen-release-kit-REPLACE_WITH_ACTUAL_NAME
+: "${COMPOSER_PHAR:?Use the verified private PHAR from preflight}"
+: "${COMPOSER_SHA256:?Use its previously verified SHA-256}"
+"$PHP_BIN" "$KIT/preflight.php" --tools "$BACKEND" "$COMPOSER_PHAR" "$COMPOSER_SHA256"
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 BACKUPS=/madebymadlen.de/private/backups
 mkdir -p "$BACKUPS"
@@ -93,8 +103,7 @@ cd "$KIT"
 (cd "$BACKUPS/db-$STAMP" && sha256sum -c backup.sha256)
 "$PHP_BIN" overlay.php apply "$BACKEND" "$BACKUPS/code-$STAMP" installed-state.json
 cd "$BACKEND"
-COMPOSER_BIN=$(command -v composer)
-"$PHP_BIN" "$COMPOSER_BIN" dump-autoload --no-dev --optimize --no-scripts
+"$PHP_BIN" "$COMPOSER_PHAR" dump-autoload --no-dev --optimize --no-scripts --no-plugins
 "$PHP_BIN" -r 'require "vendor/autoload.php"; foreach (["App\\Services\\ProductionReleaseManager","App\\Console\\Commands\\RetryProductionPublication","App\\Data\\ProjectPreviewSnapshot","App\\Services\\ProjectPreviewSnapshotFactory","App\\Http\\Controllers\\AdminSessionController"] as $c) { if (!class_exists($c)) {fwrite(STDERR,"Missing class: $c\n"); exit(1);} } echo "Autoload OK\n";'
 "$PHP_BIN" artisan config:clear
 "$PHP_BIN" artisan route:clear
@@ -192,7 +201,11 @@ cd /madebymadlen.de/app/backend
 /usr/local/php84/bin/php artisan madlen:production:retry JOB_UUID --runner-stopped
 ```
 
-Это не новый снимок, не новый project и не новый publication row. Более новый job уже существует — retry старого отклоняется. Если activation остановилась после распаковки и проверенный target уже существует с другим checksum, не удалять его вслепую: выяснить, какой архив создал его. Допустим повтор активации исходного проверенного архива с правильным runner, либо отдельное ручное перемещение ТОЛЬКО этого неактивного target в private quarantine после сверки current. Реальные сетевые таймауты/права проверяются на Netcup, не имитируются обещанием готовности.
+Это не новый снимок, не новый project и не новый publication row. Более новый job уже существует — retry старого отклоняется. Новый runner заново собирает тот же исходный package: из-за `builtAt` checksum **результирующего ZIP** может отличаться, что нормально. Checksum исходного package, source revision, content checksum, UUID/sequence и новый runner_id продолжают проверяться.
+
+Если после переключения `current` произошла ошибка CMS-транзакции, компенсатор возвращает прежний указатель и записывает `failedActivation`/`failedPackageChecksum` в `.publisher-state.json`. Только для этого последнего неактивного релиза повтор может заменить каталог: сначала полностью проверяется новый ZIP в staging, затем старый каталог переносится в `.incoming/failed-<sequence>-<uuid>-<random>` внутри static root, и новый занимает его место. Старый каталог сохраняется для расследования, через `current` не обслуживается. Изменённая контрольная сумма старого каталога, неправильный новый checksum, старый runner, активный/более старый/откатанный релиз не обходят защиту. Повтор с исходным ZIP также поддержан.
+
+Если нет записи компенсации (например, аварийно завершился процесс), метаданные не совпадают или указатель неизвестен — остановиться и сверить current, запись CMS, state и оба ZIP. Не удалять каталог, не править checksum/state и не пытаться обойти проверку новым заказом. Это отдельное расследование; полная атомарность БД+файловой системы при аварии машины не обещается. Реальные сетевые таймауты/права проверяются на Netcup.
 
 Для отката уже принятого выпуска дождаться отсутствия in-flight jobs, выключить GitHub gate (connected временно оставить true для команды) и выполнить:
 
@@ -206,10 +219,13 @@ cd /madebymadlen.de/app/backend
 Code rollback: выключить production/runner, закрыть изменение CMS, проверить отсутствие активных операций. Из того же kit:
 
 ```bash
+set -eu
+: "${COMPOSER_PHAR:?Use the verified private PHAR from preflight}"
+: "${COMPOSER_SHA256:?Use its previously verified SHA-256}"
+/usr/local/php84/bin/php "$KIT/preflight.php" --tools /madebymadlen.de/app/backend "$COMPOSER_PHAR" "$COMPOSER_SHA256"
 /usr/local/php84/bin/php "$KIT/overlay.php" rollback /madebymadlen.de/app/backend "$BACKUPS/code-$STAMP"
 cd /madebymadlen.de/app/backend
-COMPOSER_BIN=$(command -v composer)
-/usr/local/php84/bin/php "$COMPOSER_BIN" dump-autoload --no-dev --optimize --no-scripts
+/usr/local/php84/bin/php "$COMPOSER_PHAR" dump-autoload --no-dev --optimize --no-scripts --no-plugins
 /usr/local/php84/bin/php artisan config:clear
 /usr/local/php84/bin/php artisan route:clear
 /usr/local/php84/bin/php artisan view:clear

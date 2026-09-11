@@ -356,6 +356,113 @@ class ProductionPublisherPreparationTest extends TestCase
         $this->assertSame('Erster stabiler Stand', trim(strip_tags(file_get_contents($this->destinationRoot.'/current/index.html'))));
     }
 
+    public function test_cms_failure_recovers_with_a_new_runner_and_two_real_astro_builds(): void
+    {
+        $this->artisan('madlen:import')->assertSuccessful();
+        $baseline = ProductionPublication::create(['sequence' => 1, 'status' => 'active', 'source_revision' => str_repeat('a', 40)]);
+        [$oldZip, $oldSha] = $this->makeStaticArchive('stable.zip', 'Stable site', $baseline->id, 1);
+        $activator = app(StaticReleaseActivator::class);
+        $stable = $activator->activate($baseline->id, 1, basename($oldZip), $oldSha);
+        $baseline->update(['target_release' => $stable]);
+        $project = Project::where('slug', 'renaissance')->firstOrFail();
+        $project->update(['status' => 'draft']);
+        config([
+            'madlen.production_connected' => true, 'madlen.production_publisher' => 'github-actions',
+            'madlen.publisher.github_repository' => 'example/madlen',
+            'madlen.publisher.github_token' => 'synthetic', 'madlen.publisher.api_token' => 'synthetic-api',
+        ]);
+        Http::preventStrayRequests();
+        Http::fake(['https://api.github.com/*' => Http::response(null, 204)]);
+        $job = app(ProductionPublisher::class)->publish((string) Str::uuid(), $project, 'publish');
+        $packageSha = $job->package_checksum;
+        $api = '/api/publisher/v1/publications/'.$job->id;
+        $this->withToken('synthetic-api')->postJson($api.'/claim', ['runner_id' => '71-1'])->assertOk()->assertJson(['claimed' => true]);
+        $package = $this->extractPackage($job);
+        $firstBuild = $this->buildPublication($job, $package);
+        [$firstZip, $firstSha] = $this->archiveBuild($firstBuild, 'attempt-one.zip');
+        $firstMetadata = json_decode(File::get($firstBuild.'/.madlen-release.json'), true);
+        $release = $job->sequence.'-'.$job->id;
+        $this->withToken('synthetic-api')->postJson($api.'/status', ['runner_id' => '71-1', 'status' => 'uploading'])->assertOk();
+        $armed = true;
+        Project::updating(function (Project $record) use ($project, $release, &$armed): void {
+            if ($armed && $record->id === $project->id && $record->status === 'published') {
+                $armed = false;
+                $this->assertSame('releases/'.$release, readlink($this->destinationRoot.'/current'));
+                throw new \RuntimeException('Synthetic CMS failure AFTER current switch');
+            }
+        });
+        $manager = app(ProductionReleaseManager::class);
+        try {
+            $manager->activate($job->id, $job->sequence, basename($firstZip), $firstSha, '71-1');
+            $this->fail('CMS transaction failure expected');
+        } catch (\RuntimeException $error) {
+            $this->assertSame('Synthetic CMS failure AFTER current switch', $error->getMessage());
+        }
+        $this->assertSame('releases/'.$stable, readlink($this->destinationRoot.'/current'));
+        $this->assertSame('draft', $project->refresh()->status);
+        $this->assertSame('active', $baseline->refresh()->status);
+        $target = $this->destinationRoot.'/releases/'.$release;
+        $this->assertSame($firstSha, trim(File::get($target.'/.madlen-package.sha256')));
+        $this->withToken('synthetic-api')->postJson($api.'/status', ['runner_id' => '71-1', 'status' => 'failed'])->assertOk();
+        $this->artisan('madlen:production:retry', ['publication' => $job->id, '--runner-stopped' => true])->assertSuccessful();
+        $this->withToken('synthetic-api')->postJson($api.'/claim', ['runner_id' => '72-1'])->assertOk()->assertJson(['claimed' => true]);
+        $this->assertSame($packageSha, $job->refresh()->package_checksum);
+        $this->assertDatabaseCount('production_publications', 2);
+
+        // Re-run the real build: do NOT reuse the first ZIP or patch its metadata.
+        $secondBuild = $this->buildPublication($job, $package);
+        [$secondZip, $secondSha] = $this->archiveBuild($secondBuild, 'attempt-two.zip');
+        $secondMetadata = json_decode(File::get($secondBuild.'/.madlen-release.json'), true);
+        $this->assertNotSame($firstMetadata['builtAt'], $secondMetadata['builtAt']);
+        $this->assertNotSame($firstSha, $secondSha);
+        $this->assertSame($firstMetadata['contentChecksum'], $secondMetadata['contentChecksum']);
+        $this->withToken('synthetic-api')->postJson($api.'/status', ['runner_id' => '72-1', 'status' => 'uploading'])->assertOk();
+        foreach ([['71-1', $secondSha], ['72-1', $firstSha]] as [$runner, $badSha]) {
+            try {
+                $manager->activate($job->id, $job->sequence, basename($secondZip), $badSha, $runner);
+                $this->fail('Old runner / wrong checksum must be refused');
+            } catch (\RuntimeException) {
+                $this->assertSame('releases/'.$stable, readlink($this->destinationRoot.'/current'));
+                $this->assertSame($firstSha, trim(File::get($target.'/.madlen-package.sha256')));
+            }
+        }
+        // A modified failed-release checksum cannot use the recovery exception.
+        File::put($target.'/.madlen-package.sha256', str_repeat('0', 64));
+        try {
+            $manager->activate($job->id, $job->sequence, basename($secondZip), $secondSha, '72-1');
+            $this->fail('Modified failed directory must be refused');
+        } catch (\RuntimeException $error) {
+            $this->assertStringContainsString('Zielverzeichnis', $error->getMessage());
+        }
+        File::put($target.'/.madlen-package.sha256', $firstSha."\n");
+        $manager->activate($job->id, $job->sequence, basename($secondZip), $secondSha, '72-1');
+        $this->assertSame('active', $job->refresh()->status);
+        $this->assertSame('published', $project->refresh()->status);
+        $this->assertSame($secondSha, trim(File::get($target.'/.madlen-package.sha256')));
+        foreach (['portfolio/renaissance', 'en/portfolio/renaissance'] as $route) {
+            $this->assertFileEquals($secondBuild.'/'.$route.'/index.html', $this->destinationRoot.'/current/'.$route.'/index.html');
+        }
+        $quarantined = glob($this->destinationRoot.'/.incoming/failed-'.$release.'-*');
+        $this->assertCount(1, $quarantined);
+        $this->assertSame($firstSha, trim(File::get($quarantined[0].'/.madlen-package.sha256')));
+        try {
+            $manager->activate($job->id, $job->sequence, basename($firstZip), $firstSha, '72-1');
+            $this->fail('An active release must not be replaced by another build');
+        } catch (\RuntimeException $error) {
+            $this->assertStringContainsString('anderes Paket', $error->getMessage());
+        }
+        $manager->rollback($stable);
+        $this->assertSame('draft', $project->refresh()->status);
+        $this->assertSame('releases/'.$stable, readlink($this->destinationRoot.'/current'));
+        $this->artisan('madlen:production:retry', ['publication' => $job->id, '--runner-stopped' => true])->assertFailed();
+        try {
+            $activator->activate($job->id, $job->sequence, basename($firstZip), $firstSha);
+            $this->fail('Rolled-back high-water sequence must stay protected');
+        } catch (\RuntimeException $error) {
+            $this->assertStringContainsString('älter', $error->getMessage());
+        }
+    }
+
     private function makeStaticArchive(string $archiveName, string $label, string $publicationId, int $sequence): array
     {
         $source = $this->testRoot.'/archive-source-'.Str::random(8);

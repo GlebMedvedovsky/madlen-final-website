@@ -59,13 +59,28 @@ class StaticReleaseActivator
             $this->files->ensureDirectory($root.'/releases');
             $this->files->ensureDirectory($root.'/.incoming');
 
+            $replaceFailed = false;
+            if (is_link($target) || (file_exists($target) && ! is_dir($target))) {
+                throw new RuntimeException('Das Release-Ziel ist kein sicheres Verzeichnis.');
+            }
             if (is_dir($target)) {
                 $storedChecksum = trim((string) @file_get_contents($target.'/.madlen-package.sha256'));
                 if (! hash_equals(strtolower($expectedChecksum), strtolower($storedChecksum))) {
-                    throw new RuntimeException('Das vorhandene Zielverzeichnis gehört nicht zu diesem geprüften Paket.');
+                    // A rebuild of the SAME immutable request has a different builtAt.
+                    // Only a recorded, compensated CMS failure may replace its inactive
+                    // directory. Active/older releases were rejected above, and the old
+                    // package identity must still match the compensation record.
+                    $replaceFailed = ($state['failedActivation'] ?? null) === $releaseName
+                        && $sequence === $highestSequence
+                        && preg_match('/\A[0-9a-f]{64}\z/', $storedChecksum)
+                        && hash_equals($storedChecksum, $state['failedPackageChecksum'] ?? '');
+                    if (! $replaceFailed) {
+                        throw new RuntimeException('Das vorhandene Zielverzeichnis gehört nicht zu diesem geprüften Paket.');
+                    }
                 }
                 $this->validateRelease($target, $publicationId, $sequence);
-            } else {
+            }
+            if (! is_dir($target) || $replaceFailed) {
                 if (file_exists($staging) || is_link($staging)) {
                     throw new RuntimeException('Ein unvollständiges Ziel für diesen Auftrag ist bereits vorhanden.');
                 }
@@ -75,6 +90,14 @@ class StaticReleaseActivator
                     $this->validateRelease($staging, $publicationId, $sequence);
                     if (config('madlen.publisher.simulate_transfer_failure')) {
                         throw new RuntimeException('Simulierter Übertragungsfehler; der bisherige Stand bleibt aktiv.');
+                    }
+                    if ($replaceFailed) {
+                        // Keep the failed build for inspection, outside releases/current.
+                        // Do not move it until the replacement has passed ALL checks.
+                        $quarantine = $root.'/.incoming/failed-'.$releaseName.'-'.bin2hex(random_bytes(8));
+                        if (! rename($target, $quarantine)) {
+                            throw new RuntimeException('Der fehlgeschlagene Stand konnte nicht sicher verwahrt werden.');
+                        }
                     }
                     $moved = @rename($staging, $target);
                     if (! $moved && ! (is_dir($target) && ! file_exists($staging))) {
@@ -153,6 +176,7 @@ class StaticReleaseActivator
             $state = $this->readState($root);
             $state['activeRelease'] = $previous;
             $state['failedActivation'] = $failed;
+            $state['failedPackageChecksum'] = trim((string) file_get_contents($root.'/releases/'.$failed.'/.madlen-package.sha256'));
             $this->writeState($root, $state);
         } finally {
             flock($lock, LOCK_UN);

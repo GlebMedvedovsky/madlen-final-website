@@ -1,8 +1,60 @@
 <?php
 // Read-only. No Laravel bootstrap, artisan, tinker, caches, dumps or network requests except SELECTs to its DB.
 declare(strict_types=1);
-$backend = realpath($argv[1] ?? '/madebymadlen.de/app/backend');
+$args = array_slice($argv, 1);
+$toolsOnly = ($args[0] ?? '') === '--tools';
+if ($toolsOnly) array_shift($args);
+$backend = realpath($args[0] ?? '/madebymadlen.de/app/backend');
 if (! $backend || basename($backend)!=='backend') { fwrite(STDERR,"Invalid backend\n"); exit(1); }
+// This gate runs BEFORE reading env or bootstrapping the installed application.
+// --tools is also used immediately before apply/rollback. No PATH Composer and
+// no executable `stat` dependency; the trusted PHAR checksum comes from the operator.
+try {
+    if (PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500) throw new RuntimeException('PHP 8.4 is required');
+    foreach (['proc_open', 'symlink', 'hash_file', 'fileperms'] as $function) {
+        if (! function_exists($function)) throw new RuntimeException('Required PHP function: '.$function);
+    }
+    foreach (['pdo_mysql', 'mbstring', 'openssl', 'fileinfo', 'zip', 'gd', 'intl', 'Phar'] as $extension) {
+        if (! extension_loaded($extension)) throw new RuntimeException('Required PHP extension: '.$extension);
+    }
+    $run = static function (array $command): string {
+        $process = proc_open($command, [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes);
+        if (! is_resource($process)) throw new RuntimeException('Cannot check required tool');
+        fclose($pipes[0]); $output=stream_get_contents($pipes[1]); $errors=stream_get_contents($pipes[2]);
+        fclose($pipes[1]); fclose($pipes[2]);
+        if (proc_close($process)!==0) throw new RuntimeException('Required tool failed: '.basename($command[0]));
+        return trim($output);
+    };
+    $tools = [];
+    foreach (['tar','gzip','sha256sum','date','mkdir','chmod','cmp','id','ls'] as $name) {
+        $binary=$run(['/bin/sh','-c','command -v "$1"','madlen-preflight',$name]);
+        if (! is_executable($binary)) throw new RuntimeException('Missing tool: '.$name);
+        $tools[$name]=$binary;
+    }
+    foreach (['/usr/bin/mysqldump','/usr/bin/mysql'] as $binary) {
+        if (! is_executable($binary)) throw new RuntimeException('Missing tool: '.$binary);
+        $tools[basename($binary)]=$run([$binary,'--version']);
+    }
+    $phar = $args[1] ?? '';
+    $expected = strtolower($args[2] ?? '');
+    $private = realpath(dirname($backend, 2).'/private');
+    $resolved = realpath($phar);
+    if (! $private || ! $resolved || ! str_starts_with($resolved, $private.DIRECTORY_SEPARATOR)
+        || is_link($phar) || ! is_file($resolved) || ! is_readable($resolved)
+        || (fileperms($resolved) & 0022) !== 0) {
+        throw new RuntimeException('A readable, non-symlink, non-group/world-writable private composer.phar is required');
+    }
+    if (! preg_match('/\A[0-9a-f]{64}\z/', $expected) || ! hash_equals($expected, hash_file('sha256', $resolved))) {
+        throw new RuntimeException('Private Composer SHA-256 does not match the previously verified checksum');
+    }
+    $tools['composer_phar']=$resolved;
+    $tools['composer_sha256']=$expected;
+    $tools['composer_version']=$run([PHP_BINARY,$resolved,'--version','--no-ansi','--no-plugins','--no-scripts']);
+    if (! str_starts_with($tools['composer_version'], 'Composer version 2.')) throw new RuntimeException('Composer 2 is required');
+} catch (Throwable $error) {
+    fwrite(STDERR, 'STOP before changing code: '.$error->getMessage()."\n"); exit(1);
+}
+if ($toolsOnly) { echo json_encode(['tools'=>$tools],JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES)."\n"; exit(0); }
 require $backend.'/vendor/autoload.php';
 try { $env = Dotenv\Dotenv::parse(file_get_contents($backend.'/.env')); }
 catch(Throwable) { fwrite(STDERR,"Private configuration could not be parsed. Inspect locally; values are not printed.\n"); exit(1); }
@@ -13,7 +65,7 @@ $report = ['php'=>PHP_VERSION,'sapi'=>PHP_SAPI,'php_binary'=>PHP_BINARY,'backend
     'extensions'=>array_combine(['pdo_mysql','mbstring','openssl','fileinfo','zip','gd','intl'],array_map('extension_loaded',['pdo_mysql','mbstring','openssl','fileinfo','zip','gd','intl'])),
     'proc_open'=>function_exists('proc_open'),'symlink'=>function_exists('symlink'),
     'dump_executable'=>is_executable('/usr/bin/mysqldump'),'mysql_executable'=>is_executable('/usr/bin/mysql'),
-    'composer_candidates'=>array_values(array_filter(['/usr/local/bin/composer','/usr/bin/composer'], 'is_file')),
+    'tools'=>$tools,
     'cli_limits'=>array_combine(['memory_limit','max_execution_time','upload_max_filesize','post_max_size','max_file_uploads'],
         array_map('ini_get',['memory_limit','max_execution_time','upload_max_filesize','post_max_size','max_file_uploads'])),
     'resolved_layout_paths'=>$paths,
@@ -25,6 +77,8 @@ foreach (['MADLEN_PRODUCTION_PUBLISHER','MADLEN_PRODUCTION_CONNECTED','MADLEN_PR
 foreach (['APP_KEY','MADLEN_GITHUB_TOKEN','MADLEN_PUBLISHER_API_TOKEN','MAIL_PASSWORD'] as $key) $report['present_only'][$key]=!empty($env[$key]);
 foreach (['/madebymadlen.de/releases/static','/madebymadlen.de/private','/madebymadlen.de/private/packages/production','/madebymadlen.de/private/incoming/production',$backend.'/storage',$backend.'/bootstrap/cache'] as $path) {
     $report['paths'][$path]=['exists'=>file_exists($path),'writable'=>is_writable($path),'realpath'=>realpath($path)?:null,
+        'mode'=>file_exists($path)?sprintf('%04o',fileperms($path)&07777):null,
+        'owner_uid'=>file_exists($path)?fileowner($path):null,'group_gid'=>file_exists($path)?filegroup($path):null,
         'free_bytes'=>is_dir($path)?disk_free_space($path):null];
 }
 $current='/madebymadlen.de/releases/static/current';
