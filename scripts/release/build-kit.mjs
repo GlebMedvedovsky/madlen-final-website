@@ -20,7 +20,7 @@ for(const file of list) {
   if(before===sha(bytes)) throw Error('Unchanged file in overlay: '+file);
   files[file]={before,after:sha(bytes)}; put('payload/backend/'+file,bytes);
 }
-const runtime=path=>/^backend\/(app|config|routes|database\/migrations)\//.test(path);
+const runtime=path=>/^backend\/(app|config|routes|database\/migrations|lang)\//.test(path) || path==='backend/bootstrap/app.php';
 const deltas=new Set([...git('diff','--name-only',reference).toString().trim().split('\n'),...git('ls-files','--others','--exclude-standard').toString().trim().split('\n')].filter(runtime));
 for(const path of deltas) if(!list.includes(path.slice(8))) throw Error('Runtime change missing from allowlist: '+path);
 put('manifest.json',JSON.stringify({schemaVersion:1,referenceRevision:reference,workingHead:git('rev-parse','HEAD').toString().trim(),
@@ -43,6 +43,11 @@ for(const [source,target] of Object.entries({
 const sums=[];
 function walk(dir){for(const entry of readdirSync(dir,{withFileTypes:true})){const path=resolve(dir,entry.name);if(entry.isDirectory())walk(path);else sums.push(sha(readFileSync(path))+'  '+relative(out,path).replaceAll('\\','/'));}}
 walk(out); sums.sort();put('SHA256SUMS',sums.join('\n')+'\n');
+// Local installer verification without producing a release archive before merge.
+if (process.argv.includes('--unpacked')) {
+  console.log(JSON.stringify({name,directory:out,backendFiles:list.length,archive:null},null,2));
+  process.exit(0);
+}
 const archive=out+'.tar.gz';
 execFileSync('tar',['-czf',archive,'-C',dirname(out),name]);
 const checksum=sha(readFileSync(archive));

@@ -59,7 +59,13 @@ require $backend.'/vendor/autoload.php';
 try { $env = Dotenv\Dotenv::parse(file_get_contents($backend.'/.env')); }
 catch(Throwable) { fwrite(STDERR,"Private configuration could not be parsed. Inspect locally; values are not printed.\n"); exit(1); }
 $paths = App\Support\HostingPathResolver::resolve($backend, $env['MADLEN_INSTALL_LAYOUT']??null);
+$versions = [];
+foreach (['laravel/framework', 'filament/filament', 'livewire/livewire'] as $package) {
+    $versions[$package] = Composer\InstalledVersions::isInstalled($package)
+        ? Composer\InstalledVersions::getPrettyVersion($package) : 'NOT INSTALLED';
+}
 $report = ['php'=>PHP_VERSION,'sapi'=>PHP_SAPI,'php_binary'=>PHP_BINARY,'backend'=>$backend,
+    'framework_versions'=>$versions,
     'config_cache_exists'=>is_file($backend.'/bootstrap/cache/config.php'),
     'route_cache_files'=>array_map('basename',glob($backend.'/bootstrap/cache/routes*.php')),
     'extensions'=>array_combine(['pdo_mysql','mbstring','openssl','fileinfo','zip','gd','intl'],array_map('extension_loaded',['pdo_mysql','mbstring','openssl','fileinfo','zip','gd','intl'])),
@@ -73,7 +79,8 @@ $report = ['php'=>PHP_VERSION,'sapi'=>PHP_SAPI,'php_binary'=>PHP_BINARY,'backend
 ];
 foreach (['MADLEN_PRODUCTION_PUBLISHER','MADLEN_PRODUCTION_CONNECTED','MADLEN_PRODUCTION_DESTINATION_ROOT',
     'MADLEN_PRODUCTION_SOURCE_REVISION','MADLEN_PREVIEW_SOURCE_REVISION','MADLEN_GITHUB_WORKFLOW','MADLEN_GITHUB_REPOSITORY',
-    'MADLEN_GITHUB_REF','MADLEN_PUBLIC_SITE_URL','MADLEN_CONTACT_ENABLED','MAIL_MAILER','MAIL_SCHEME','MAIL_PORT','MAIL_ENCRYPTION'] as $key) $report['settings'][$key]=$env[$key]??'NOT SET';
+    'MADLEN_GITHUB_REF','MADLEN_PUBLIC_SITE_URL','MADLEN_CONTACT_ENABLED','MAIL_MAILER','MAIL_SCHEME','MAIL_PORT','MAIL_ENCRYPTION',
+    'APP_URL','APP_LOCALE','SESSION_DRIVER','SESSION_SECURE_COOKIE','CACHE_STORE'] as $key) $report['settings'][$key]=$env[$key]??'NOT SET';
 foreach (['APP_KEY','MADLEN_GITHUB_TOKEN','MADLEN_PUBLISHER_API_TOKEN','MAIL_PASSWORD'] as $key) $report['present_only'][$key]=!empty($env[$key]);
 foreach (['/madebymadlen.de/releases/static','/madebymadlen.de/private','/madebymadlen.de/private/packages/production','/madebymadlen.de/private/incoming/production',$backend.'/storage',$backend.'/bootstrap/cache'] as $path) {
     $report['paths'][$path]=['exists'=>file_exists($path),'writable'=>is_writable($path),'realpath'=>realpath($path)?:null,
@@ -84,13 +91,16 @@ foreach (['/madebymadlen.de/releases/static','/madebymadlen.de/private','/madeby
 $current='/madebymadlen.de/releases/static/current';
 $report['current']=['is_link'=>is_link($current),'target'=>is_link($current)?readlink($current):null];
 foreach (['App\\Services\\ProductionReleaseManager','App\\Console\\Commands\\RetryProductionPublication',
-    'App\\Data\\ProjectPreviewSnapshot','App\\Services\\ProjectPreviewSnapshotFactory','App\\Http\\Controllers\\AdminSessionController'] as $class) $report['autoload'][$class]=class_exists($class);
+    'App\\Data\\ProjectPreviewSnapshot','App\\Services\\ProjectPreviewSnapshotFactory','App\\Http\\Controllers\\AdminSessionController',
+    'App\\Filament\\Auth\\RequestPasswordReset','App\\Filament\\Auth\\ResetPassword',
+    'App\\Http\\Middleware\\AuthenticateAdminSession','App\\Notifications\\AdminResetPassword'] as $class) $report['autoload'][$class]=class_exists($class);
 try {
     if (($env['DB_CONNECTION']??'mysql')!=='mysql' || !empty($env['DB_URL'])) throw new RuntimeException('Unsupported preflight DB configuration');
     $pdo=new PDO('mysql:host='.($env['DB_HOST']??'127.0.0.1').';port='.($env['DB_PORT']??3306).';dbname='.$env['DB_DATABASE'].';charset=utf8mb4', $env['DB_USERNAME'],$env['DB_PASSWORD']??'', [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
     $report['database']['connected']=true;
     $report['database']['migration_names']=$pdo->query('SELECT migration FROM migrations ORDER BY migration')->fetchAll(PDO::FETCH_COLUMN);
     $report['database']['preview_columns']=$pdo->query('SHOW COLUMNS FROM preview_builds')->fetchAll(PDO::FETCH_COLUMN);
+    $report['database']['reset_token_columns']=$pdo->query('SHOW COLUMNS FROM password_reset_tokens')->fetchAll(PDO::FETCH_COLUMN);
     $report['database']['publication_columns']=$pdo->query('SHOW COLUMNS FROM production_publications')->fetchAll(PDO::FETCH_COLUMN);
     $report['database']['publication_statuses']=$pdo->query('SELECT status, COUNT(*) AS count FROM production_publications GROUP BY status')->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $error) { $report['database']['check']='FAILED; inspect connection locally, do not send credentials'; }

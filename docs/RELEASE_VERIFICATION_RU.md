@@ -78,3 +78,42 @@
 Сбои сборки/доставки и компенсация DB-транзакции испытаны локально, но это не испытание реального сетевого обрыва SSH или аварийного выключения хостинга. Полной транзакционности между файловой системой и БД при падении процесса/машины не обещаем: перед повтором обязательно сверить current и запись заказа по runbook. Полный restore рабочей БД не является штатным лечением ошибки аддитивной migration.
 
 Реальная SMTP-доставка, DNS почты, WCP document root, внешние credentials и установленные server hashes — оставшиеся проверки, которые нельзя честно выполнить локально. Секреты в чат не нужны. Production gate и сервер в ходе этой работы не включались; Test не публиковался.
+
+## Дополнение: восстановление пароля администратора (после PR #4)
+
+Рабочая ветка `fix/admin-password-reset` создана в отдельном worktree от заново полученного `origin/main = 88a45f3ef04d4beb41a6a682d9cc09e5b94073b0`. Пользовательская рабочая копия и два прежних архива не изменены (проверены SHA-256). Следующие проверки выполнены на этапе локальной реализации, до подготовки commit и draft PR; merge и установки не было.
+
+Использованы установленные Laravel **12.69.2**, Filament **5.8.1**, Livewire **4.4.4**, без новых зависимостей. Включён штатный password broker/Filament flow; наследники страниц задают одинаковый результат запроса, немецкое письмо и строгую валидацию. URL — подписанный `https://admin.madebymadlen.de`, не зависит от входного Host или APP_URL, 60 минут. Токен хранится хэшированным и потребляется штатным broker; транзакционная блокировка строки сериализует его потребление. Новый пароль не может совпадать с прежним; проверка совпадения выполняется только при действительном токене.
+
+Механизм AuthenticateSession проверяет хэш пароля во всех web/Livewire/preview/media/CSRF-recovery запросах. Login event записывает отметку при настоящем входе. Старая сессия без отметки не получает автоматически новый хэш: требуется вход. Native reset меняет пароль и remember token, удаляет reset token; автоматического входа нет, регистрации нет.
+
+### Автоматические проверки этого дополнения
+
+- **54 backend-теста / 6018 assertions**, без failures: новая группа — **11 тестов / 200 assertions**, плюс полный CMS/preview/production/contact набор. SQLite `:memory:`, array/fake mail и поддельные GitHub ответы. Полный набор включает реальные локальные Astro preview/production builds, финальную JS-постобработку, повтор публикации из редактора, две разные сборки при recovery и rollback.
+- Новые тесты: известный/неизвестный email и broker throttle с одинаковым notification/form state; немецкий email; защита от подмены домена; подпись/60 минут; invalid/expired/reused token; слабый/неподтверждённый/слишком длинный UTF-8 пароль; запрет прежнего пароля; IP/reset limits; отключённая регистрация; mail failure и последующий retry; запрет log transport; старые/unstamped sessions; настоящий Login event.
+- **8 Node-тестов** preview-base, Renaissance DE/EN, lost/late response, 500/419 recovery — pass.
+- Обычная Astro-сборка DE/EN: exit 0, **49 страниц**. В stderr Astro/Vite печатает `The build was canceled` при начальной синхронизации, после чего основной build завершается `Complete!`; это не скрыто и не выдано за отсутствие сообщений в логе. Frontend-код этим исправлением не менялся.
+- Symfony YAML parser и `bash -n` для **17** workflow-блоков — pass; workflow не запускался.
+- Обновлённый preflight: **6 отказных сценариев**, запуск без stat/Composer в PATH, **7** bash-блоков runbook — pass.
+- Распакованный тестовый kit: **36 production-файлов**, per-file SHA-256, guard исходников/stale report/symlink, apply/reapply/rollback, отказ при последующей правке, сохранение аддитивной миграции и неизменность synthetic env/media — pass.
+- В отдельной Linux-копии через PHP 8.4 выполнен Composer `dump-autoload --no-dev --optimize --classmap-authoritative --no-scripts --no-plugins` без сети; все **шесть** новых классов совокупного комплекта разрешаются.
+
+Первый запуск полного набора на read-only/noexec mounts не позволял Astro удалить его временную .astro и backup-тесту выполнить синтетический mysqldump. Набор повторён на отдельной записываемой Linux-копии с теми же исходниками и изолированной БД: приведены результаты успешного повторного запуска, а не замена проверок чтением кода.
+
+### Браузер и границы проверки
+
+**PASS: настоящий Chromium, семь групп сценариев.** Два независимых входа и remember-cookie; ссылка возле пароля; одинаковый результат известного/неизвестного email; неверная подпись (403), истёкший broker token; имитация сбоя почты и успешный retry; слабый/неподтверждённый пароль; успешный reset и возврат к login; старый Livewire snapshot с cookies (401), старая сессия на CSRF-recovery (404, токен не выдан), replay старых cookies и remember-only cookie; повтор ссылки и старого пароля отклонены, новым паролем вход успешен; неверный CSRF (419). Число пользователей, previews и publications не изменилось.
+
+Запросы старой сессии повторяются из стабильного локального HTML probe в том же browser origin, поскольку исходная вкладка CMS может автоматически переходить на login при отзыве доступа. Это не обход backend: запросы Livewire/CSRF идут в настоящий локальный Laravel со старым подписанным snapshot и cookies; подменяется только пустой HTML-документ, запускающий проверочный fetch.
+
+Сценарий воспроизводится `scripts/release/qa-password-reset-browser.mjs` с локальным PHP fixture `qa-password-reset.php` и отдельной SQLite. Итог и обзорные изображения находятся в `installation-artifacts/password-reset-qa/`; токены, пароли и содержимое cookies в итоговый JSON не записываются. Canonical HTTPS origin проксируется Playwright только на localhost: это настоящий Chromium/UI/Livewire, но не проверка реального TLS/DNS или Netcup. Срок broker-токена и ошибка отправки изменяются только в disposable fixture.
+
+Реальная SMTP-доставка, сертификат/HTTPS, session/cache driver и права FastCGI, MySQL-конкурентность на Netcup остаются серверными проверками. Одноразовость последовательно проверена локально; конкурентную MySQL-гонку отдельным серверным тестом здесь не воспроизводили.
+
+### Доставка
+
+Единый состав — **36** production-файлов: 26 из PR #4 + десять из этого исправления. Четыре новых reset-класса + два production-класса; одна migration PR #4, **нет новой reset migration**. Нужны Composer autoload, config:clear, route:clear и view:clear; config:cache запрещён.
+
+Инструкция — только `docs/NETCUP_RELEASE_RU.md`. Перед commit проверено: reset через default `MAIL_MAILER=smtp` и контакт через `MADLEN_CONTACT_MAILER=smtp` используют один `mail.mailers.smtp` из `backend/config/mail.php` и существующие MAIL_* credentials, без отдельного аккаунта. Код для этого менять не потребовалось; полный набор тестов при подготовке PR повторно не запускался. Серверная доставка проверяется отдельно. Пакет, исходные server hashes, backup и application checks проверяются до первого production gate; Test остаётся Entwurf.
+
+Финальный архив в этой задаче **не создаётся**: после review/нового merge требуется чистый checkout его точного SHA, новая сборка и проверка metadata/payload/checksums. Старый kit из merge PR #4 сохраняется контрольным, но не устанавливается как полный комплект с reset.

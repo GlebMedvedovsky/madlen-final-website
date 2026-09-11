@@ -10,7 +10,7 @@ function digest(string $file): ?string {
     return hash_file('sha256', $file);
 }
 function target(string $root, string $relative): string {
-    if (! preg_match('#\A(?:app|config|routes|database/migrations)/[A-Za-z0-9_./-]+\.php\z#', $relative)
+    if (! preg_match('#\A(?:(?:app|config|routes|database/migrations)/[A-Za-z0-9_./-]+\.php|bootstrap/app\.php|lang/de/(?:passwords|validation)\.php|lang/de\.json)\z#', $relative)
         || str_contains($relative, '..') || str_contains($relative, '//')) stop('Path outside backend allowlist');
     $pieces = explode('/', $relative); array_pop($pieces); $parent = $root;
     foreach ($pieces as $piece) {

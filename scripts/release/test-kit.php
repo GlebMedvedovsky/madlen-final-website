@@ -48,6 +48,9 @@ check(file_get_contents($backend.'/storage/media/sentinel')==='must-not-change',
 $inspect();run([...$cmd,'check',$backend,$root.'/reapply',$root.'/observed.json']);
 run([...$cmd,'apply',$backend,$root.'/reapply',$root.'/observed.json']);
 run([...$cmd,'rollback',$backend,$root.'/reapply']);
-foreach($manifest['files'] as $file=>$sums)run([PHP_BINARY,'-l',$kit.'/payload/backend/'.$file]);
+foreach($manifest['files'] as $file=>$sums) {
+    if (str_ends_with($file,'.php')) run([PHP_BINARY,'-l',$kit.'/payload/backend/'.$file]);
+    else json_decode(file_get_contents($kit.'/payload/backend/'.$file),true,flags:JSON_THROW_ON_ERROR);
+}
 echo "PASS: source checksum guard; stale report; symlink refusal; apply; per-file checksum; idempotence; edited-file rollback refusal; code rollback; additive migration retained; reapply after rollback; env/media untouched; all payload PHP syntax.\n";
 echo "Disposable fixture retained at $root\n";
