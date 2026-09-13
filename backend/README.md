@@ -1,59 +1,79 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Madlen backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[English](#english) · [Русский](#russian)
 
-## About Laravel
+<a id="english"></a>
+## English
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 1. Responsibility and components
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+I am Gleb Medvedovskyy. I designed the backend around Laravel 12, Filament 5 and Livewire 4 to separate editorial work from public delivery. I manage architecture, configuration and release decisions; implementation and testing use AI-assisted workflows. Laravel, Filament and Livewire are third-party projects, not frameworks I authored.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+I use the CMS for projects, ordered galleries, bilingual content, media and revisions. `ContentManifestService` exports content; `ProductionPublisher` coordinates external releases. `PreviewBuilder` creates protected previews. The legacy local release service is not the Netcup publication path.
 
-## Learning Laravel
+### 2. Local environment
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+I use the repository's isolated Docker Compose setup for backend work. Review [the Compose configuration](../compose.yaml) and the example environment files before starting a disposable environment. Use project name `madlen`; do not share application databases or volumes with another project.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Install dependencies from `composer.lock`, not an unrestricted update. The current lockfile records Laravel 12.69.2, Filament 5.8.1 and Livewire 4.4.4. A lockfile describes dependencies, not proof of the installed server state.
 
-## Laravel Sponsors
+Do not use the framework's generic setup script against production: it can generate configuration and run migrations. Existing CMS data must never be replaced by a development import. Local credentials belong in ignored environment files.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 3. Tests and mail
 
-### Premium Partners
+Run the backend suite only with a verified isolated test database and temporary storage:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+php artisan test
+```
 
-## Contributing
+Tests cover editorial operations, preview isolation/recovery, publication identity and activation, contact validation, password reset, media and backup behaviour. Some tests execute actual local Astro builds; external dispatch and mail transport are substituted where documented. See the [verification record](../docs/RELEASE_VERIFICATION_RU.md), not an unconditional “all systems passed” claim.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The contact controller selects the configured contact mailer; administrator recovery uses Laravel's default mailer. Both can select the same `mail.mailers.smtp` configuration. I do not maintain a second SMTP account for recovery. Passwords, tokens and reset links must not be logged or included in reports.
 
-## Code of Conduct
+### 4. Operations and ownership
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+[The CMS guide](../ADMIN_CMS.md) describes editorial actions. [The release procedure](../docs/NETCUP_RELEASE_RU.md) covers preflight, backups, autoload, migrations and rollback.
 
-## Security Vulnerabilities
+On Netcup, PHP runs the backend and release activation; Astro builds run externally. Configuration remains uncached because hosting paths differ between CLI and FastCGI. I keep runtime state, media and credentials separate from code updates.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Framework licence terms are retained in dependencies. This README does not grant a new licence for the portfolio's photographs, videos or project-specific assets.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+<a id="russian"></a>
+## Русский
+
+### 1. Ответственность и компоненты
+
+Я — Gleb Medvedovskyy. Я спроектировал backend на Laravel 12, Filament 5 и Livewire 4, чтобы отделить редакционную работу от публичной доставки сайта. Я управляю архитектурой, настройкой и решениями о выпуске; реализация и тестирование используют AI-assisted процессы. Laravel, Filament и Livewire — сторонние проекты, а не разработанные мной фреймворки.
+
+Я использую CMS для проектов, упорядоченных галерей, двуязычного контента, медиа и истории изменений. `ContentManifestService` экспортирует контент; `ProductionPublisher` управляет внешними выпусками. `PreviewBuilder` создаёт защищённый предпросмотр. Старый локальный сервис выпуска не используется для публикации на Netcup.
+
+### 2. Локальное окружение
+
+Для backend я использую изолированную конфигурацию Docker Compose из репозитория. Перед запуском одноразового окружения изучите [конфигурацию Compose](../compose.yaml) и примеры переменных окружения. Используйте имя проекта `madlen`; не объединяйте рабочие базы или тома с другим проектом.
+
+Зависимости устанавливаются из `composer.lock`, без произвольного обновления. Текущий lockfile фиксирует Laravel 12.69.2, Filament 5.8.1 и Livewire 4.4.4. Lockfile описывает зависимости, но не доказывает состояние установленного сервера.
+
+Не запускайте стандартный setup-скрипт фреймворка на production: он может создавать конфигурацию и применять миграции. Существующие данные CMS нельзя заменять импортом из среды разработки. Локальные credentials хранятся в игнорируемых файлах окружения.
+
+### 3. Тесты и почта
+
+Backend-тесты запускаются только с проверенной изолированной тестовой базой и временным хранилищем:
+
+```bash
+php artisan test
+```
+
+Тесты охватывают редакционные операции, изоляцию и восстановление preview, идентичность и активацию публикаций, валидацию контакта, сброс пароля, медиа и резервное копирование. Часть тестов выполняет настоящие локальные сборки Astro; внешняя отправка заданий и почтовый transport заменяются там, где это указано. Ориентир — [отчёт о проверках](../docs/RELEASE_VERIFICATION_RU.md), а не безусловное утверждение «все системы проверены».
+
+Контроллер контакта выбирает настроенный contact mailer; восстановление администратора использует mailer Laravel по умолчанию. Оба могут выбирать одну конфигурацию `mail.mailers.smtp`. Я не использую отдельный SMTP-аккаунт для восстановления. Пароли, токены и ссылки сброса нельзя записывать в журнал или отчёт.
+
+### 4. Эксплуатация и авторство
+
+[Руководство CMS](../ADMIN_CMS.md) описывает редакционные действия. [Инструкция выпуска](../docs/NETCUP_RELEASE_RU.md) охватывает preflight, резервные копии, autoload, миграции и откат.
+
+На Netcup PHP обслуживает backend и активацию релизов; Astro собирается снаружи. Конфигурация остаётся без кеширования, поскольку пути CLI и FastCGI различаются. Я отделяю рабочее состояние, медиа и credentials от обновлений кода.
+
+Лицензии фреймворков сохраняются в зависимостях. Этот README не предоставляет новую лицензию на фотографии, видео или собственные ресурсы портфолио.

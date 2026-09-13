@@ -1,53 +1,47 @@
-# /public/images/
+# Madlen image assets
 
-Place your images here in the following structure:
+[English](#english) · [Русский](#russian)
 
-## Folder structure
+<a id="english"></a>
+## English
 
-```
-/public/images/
-├── portfolio/
-│   ├── portraits/
-│   │   ├── portrait-001.webp
-│   │   ├── portrait-002.webp
-│   │   └── ...
-│   ├── paare-familien/
-│   ├── hochzeiten/
-│   ├── events/
-│   └── editorial/
-├── hero.jpg              ← Main hero image (large B&W photo, min 1920×1200px)
-└── madlen-portrait.jpg   ← Photo of Madlen for the About page (~800×1000px)
-```
+### 1. Static assets and CMS media
 
-## Recommended formats and sizes
+I maintain this directory for versioned frontend assets: branding, decorative graphics and baseline media referenced by the Astro source. A file here is publicly deliverable unless an explicit build rule excludes it. I never store credentials, private originals, backups or internal documents here.
 
-| Use case          | Format | Width   | Notes                          |
-|-------------------|--------|---------|--------------------------------|
-| Hero image        | JPG    | 1920px+ | Will be grayscale via CSS      |
-| Portrait shots    | WebP   | 800px   | Portrait orientation preferred |
-| Landscape shots   | WebP   | 1200px  | Landscape orientation          |
-| About photo       | WebP   | 800px   | Portrait orientation           |
+For ordinary portfolio updates, I use **Medien** in the CMS and assign uploaded images under **Projekte**. I do not replace source arrays or upload files directly into an active static release. Gallery order is the saved project order, not filename or upload order.
 
-## How to reference in code
+### 2. Image preparation
 
-In `src/pages/portfolio.astro`, replace the Unsplash URLs:
-```
-src: '/images/portfolio/portraits/portrait-001.webp'
-```
+I preserve the original composition and prepare readable DE/EN alternative text. The CMS accepts JPEG, PNG and WebP images and creates web derivatives while retaining uploaded originals. Actual server limits may be stricter than application defaults. Videos require a supported, prepared MP4/WebM file; the CMS does not transcode them automatically.
 
-In `src/components/Hero.astro`, update the `backgroundImage` prop in `src/pages/index.astro`:
-```
-<Hero backgroundImage="/images/hero.jpg" />
-```
+Cover and gallery are separate assignments. Homepage video, poster and Memories photograph are separate slots. I verify both languages and mobile layouts in preview before publication; replacing a file does not automatically replace all assignments or generate a poster.
 
-In `src/pages/ueber-mich.astro`, replace the placeholder with:
-```
-<img src="/images/madlen-portrait.webp" alt="Madlen Medvedovskyy, Fotografin" class="..." />
-```
+### 3. Source references and rights
 
-## Performance tips
+An asset at `public/images/example.webp` is referenced as `/images/example.webp`, without `/public`. Existing filenames and references remain the source of truth; this example does not prescribe a new directory structure.
 
-- Convert images to WebP format for ~30% smaller file sizes
-- Aim for < 200 KB per portfolio image
-- Use the `loading="lazy"` attribute (already set in the code)
-- Consider using `sharp` or Squoosh to batch optimize images before upload
+The software project's authorship does not transfer rights to photographs, videos, logos or supplied artwork. I use only assets cleared for their intended publication. See the [CMS guide](../../ADMIN_CMS.md) for editorial operations.
+
+---
+
+<a id="russian"></a>
+## Русский
+
+### 1. Статические ресурсы и медиа CMS
+
+Я использую этот каталог для версионируемых ресурсов frontend: фирменной графики, декоративных элементов и исходных медиа, на которые ссылается код Astro. Файл здесь может быть опубликован, если его явно не исключает правило сборки. Я не храню здесь credentials, приватные оригиналы, резервные копии или внутренние документы.
+
+Для обычного обновления портфолио я использую **Medien** в CMS и назначаю загруженные изображения в **Projekte**. Я не заменяю массивы исходников и не загружаю файлы непосредственно в активный статический релиз. Порядок галереи определяется сохранённым порядком проекта, а не именами файлов или последовательностью загрузки.
+
+### 2. Подготовка изображений
+
+Я сохраняю исходную композицию и подготавливаю понятные альтернативные тексты DE/EN. CMS принимает JPEG, PNG и WebP и создаёт web-производные, сохраняя загруженные оригиналы. Реальные ограничения сервера могут быть строже стандартных лимитов приложения. Для видео нужен подготовленный поддерживаемый MP4/WebM; CMS не перекодирует его автоматически.
+
+Обложка и галерея назначаются отдельно. Видео главной страницы, постер и фотография Memories — отдельные слоты. Перед публикацией я проверяю обе языковые версии и мобильную раскладку в preview; замена файла не переназначает автоматически все связи и не создаёт постер.
+
+### 3. Ссылки на ресурсы и права
+
+Файл `public/images/example.webp` подключается как `/images/example.webp`, без `/public`. Источник истины — существующие имена и ссылки; этот пример не задаёт новую структуру каталогов.
+
+Авторство программного проекта не передаёт права на фотографии, видео, логотипы или предоставленную графику. Я использую только ресурсы, разрешённые для соответствующей публикации. Редакционные операции описаны в [руководстве CMS](../../ADMIN_CMS.md).
